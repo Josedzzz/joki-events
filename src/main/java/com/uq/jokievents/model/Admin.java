@@ -13,6 +13,7 @@ public class Admin {
     private String username;
     private String password;
     private ArrayList<String> idClients;
+    private boolean active;
 
     // Constructor
     public Admin() {}
@@ -22,6 +23,7 @@ public class Admin {
         this.username = username;
         this.password = password;
         this.idClients = idClients;
+        this.active = true;
     }
 
     // Getters and setters
@@ -58,4 +60,7 @@ public class Admin {
         this.idClients = idClients;
     }
 
+    public boolean isActive() { return active; }
+
+    public void setActive(boolean active) { this.active = active; }
 }
