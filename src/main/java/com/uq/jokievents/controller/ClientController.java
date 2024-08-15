@@ -28,75 +28,58 @@ public class ClientController {
     private ClientService clientService;
 
     /**
-     * Gets a list of all clients
-     * 
-     * @return a ResponseEntity containing a list of Client objects and an HTTP
-     *         status of ok
+     * Get all clients
+     *
+     * @return a ResponseEntity objest with containing clients
      */
     @GetMapping
-    public ResponseEntity<List<Client>> getAllClients() {
-        List<Client> clients = clientService.findAll();
-        return new ResponseEntity<>(clients, HttpStatus.OK);
+    public ResponseEntity<?> getAllClients() {
+        return clientService.findAll();
     }
 
     /**
-     * Gets a Client by its unique id
-     * 
-     * @param id the unique identifier of the Client
-     * @return a ResponseEntity containing the Client object and HTTP status of ok
-     *         if found, otherwhise the status is not found
+     * Get a client by id
+     *
+     * @param id the identifier object of the client to find
+     * @return a ResponseEntity containing the client
      */
     @GetMapping("/{id}")
-    public ResponseEntity<Client> getClientById(@PathVariable String id) {
-        Optional<Client> client = clientService.findById(id);
-        return client.map(value -> new ResponseEntity<>(value, HttpStatus.OK))
-                .orElseGet(() -> new ResponseEntity<>(HttpStatus.NOT_FOUND));
+    public ResponseEntity<?> getClientById(@PathVariable String id) {
+        return clientService.findById(id);
     }
 
     /**
-     * Creates a new Client
-     * 
-     * @param client the Client object to be created
-     * @return a ResponseEntity containing the created Client object and an HTTP
-     *         status of created
+     * Create a new client
+     *
+     * @param client the client object to be created
+     * @return a ResponseEntity containing the created Client
      */
     @PostMapping
-    public ResponseEntity<Client> createClient(@RequestBody Client client) {
-        Client newClient = clientService.save(client);
-        return new ResponseEntity<>(newClient, HttpStatus.CREATED);
+    public ResponseEntity<?> createClient(@RequestBody Client client) {
+        return clientService.create(client);
     }
 
     /**
-     * Updates an existing Client
-     * 
-     * @param id     the unique indentifier of the Client to be updated
-     * @param client the Client object containing the updated data
-     * @return a ResponseEntity containing the updated Client object and HTTP status
-     *         of ok, otherwise not found
+     * Update an existing client by id
+     *
+     * @param id the identifier of the client to update
+     * @param client the updated client object
+     * @return a ReponseEntity containing the update client
      */
     @PutMapping("/{id}")
-    public ResponseEntity<Client> updateClient(@PathVariable String id, @RequestBody Client client) {
-        Optional<Client> existingClient = clientService.findById(id);
-        if (existingClient.isPresent()) {
-            client.setId(id);
-            Client updateClient = clientService.save(client);
-            return new ResponseEntity<>(updateClient, HttpStatus.OK);
-        } else {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-        }
+    public ResponseEntity<?> updateClient(@PathVariable String id, @RequestBody Client client) {
+        return clientService.update(id, client);
     }
 
     /**
-     * Deletes a Client by its unique id
-     * 
-     * @param id the unique identifier of the client to be deleted
-     * @return a ResponseEntity with an HTTP status of  ok if the deletion is
-     *         succesful
+     * Delete client by id
+     *
+     * @param id the identifier of the client to delete
+     * @return a ResponseEntity object with and HTTP status
      */
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteClient(@PathVariable String id) {
-        clientService.deleteById(id);
-        return new ResponseEntity<>(HttpStatus.OK);
+    public ResponseEntity<?> deleteClient(@PathVariable String id) {
+        return clientService.delete(id);
     }
 
 }

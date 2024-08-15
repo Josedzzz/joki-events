@@ -4,6 +4,8 @@ import java.util.List;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import com.uq.jokievents.model.Client;
@@ -17,39 +19,91 @@ public class ClientService {
 
     /**
      * Get a list of all clients from the db
-     * 
-     * @return a list of all Client objects in the db
+     *
+     * @return a ResponseEntity containing a list of Client objects and an HTTP status of ok
      */
-    public List<Client> findAll() {
-        return clientRepository.findAll();
+    public ResponseEntity<?> findAll() {
+        try {
+            List<Client> clients = clientRepository.findAll();
+            return new ResponseEntity<>(clients, HttpStatus.OK);
+        } catch (Exception e) {
+            return new ResponseEntity<>("Failed clients request", HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
 
     /**
-     * Gets a client by its unique id from the db
-     * 
-     * @param id unique identifier of the client
-     * @return an Optional containing the client if found, empty Optional if not
+     * Get a client by id
+     *
+     * @param id the identifier of the client object
+     * @return a ResponseEntity containing the client and an HTTP status
      */
-    public Optional<Client> findById(String id) {
-        return clientRepository.findById(id);
+    public ResponseEntity<?> findById(String id) {
+        try {
+            Optional<Client> client = clientRepository.findById(id);
+            if (client.isPresent()) {
+                return new ResponseEntity<>(client.get(), HttpStatus.OK);
+            } else {
+                return new ResponseEntity<>("Client not found", HttpStatus.NOT_FOUND);
+            }
+        } catch (Exception e) {
+            return new ResponseEntity<>("Failed client request", HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
 
     /**
-     * Saves a new Client or updates an existing in the db
-     * 
-     * @param client the Client object to be saved or updated
-     * @return the saved or updated client object
+     * Create a new client
+     *
+     * @param client the client object to be created
+     * @return a ResponseEntity containing the created client object and an HTTP status
      */
-    public Client save(Client client) {
-        return clientRepository.save(client);
+    public ResponseEntity<?> create(Client client) {
+        try {
+            Client createdClient = clientRepository.save(client);
+            return new ResponseEntity<>(createdClient, HttpStatus.CREATED);
+        } catch (Exception e) {
+            return new ResponseEntity<>("Failed to create client", HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
 
     /**
-     * Deletes a Client from the db using its id
-     * 
-     * @param id the unique identifier of the client to be deleted
+     * Update an existing client by id
+     *
+     * @param id the identifierof the client to be update
+     * @param client the updated client object
+     * @return a ResponseEntity containing the updated client objec and an HTTP status
      */
-    public void deleteById(String id) {
-        clientRepository.deleteById(id);
+    public ResponseEntity<?> update(String id, Client client) {
+        try {
+            Optional<Client> existingClient = clientRepository.findById(id);
+            if (existingClient.isPresent()) {
+                client.setId(id);
+                Client updatedClient = clientRepository.save(client);
+                return new ResponseEntity<>(updatedClient, HttpStatus.OK);
+            } else {
+                return new ResponseEntity<>("Client not found", HttpStatus.NOT_FOUND);
+            }
+        } catch (Exception e) {
+            return new ResponseEntity<>("Failed to update client", HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    /**
+     * Delete a client by its id
+     *
+     * @param id the identifier of the client to delete
+     * @return a ResponseEntity with an HTTP status
+     */
+    public ResponseEntity<?> delete(String id) {
+        try {
+            Optional<Client> existingClient = clientRepository.findById(id);
+            if (existingClient.isPresent()) {
+                clientRepository.deleteById(id);
+                return new ResponseEntity<>("Client deleted", HttpStatus.OK);
+            } else {
+                return new ResponseEntity<>("Client not found", HttpStatus.NOT_FOUND);
+            }
+        } catch (Exception e) {
+            return new ResponseEntity<>("Failed to delete client", HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
 }

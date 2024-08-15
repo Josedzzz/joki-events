@@ -22,4 +22,4 @@ GET http://localhost:3000/api/clients
 GET http://localhost:3000/api/clients/66bc6aeedab3fd59668eb058
 
 ### Deletes a Client by its id
-DELETE  http://localhost:3000/api/clients/66bc61d3667c8d2cfbe823ea
+DELETE  http://localhost:3000/api/clients/66bc6aeedab3fd59668eb058
