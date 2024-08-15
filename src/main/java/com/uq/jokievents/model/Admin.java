@@ -57,4 +57,5 @@ public class Admin {
     public void setIdClients(ArrayList<String> idClients) {
         this.idClients = idClients;
     }
+
 }
