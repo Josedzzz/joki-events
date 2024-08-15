@@ -1,5 +1,6 @@
 package com.uq.jokievents.controller;
 
+import com.uq.jokievents.model.Client;
 import com.uq.jokievents.model.Coupon;
 import com.uq.jokievents.service.CouponService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -11,7 +12,7 @@ import java.util.List;
 import java.util.Optional;
 
 @RestController
-@RequestMapping("api/coupons")
+@RequestMapping("/api/coupons")
 public class CouponController {
 
     @Autowired
@@ -23,9 +24,8 @@ public class CouponController {
      * @return a ResponseEntity containing the list of coupon objects and an HTTP status of ok
      */
     @GetMapping
-    public ResponseEntity<List<Coupon>> getAllCoupons() {
-        List<Coupon> coupons = couponService.findAll();
-        return new ResponseEntity<>(coupons, HttpStatus.OK);
+    public ResponseEntity<?> getAllCoupons() {
+        return couponService.findAll();
     }
 
     /**
@@ -35,9 +35,8 @@ public class CouponController {
      * @return a ResponseEntity containing the coupon object and HTTP status of ok if found. otherwise the status is not found
      */
     @GetMapping("/{id}")
-    public ResponseEntity<Coupon> getCouponById(@PathVariable String id) {
-        Optional<Coupon> coupon = couponService.findById(id);
-        return coupon.map(value -> new ResponseEntity<>(value, HttpStatus.OK)).orElseGet(() -> new ResponseEntity<>(HttpStatus.NOT_FOUND));
+    public ResponseEntity<?> getCouponById(@PathVariable String id) {
+        return couponService.findById(id);
     }
 
     /**
@@ -47,28 +46,20 @@ public class CouponController {
      * @return a ResponseEntity containing
      */
     @PostMapping
-    public ResponseEntity<Coupon> createCoupon(@RequestBody Coupon coupon) {
-        Coupon newCoupon = couponService.save(coupon);
-        return new ResponseEntity<>(newCoupon, HttpStatus.CREATED);
+    public ResponseEntity<?> createCoupon(@RequestBody Coupon coupon) {
+        return couponService.create(coupon);
     }
 
     /**
-     * Updates an existing coupon
+     * Update an existing coupon by id
      *
-     * @param id identifier of the coupon to be updated
-     * @param coupon the coupon object containing the updated data
-     * @return a ResponseEntity containing the updated coupon object and an HTTP status of ok, otherwise not found
+     * @param id the identifier of the client to update
+     * @param coupon the updated coupon object
+     * @return a ReponseEntity containing the update client
      */
     @PutMapping("/{id}")
-    public ResponseEntity<Coupon> updateCoupon(@PathVariable String id, @RequestBody Coupon coupon) {
-        Optional<Coupon> couponOptional = couponService.findById(id);
-        if (couponOptional.isPresent()) {
-            coupon.setId(id);
-            Coupon newCoupon = couponService.save(coupon);
-            return new ResponseEntity<>(newCoupon, HttpStatus.OK);
-        } else {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-        }
+    public ResponseEntity<?> updateCoupon(@PathVariable String id, @RequestBody Coupon coupon) {
+        return couponService.update(id, coupon);
     }
 
     /**
@@ -78,9 +69,8 @@ public class CouponController {
      * @return a ResponseEntity with an HTTP status of ok if the deletion is succesful
      */
     @DeleteMapping("/{id}")
-    public ResponseEntity<Coupon> deleteCoupon(@PathVariable String id) {
-        couponService.deleteById(id);
-        return new ResponseEntity<>(HttpStatus.OK);
+    public ResponseEntity<?> deleteCoupon(@PathVariable String id) {
+        return couponService.deleteById(id);
     }
 
 }

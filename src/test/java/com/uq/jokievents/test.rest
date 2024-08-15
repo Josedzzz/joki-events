@@ -45,3 +45,24 @@ GET http://localhost:3000/api/admins/66be7bbf1c40a4735cc24ae8
 ### Deletes a Admin by its id
 DELETE  http://localhost:3000/api/admins/66be7bbf1c40a4735cc24ae8
 
+### Try APIS for coupon
+### Create a coupon
+POST http://localhost:3000/api/coupons
+Content-Type: application/json
+
+{
+  "discountPercent": 20.0,
+  "expirationDate": "2024-12-31T23:59:59Z",
+  "minPurchaseQuantity": 1.0,
+  "isUsed": false
+}
+
+### Gets all coupons
+GET http://localhost:3000/api/coupons
+
+### Gets a Coupon by its id
+GET http://localhost:3000/api/coupons/66be83dbd9e7974f76aaf4b6
+
+### Deletes a Coupon by its id
+DELETE  http://localhost:3000/api/coupons/66be83dbd9e7974f76aaf4b6
+

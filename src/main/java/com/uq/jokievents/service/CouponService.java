@@ -1,8 +1,11 @@
 package com.uq.jokievents.service;
 
+import com.uq.jokievents.model.Client;
 import com.uq.jokievents.model.Coupon;
 import com.uq.jokievents.repository.CouponRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -19,8 +22,13 @@ public class CouponService {
      *
      * @return a list of all coupons objects in the db
      */
-    public List<Coupon> findAll() {
-        return couponRepository.findAll();
+    public ResponseEntity<?> findAll() {
+        try {
+            List<Coupon> coupon = couponRepository.findAll();
+            return new ResponseEntity<>(coupon, HttpStatus.OK);
+        } catch (Exception e) {
+            return new ResponseEntity<>("Failed coupons request", HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
 
     /**
@@ -29,18 +37,54 @@ public class CouponService {
      * @param id unique identifier of the coupon
      * @return an Optional containing the coupon if found, empty Optional if not
      */
-    public Optional<Coupon> findById(String id) {
-        return couponRepository.findById(id);
+    public ResponseEntity<?> findById(String id) {
+        try {
+            Optional<Coupon> coupon = couponRepository.findById(id);
+            if (coupon.isPresent()) {
+                return new ResponseEntity<>(coupon.get(), HttpStatus.OK);
+            } else {
+                return new ResponseEntity<>("Coupons not found", HttpStatus.NOT_FOUND);
+            }
+        } catch (Exception e) {
+            return new ResponseEntity<>("Failed coupons request", HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
 
     /**
-     * Saves a new coupon or updates an existing in the db
+     * Create a new coupon
      *
-     * @param coupon the coupon object to be saved or updated
-     * @return the saved or updated coupon object
+     * @param coupon the coupon object to be created
+     * @return a ResponseEntity containing the created coupon object and an HTTP status
      */
-    public Coupon save(Coupon coupon) {
-        return couponRepository.save(coupon);
+    public ResponseEntity<?> create(Coupon coupon) {
+        try {
+            Coupon createdCoupon= couponRepository.save(coupon);
+            return new ResponseEntity<>(createdCoupon, HttpStatus.CREATED);
+        } catch (Exception e) {
+            return new ResponseEntity<>("Failed to create coupon", HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    /**
+     * Update an existing coupon by id
+     *
+     * @param id the identifierof the coupon to be update
+     * @param coupon the updated coupon object
+     * @return a ResponseEntity containing the updated client coupon and an HTTP status
+     */
+    public ResponseEntity<?> update(String id, Coupon coupon) {
+        try {
+            Optional<Coupon> existingCoupon = couponRepository.findById(id);
+            if (existingCoupon.isPresent()) {
+                coupon.setId(id);
+                Coupon updatedCoupon = couponRepository.save(coupon);
+                return new ResponseEntity<>(updatedCoupon, HttpStatus.OK);
+            } else {
+                return new ResponseEntity<>("Coupon not found", HttpStatus.NOT_FOUND);
+            }
+        } catch (Exception e) {
+            return new ResponseEntity<>("Failed to update coupon", HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
 
     /**
@@ -48,8 +92,18 @@ public class CouponService {
      *
      * @param id the unique identifier of the coupon to be deleted
      */
-    public void deleteById(String id) {
-        couponRepository.deleteById(id);
+    public ResponseEntity<?> deleteById(String id) {
+        try {
+            Optional<Coupon> existingCoupon = couponRepository.findById(id);
+            if (existingCoupon.isPresent()) {
+                couponRepository.deleteById(id);
+                return new ResponseEntity<>("Coupon deleted", HttpStatus.OK);
+            } else {
+                return new ResponseEntity<>("Coupon not found", HttpStatus.NOT_FOUND);
+            }
+        } catch (Exception e) {
+            return new ResponseEntity<>("Failed to coupon client", HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
 
 }
