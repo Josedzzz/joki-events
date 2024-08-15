@@ -4,7 +4,7 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 @Document(collection = "reports")
-public class Report {
+public class DistributionLocality {
 
     @Id
     private String id;
@@ -13,9 +13,9 @@ public class Report {
     private int maxCapacity;
 
     // constructor
-    public Report() {}
+    public DistributionLocality() {}
 
-    public Report(String id, String name, double price, int maxCapacity) {
+    public DistributionLocality(String id, String name, double price, int maxCapacity) {
         this.id = id;
         this.name = name;
         this.price = price;
