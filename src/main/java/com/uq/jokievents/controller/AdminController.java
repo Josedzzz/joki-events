@@ -1,6 +1,7 @@
 package com.uq.jokievents.controller;
 
 import com.uq.jokievents.model.Admin;
+import com.uq.jokievents.model.Client;
 import com.uq.jokievents.service.AdminService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -23,9 +24,8 @@ public class AdminController {
      * @return a ResponseEntity containing a list of admin objects and an HTTP status of ok
      */
     @GetMapping
-    public ResponseEntity<List<Admin>> getAllAdmins() {
-        List<Admin> admins = adminService.findAll();
-        return new ResponseEntity<>(admins, HttpStatus.OK);
+    public ResponseEntity<?> getAllAdmins() {
+        return adminService.findAll();
     }
 
     /**
@@ -35,9 +35,19 @@ public class AdminController {
      * @return a ResponseEntity containing the admin object and an HTTP status of ok if found, otherwise the status is not found
      */
     @GetMapping("/{id}")
-    public ResponseEntity<Admin> getAdminById(@PathVariable String id) {
-        Optional<Admin> admin = adminService.findById(id);
-        return admin.map(value -> new ResponseEntity<>(value, HttpStatus.OK)).orElseGet(() -> new ResponseEntity<>(HttpStatus.NOT_FOUND));
+    public ResponseEntity<?> getAdminById(@PathVariable String id) {
+        return adminService.findById(id);
+    }
+
+    /**
+     * Create a new admin
+     *
+     * @param admin the admin object to be created
+     * @return a ResponseEntity containing the created Admin
+     */
+    @PostMapping
+    public ResponseEntity<?> createAdmin(@RequestBody Admin admin) {
+        return adminService.create(admin);
     }
 
     /**
@@ -48,16 +58,10 @@ public class AdminController {
      * @return
      */
     @PutMapping("/{id}")
-    public ResponseEntity<Admin> updateAdmin(@PathVariable String id, @RequestBody Admin admin) {
-        Optional<Admin> existingAdmin = adminService.findById(id);
-        if (existingAdmin.isPresent()) {
-            admin.setId(id);
-            Admin updatedAdmin = adminService.save(admin);
-            return new ResponseEntity<>(updatedAdmin, HttpStatus.OK);
-        } else {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-        }
+    public ResponseEntity<?> updateAdmin(@PathVariable String id, @RequestBody Admin admin) {
+        return adminService.update(id, admin);
     }
+
 
     /**
      * Deletes an Admin by its identifier
@@ -66,9 +70,8 @@ public class AdminController {
      * @return a ResponseEntity with an HTTP status of ok if the deletion is succesful
      */
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteAdmin(@PathVariable String id) {
-        adminService.deleteById(id);
-        return new ResponseEntity<>(HttpStatus.OK);
+    public ResponseEntity<?> deleteAdmin(@PathVariable String id) {
+        return adminService.deleteById(id);
     }
 
 }

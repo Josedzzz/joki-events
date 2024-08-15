@@ -1,8 +1,11 @@
 package com.uq.jokievents.service;
 
 import com.uq.jokievents.model.Admin;
+import com.uq.jokievents.model.Client;
 import com.uq.jokievents.repository.AdminRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -19,8 +22,13 @@ public class AdminService {
      *
      * @return a list of admins objects in the db
      */
-    public List<Admin> findAll() {
-        return adminRepository.findAll();
+    public ResponseEntity<?> findAll() {
+        try {
+            List<Admin> admins =  adminRepository.findAll();
+            return new ResponseEntity<>(admins, HttpStatus.OK);
+        } catch (Exception e) {
+            return new ResponseEntity<>("Failed admins request", HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
 
     /**
@@ -29,8 +37,32 @@ public class AdminService {
      * @param id the identifier of the admin
      * @return an Optional containing the admin if found, empty Optional if not
      */
-    public Optional<Admin> findById(String id) {
-        return adminRepository.findById(id);
+    public ResponseEntity<?> findById(String id) {
+        try {
+            Optional<Admin> admin = adminRepository.findById(id);
+            if (admin.isPresent()) {
+                return new ResponseEntity<>(admin.get(), HttpStatus.OK);
+            } else {
+                return new ResponseEntity<>("Admin not found", HttpStatus.NOT_FOUND);
+            }
+        } catch (Exception e) {
+            return new ResponseEntity<>("Failed admins request", HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    /**
+     * Create a new admin
+     *
+     * @param admin the admin object to be created
+     * @return a ResponseEntity containing the created admin object and an HTTP status
+     */
+    public ResponseEntity<?> create(Admin admin) {
+        try {
+            Admin createdAdmin = adminRepository.save(admin);
+            return new ResponseEntity<>(createdAdmin, HttpStatus.CREATED);
+        } catch (Exception e) {
+            return new ResponseEntity<>("Failed to create admin", HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
 
     /**
@@ -39,8 +71,19 @@ public class AdminService {
      * @param admin the admin object to be saved or updated
      * @return the saved or updated admin object
      */
-    public Admin save(Admin admin) {
-        return adminRepository.save(admin);
+    public ResponseEntity<?> update(String id, Admin admin) {
+        try {
+            Optional<Admin> existingAdmin = adminRepository.findById(id);
+            if (existingAdmin.isPresent()) {
+                admin.setId(id);
+                Admin updatedAdmin = adminRepository.save(admin);
+                return new ResponseEntity<>(updatedAdmin, HttpStatus.OK);
+            } else {
+                return new ResponseEntity<>("Admin not found", HttpStatus.NOT_FOUND);
+            }
+        } catch (Exception e) {
+            return new ResponseEntity<>("Failed to admins client", HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
 
     /**
@@ -48,8 +91,18 @@ public class AdminService {
      *
      * @param id the identifier of the admin to be deletec
      */
-    public void deleteById(String id) {
-        adminRepository.deleteById(id);
+    public ResponseEntity<?> deleteById(String id) {
+        try {
+            Optional<Admin> existingAdmin = adminRepository.findById(id);
+            if (existingAdmin.isPresent()) {
+                adminRepository.deleteById(id);
+                return new ResponseEntity<>("Admin deleted", HttpStatus.OK);
+            } else {
+                return new ResponseEntity<>("Admin not found", HttpStatus.NOT_FOUND);
+            }
+        } catch (Exception e) {
+            return new ResponseEntity<>("Failed to delete admin", HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
 
 }
