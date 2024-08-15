@@ -35,3 +35,7 @@ out/
 
 ### VS Code ###
 .vscode/
+
+### rest ###
+/src/test/java/com/uq/jokievents/test.rest
+/src/test/java/com/uq/jokievents/.rest
