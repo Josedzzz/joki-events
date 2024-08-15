@@ -18,6 +18,7 @@ public class Client {
     private String password;
     private ArrayList<String> idCoupons;
     private String idShoppingCart;
+    private boolean active;
 
     // Constructors
     public Client() {
@@ -33,6 +34,7 @@ public class Client {
         this.password = password;
         this.idCoupons = idCoupons;
         this.idShoppingCart = shoppingCart;
+        this.active = false;
     }
 
     // Getters and setters
@@ -109,4 +111,7 @@ public class Client {
         this.idShoppingCart = idShoppingCart;
     }
 
+    public boolean isActive() { return active; }
+
+    public void setActive(boolean active) { this.active = active; }
 }
