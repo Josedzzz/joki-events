@@ -133,4 +133,24 @@ GET http://localhost:3000/api/reports/66bea83d9e0baa2ac50ca91c
 ### Deletes a Report by its id
 DELETE  http://localhost:3000/api/reports/66bea77bdd7121311fdb5199
 
+### Try APIS for ShoppingCart
+### Create a REport
+POST http://localhost:3000/api/shoppingcarts
+Content-Type: application/json
+
+{
+  "idTickets": ["ticketId1", "ticketId2"],
+  "totalPrice": 150.0,
+  "idClient": "clientId123"
+}
+
+### Gets all ShoppingCarts
+GET http://localhost:3000/api/shoppingcarts
+
+### Gets a ShoppingCart by its id
+GET http://localhost:3000/api/shoppingcarts/66beac23add64e1d15052862
+
+### Deletes a ShoppingCart by its id
+DELETE  http://localhost:3000/api/shoppingcarts/66beac23add64e1d15052862
+
 
