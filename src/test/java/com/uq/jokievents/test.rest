@@ -19,10 +19,10 @@ Content-Type: application/json
 GET http://localhost:3000/api/clients
 
 ### Gets a Client by its id
-GET http://localhost:3000/api/clients/66bc6aeedab3fd59668eb058
+GET http://localhost:3000/api/clients/66bf52bf2046b27428b702ef
 
 ### Deletes a Client by its id
-DELETE  http://localhost:3000/api/clients/66bc6aeedab3fd59668eb058
+DELETE  http://localhost:3000/api/clients/66bf52bf2046b27428b702ef
 
 ### Try APIS for admins
 ### Create a admin
@@ -40,10 +40,10 @@ Content-Type: application/json
 GET http://localhost:3000/api/admins
 
 ### Gets a Admin by its id
-GET http://localhost:3000/api/admins/66be7bbf1c40a4735cc24ae8
+GET http://localhost:3000/api/admins/66bf52f52046b27428b702f1
 
 ### Deletes a Admin by its id
-DELETE  http://localhost:3000/api/admins/66be7bbf1c40a4735cc24ae8
+DELETE  http://localhost:3000/api/admins/66bf52f52046b27428b702f1
 
 ### Try APIS for coupon
 ### Create a coupon
@@ -61,10 +61,10 @@ Content-Type: application/json
 GET http://localhost:3000/api/coupons
 
 ### Gets a Coupon by its id
-GET http://localhost:3000/api/coupons/66be83dbd9e7974f76aaf4b6
+GET http://localhost:3000/api/coupons/66bf530f2046b27428b702f3
 
 ### Deletes a Coupon by its id
-DELETE  http://localhost:3000/api/coupons/66be83dbd9e7974f76aaf4b6
+DELETE  http://localhost:3000/api/coupons/66bf530f2046b27428b702f3
 
 ### Try APIS for distributionlocalities
 ### Create a distributionlocalities
@@ -81,10 +81,10 @@ Content-Type: application/json
 GET http://localhost:3000/api/distributionlocalities
 
 ### Gets a DistributionLocalitie by its id
-GET http://localhost:3000/api/distributionlocalities/66bea8229e0baa2ac50ca91b
+GET http://localhost:3000/api/distributionlocalities/66bf532f2046b27428b702f5
 
 ### Deletes a DistributionLocalitie by its id
-DELETE  http://localhost:3000/api/distributionlocalities/66bea18176fa940471265915
+DELETE  http://localhost:3000/api/distributionlocalities/66bf532f2046b27428b702f5
 
 ### Try APIS for Event
 ### Create a Event
@@ -106,10 +106,10 @@ Content-Type: application/json
 GET http://localhost:3000/api/events
 
 ### Gets a event by its id
-GET http://localhost:3000/api/events/66bea382bac91365bfde4738
+GET http://localhost:3000/api/events/66bf53522046b27428b702f7
 
 ### Deletes a Event by its id
-DELETE  http://localhost:3000/api/events/66bea1d676fa940471265916
+DELETE  http://localhost:3000/api/events/66bf53522046b27428b702f7
 
 ### Try APIS for Report
 ### Create a REport
@@ -128,10 +128,10 @@ Content-Type: application/json
 GET http://localhost:3000/api/reports
 
 ### Gets a Report by its id
-GET http://localhost:3000/api/reports/66bea83d9e0baa2ac50ca91c
+GET http://localhost:3000/api/reports/66bf536b2046b27428b702f9
 
 ### Deletes a Report by its id
-DELETE  http://localhost:3000/api/reports/66bea77bdd7121311fdb5199
+DELETE  http://localhost:3000/api/reports/66bf536b2046b27428b702f9
 
 ### Try APIS for ShoppingCart
 ### Create a REport
@@ -148,10 +148,10 @@ Content-Type: application/json
 GET http://localhost:3000/api/shoppingcarts
 
 ### Gets a ShoppingCart by its id
-GET http://localhost:3000/api/shoppingcarts/66beac23add64e1d15052862
+GET http://localhost:3000/api/shoppingcarts/66bf53882046b27428b702fb
 
 ### Deletes a ShoppingCart by its id
-DELETE  http://localhost:3000/api/shoppingcarts/66beac23add64e1d15052862
+DELETE  http://localhost:3000/api/shoppingcarts/66bf53882046b27428b702fb
 
 ### Try APIS for Tickets
 # Create a ticket
@@ -171,10 +171,10 @@ Content-Type: application/json
 GET http://localhost:3000/api/tickets
 
 ### Get a ticket by ID
-GET http://localhost:3000/api/tickets/66bee2693671cd6da9fb0481
+GET http://localhost:3000/api/tickets/66bf53a72046b27428b702fd
 
 ### Delete a ticket by ID
-DELETE http://localhost:3000/api/tickets/66bee2693671cd6da9fb0481
+DELETE http://localhost:3000/api/tickets/66bf53a72046b27428b702fd
 
 ### Try APIS for TicketOrders
 ### Create a ticket order
@@ -190,7 +190,7 @@ Content-Type: application/json
 GET http://localhost:3000/api/ticketorders
 
 ### Get a ticket order by ID
-GET http://localhost:3000/api/ticketorders/66bee7c189e5a50cf1fbb902
+GET http://localhost:3000/api/ticketorders/66bf53d62046b27428b702ff
 
 ### Delete a ticket order by ID
-DELETE http://localhost:3000/api/ticketorders/66bee7c189e5a50cf1fbb902
+DELETE http://localhost:3000/api/ticketorders/66bf53d62046b27428b702ff
