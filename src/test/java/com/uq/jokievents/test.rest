@@ -176,3 +176,21 @@ GET http://localhost:3000/api/tickets/66bee2693671cd6da9fb0481
 ### Delete a ticket by ID
 DELETE http://localhost:3000/api/tickets/66bee2693671cd6da9fb0481
 
+### Try APIS for TicketOrders
+### Create a ticket order
+POST http://localhost:3000/api/ticketorders
+Content-Type: application/json
+
+{
+  "idTicket": "ticket456",
+  "purchaseDate": "2024-08-15T10:00:00Z"
+}
+
+### Get all ticket orders
+GET http://localhost:3000/api/ticketorders
+
+### Get a ticket order by ID
+GET http://localhost:3000/api/ticketorders/66bee7c189e5a50cf1fbb902
+
+### Delete a ticket order by ID
+DELETE http://localhost:3000/api/ticketorders/66bee7c189e5a50cf1fbb902
