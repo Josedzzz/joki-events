@@ -23,9 +23,8 @@ public class ReportController {
      * @return a ResponseEntity containing a list of Report objects and an HTTP status of ok
      */
     @GetMapping
-    public ResponseEntity<List<Report>> getAllReports() {
-        List<Report> reports = reportService.findAll();
-        return new ResponseEntity<>(reports, HttpStatus.OK);
+    public ResponseEntity<?> getAllReports() {
+        return reportService.findAll();
     }
 
     /**
@@ -35,9 +34,8 @@ public class ReportController {
      * @return a ResponseEntity containing the report object and an HTTP status of ok if found, otherwise the status is not found
      */
     @GetMapping("/{id}")
-    public ResponseEntity<Report> getReportById(@PathVariable String id) {
-        Optional<Report> report = reportService.findById(id);
-        return report.map(value -> new ResponseEntity<>(value, HttpStatus.OK)).orElseGet(() -> new ResponseEntity<>(HttpStatus.NOT_FOUND));
+    public ResponseEntity<?> getReportById(@PathVariable String id) {
+        return reportService.findById(id);
     }
 
     /**
@@ -47,9 +45,8 @@ public class ReportController {
      * @return a ResponseEntity containing the created report object and an HTTP status of created
      */
     @PostMapping
-    public ResponseEntity<Report> createReport(@RequestBody Report report) {
-        Report savedReport = reportService.save(report);
-        return new ResponseEntity<>(savedReport, HttpStatus.CREATED);
+    public ResponseEntity<?> createReport(@RequestBody Report report) {
+        return reportService.create(report);
     }
 
     /**
@@ -60,15 +57,8 @@ public class ReportController {
      * @return a ResponseEntity containing the update report object and an HTTP status of ok, otherwise not found
      */
     @PutMapping("/{id}")
-    public ResponseEntity<Report> updateReport(@PathVariable String id, @RequestBody Report report) {
-        Optional<Report> existingReport = reportService.findById(id);
-        if (existingReport.isPresent()) {
-            report.setId(id);
-            Report updatedReport = reportService.save(report);
-            return new ResponseEntity<>(updatedReport, HttpStatus.OK);
-        } else {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-        }
+    public ResponseEntity<?> updateReport(@PathVariable String id, @RequestBody Report report) {
+        return reportService.update(id, report);
     }
 
     /**
@@ -78,9 +68,8 @@ public class ReportController {
      * @return a ResponseEntity with an HTTP status of ok if the deletion is correct
      */
     @DeleteMapping("/{id}")
-    public ResponseEntity<Report> deleteReport(@PathVariable String id) {
-        reportService.deleteById(id);
-        return new ResponseEntity<>(HttpStatus.OK);
+    public ResponseEntity<?> deleteReport(@PathVariable String id) {
+        return reportService.deleteById(id);
     }
 
 }

@@ -3,7 +3,7 @@ package com.uq.jokievents.model;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
-@Document(collection = "reports")
+@Document(collection = "distributionlocalities")
 public class DistributionLocality {
 
     @Id

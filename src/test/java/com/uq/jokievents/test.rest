@@ -81,7 +81,7 @@ Content-Type: application/json
 GET http://localhost:3000/api/distributionlocalities
 
 ### Gets a DistributionLocalitie by its id
-GET http://localhost:3000/api/distributionlocalities/66bea18176fa940471265915
+GET http://localhost:3000/api/distributionlocalities/66bea8229e0baa2ac50ca91b
 
 ### Deletes a DistributionLocalitie by its id
 DELETE  http://localhost:3000/api/distributionlocalities/66bea18176fa940471265915
@@ -110,4 +110,27 @@ GET http://localhost:3000/api/events/66bea382bac91365bfde4738
 
 ### Deletes a Event by its id
 DELETE  http://localhost:3000/api/events/66bea1d676fa940471265916
+
+### Try APIS for Report
+### Create a REport
+POST http://localhost:3000/api/reports
+Content-Type: application/json
+
+{
+  "sellDistributionLocalityes": {
+    "Locality1": 150,
+    "Locality2": 200
+  },
+  "profit": 50000.0
+}
+
+### Gets all reports
+GET http://localhost:3000/api/reports
+
+### Gets a Report by its id
+GET http://localhost:3000/api/reports/66bea83d9e0baa2ac50ca91c
+
+### Deletes a Report by its id
+DELETE  http://localhost:3000/api/reports/66bea77bdd7121311fdb5199
+
 
