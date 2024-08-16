@@ -66,3 +66,23 @@ GET http://localhost:3000/api/coupons/66be83dbd9e7974f76aaf4b6
 ### Deletes a Coupon by its id
 DELETE  http://localhost:3000/api/coupons/66be83dbd9e7974f76aaf4b6
 
+### Try APIS for distributionlocalities
+### Create a distributionlocalities
+POST http://localhost:3000/api/distributionlocalities
+Content-Type: application/json
+
+{
+  "name": "Locality Name",
+  "price": 100.0,
+  "maxCapacity": 500
+}
+
+### Gets all distributionlocalities
+GET http://localhost:3000/api/distributionlocalities
+
+### Gets a DistributionLocalitie by its id
+GET http://localhost:3000/api/distributionlocalities/66be9b37cb4b46290543b279
+
+### Deletes a DistributionLocalitie by its id
+DELETE  http://localhost:3000/api/distributionlocalities/66be9b37cb4b46290543b279
+

@@ -1,8 +1,11 @@
 package com.uq.jokievents.service;
 
+import com.uq.jokievents.model.Client;
 import com.uq.jokievents.model.DistributionLocality;
 import com.uq.jokievents.repository.DistributionLocalityRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -19,8 +22,13 @@ public class DistributionLocalityService {
      *
      * @return a list of all distributionLocality objects in the db
      */
-    public List<DistributionLocality> findAll() {
-        return distributionLocalityRepository.findAll();
+    public ResponseEntity<?> findAll() {
+        try {
+            List<DistributionLocality> distributionLocality = distributionLocalityRepository.findAll();
+            return new ResponseEntity<>(distributionLocality, HttpStatus.OK);
+        } catch (Exception e) {
+            return new ResponseEntity<>("Failed distributionLocality request", HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
 
     /**
@@ -29,8 +37,17 @@ public class DistributionLocalityService {
      * @param id the identifier of the distributionLocality
      * @return an Optional containing thedistributionLocality if found, empty Optional if not
      */
-    public Optional<DistributionLocality> findById(String id) {
-        return distributionLocalityRepository.findById(id);
+    public ResponseEntity<?> findById(String id) {
+        try {
+            Optional<DistributionLocality> distributionLocality = distributionLocalityRepository.findById(id);
+            if (distributionLocality.isPresent()) {
+                return new ResponseEntity<>(distributionLocality.get(), HttpStatus.OK);
+            } else {
+                return new ResponseEntity<>("DistributionLocality not found", HttpStatus.NOT_FOUND);
+            }
+        } catch (Exception e) {
+            return new ResponseEntity<>("Failed distributionLocality request", HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
 
     /**
@@ -39,8 +56,35 @@ public class DistributionLocalityService {
      * @param distributionLocality the distributionLocality object to be saves or updated
      * @return the saved or updated report object
      */
-    public DistributionLocality save(DistributionLocality distributionLocality) {
-        return distributionLocalityRepository.save(distributionLocality);
+    public ResponseEntity<?> create(DistributionLocality distributionLocality) {
+        try {
+            DistributionLocality createdDistributionLocality = distributionLocalityRepository.save(distributionLocality);
+            return new ResponseEntity<>(createdDistributionLocality, HttpStatus.CREATED);
+        } catch (Exception e) {
+            return new ResponseEntity<>("Failed to create DistributionLocality", HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    /**
+     * Update an existing client by id
+     *
+     * @param id the identifierof the DistributionLocality to be update
+     * @param distributionLocality the updated DistributionLocality object
+     * @return a ResponseEntity containing the updated DistributionLocality object and an HTTP status
+     */
+    public ResponseEntity<?> update(String id, DistributionLocality distributionLocality) {
+        try {
+            Optional<DistributionLocality> existingDistributionLocality = distributionLocalityRepository.findById(id);
+            if (existingDistributionLocality.isPresent()) {
+                distributionLocality.setId(id);
+                DistributionLocality updatedDistributionLocality = distributionLocalityRepository.save(distributionLocality);
+                return new ResponseEntity<>(updatedDistributionLocality, HttpStatus.OK);
+            } else {
+                return new ResponseEntity<>("DistributionLocality not found", HttpStatus.NOT_FOUND);
+            }
+        } catch (Exception e) {
+            return new ResponseEntity<>("Failed to DistributionLocality client", HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
 
     /**
@@ -48,8 +92,18 @@ public class DistributionLocalityService {
      *
      * @param id the identifier of the distributionLocality to be deleted
      */
-    public void deleteById(String id) {
-        distributionLocalityRepository.deleteById(id);
+    public ResponseEntity<?> deleteById(String id) {
+        try {
+            Optional<DistributionLocality> existingDistributionLocality = distributionLocalityRepository.findById(id);
+            if (existingDistributionLocality.isPresent()) {
+                distributionLocalityRepository.deleteById(id);
+                return new ResponseEntity<>("DistributionLocality deleted", HttpStatus.OK);
+            } else {
+                return new ResponseEntity<>("DistributionLocality not found", HttpStatus.NOT_FOUND);
+            }
+        } catch (Exception e) {
+            return new ResponseEntity<>("Failed to delete client", HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
 
 }

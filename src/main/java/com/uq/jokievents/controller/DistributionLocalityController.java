@@ -23,9 +23,8 @@ public class DistributionLocalityController {
      * @return a ResponseEntity containing a list of distributionLocality objects and an HTTP status of ok
      */
     @GetMapping
-    public ResponseEntity<List<DistributionLocality>> getAllDistributionLocality() {
-        List<DistributionLocality> distributionLocalities = distributionLocalityService.findAll();
-        return new ResponseEntity<>(distributionLocalities, HttpStatus.OK);
+    public ResponseEntity<?> getAllDistributionLocality() {
+        return distributionLocalityService.findAll();
     }
 
     /**
@@ -35,9 +34,8 @@ public class DistributionLocalityController {
      * @return a ResponseEntity containing the distributionLocality object and an HTTP status of ok if found, otherwise the status is not found
      */
     @GetMapping("/{id}")
-    public ResponseEntity<DistributionLocality> getDistributionLocalityById(@PathVariable String id) {
-        Optional<DistributionLocality> report = distributionLocalityService.findById(id);
-        return report.map(value -> new ResponseEntity<>(value, HttpStatus.OK)).orElseGet(() -> new ResponseEntity<>(HttpStatus.NOT_FOUND));
+    public ResponseEntity<?> getDistributionLocalityById(@PathVariable String id) {
+        return distributionLocalityService.findById(id);
     }
 
     /**
@@ -47,9 +45,8 @@ public class DistributionLocalityController {
      * @return a ResponseEntity containing the created distributionLocality object and an HTTP status of created
      */
     @PostMapping
-    public ResponseEntity<DistributionLocality> createReport(@RequestBody DistributionLocality distributionLocality) {
-        DistributionLocality newdistributionLocality = distributionLocalityService.save(distributionLocality);
-        return new ResponseEntity<>(newdistributionLocality, HttpStatus.CREATED);
+    public ResponseEntity<?> createReport(@RequestBody DistributionLocality distributionLocality) {
+        return distributionLocalityService.create(distributionLocality);
     }
 
     /**
@@ -60,15 +57,8 @@ public class DistributionLocalityController {
      * @return a ResponseEntity containing the updated distributionLocality object and an HTTP status of ok, otherwise not found
      */
     @PutMapping("/{id}")
-    public ResponseEntity<DistributionLocality> updateReport(@PathVariable String id, @RequestBody DistributionLocality distributionLocality) {
-        Optional<DistributionLocality> existingDistributionLocality = distributionLocalityService.findById(id);
-        if (existingDistributionLocality.isPresent()) {
-            distributionLocality.setId(id);
-            DistributionLocality updatedDistributionLocality = distributionLocalityService.save(distributionLocality);
-            return new ResponseEntity<>(updatedDistributionLocality, HttpStatus.OK);
-        } else {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-        }
+    public ResponseEntity<?> updateReport(@PathVariable String id, @RequestBody DistributionLocality distributionLocality) {
+        return distributionLocalityService.update(id, distributionLocality);
     }
 
     /**
@@ -78,8 +68,7 @@ public class DistributionLocalityController {
      * @return a ResponseEntity with an HTTP status of ok if the deletion is succesful
      */
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteDistributionLocality(@PathVariable String id) {
-        distributionLocalityService.deleteById(id);
-        return new ResponseEntity<>(HttpStatus.OK);
+    public ResponseEntity<?> deleteDistributionLocality(@PathVariable String id) {
+        return distributionLocalityService.deleteById(id);
     }
 }
