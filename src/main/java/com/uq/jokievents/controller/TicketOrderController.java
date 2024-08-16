@@ -18,69 +18,58 @@ public class TicketOrderController {
     private TicketOrderService ticketOrderService;
 
     /**
-     * Get a list of all ticketorders
+     * Get all ticketOrders
      *
-     * @return a ResponseEntity containing a list of ticketorders objects and an HTTP status of ok
+     * @return a ResponseEntity object eith containing ticketOrders
      */
     @GetMapping
-    public ResponseEntity<List<TicketOrder>> getAllTicketOrders() {
-        List<TicketOrder> ticketOrders = ticketOrderService.findAll();
-        return new ResponseEntity<>(ticketOrders, HttpStatus.OK);
+    public ResponseEntity<?> getAllTicketOrders() {
+        return ticketOrderService.findAll();
     }
 
     /**
-     * Gets a ricket order by its id
+     * Get a ticketOrder by id
      *
-     * @param id the identifier of the ticketorder object
-     * @return a ResponseEntity containing the ticketorder object and an HTTP status of ok if found, otherwise the status is not found
+     * @param id the identifier of the ticketOrder to find
+     * @return a ResponseEntity containing the ticketOrder
      */
     @GetMapping("/{id}")
-    public ResponseEntity<TicketOrder> getTicketOrderById(@PathVariable String id) {
-        Optional<TicketOrder> ticketOrder = ticketOrderService.findById(id);
-        return ticketOrder.map(value -> new ResponseEntity<>(value, HttpStatus.OK)).orElseGet(() -> new ResponseEntity<>(HttpStatus.NOT_FOUND));
+    public ResponseEntity<?> getTicketOrderById(@PathVariable String id) {
+        return ticketOrderService.findById(id);
     }
 
     /**
-     * Creates a new ticketorder
+     * Create a new ticketOrder
      *
-     * @param ticketOrder the ticketorder object to be created
-     * @return a ResponseEntity containing the created ticketorder object and an HTTP status of created
+     * @param ticketOrder the ticketOrder object to be created
+     * @return a ResponseEntity containing the created ticketOrder
      */
     @PostMapping
-    public ResponseEntity<TicketOrder> createTicketOrder(@RequestBody TicketOrder ticketOrder) {
-        TicketOrder newTicketOrder = ticketOrderService.save(ticketOrder);
-        return new ResponseEntity<>(newTicketOrder, HttpStatus.CREATED);
+    public ResponseEntity<?> createTicketOrder(@RequestBody TicketOrder ticketOrder) {
+        return ticketOrderService.create(ticketOrder);
     }
 
     /**
-     * Updates an existing ticketorder
+     * Update an existing ticketOrder by id
      *
-     * @param id the identifier of the ticketorder to be updated
-     * @param ticketOrder the ticketorder object containing the update data
-     * @return a ResponseEntity containing the update ticketorder object and an HTTP status of ok, otherwise not found
+     * @param id the identifier of the ticketOrder object
+     * @param ticketOrder the updated ticketOrder object
+     * @return a ResponseEntity containing the update ticketOrder
      */
     @PutMapping("/{id}")
-    public ResponseEntity<TicketOrder> updateTicketOrder(@PathVariable String id, @RequestBody TicketOrder ticketOrder) {
-        Optional<TicketOrder> existingTicketOrder = ticketOrderService.findById(id);
-        if (existingTicketOrder.isPresent()) {
-            ticketOrder.setId(id);
-            TicketOrder updatedTicketOrder = ticketOrderService.save(ticketOrder);
-            return new ResponseEntity<>(updatedTicketOrder, HttpStatus.OK);
-        } else {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-        }
+    public ResponseEntity<?> updateTicketOrder(@PathVariable String id, @RequestBody TicketOrder ticketOrder) {
+        return ticketOrderService.update(id, ticketOrder);
     }
 
     /**
-     * Deletes a ticketorder by its id
+     * Delete a ticketOrder by id
      *
-     * @param id the identifier of the ticketorder object
-     * @return a ResponseEntity object with an HTTP status of ok if the deletion is succesull
+     * @param id the identifier of the ticketOrder to be deleted
+     * @return a ResponseEntity object with an HTTP status
      */
     @DeleteMapping("/{id}")
-    public ResponseEntity<TicketOrder> deleteTicketOrder(@PathVariable String id) {
-        ticketOrderService.deleteById(id);
-        return new ResponseEntity<>(HttpStatus.OK);
+    public ResponseEntity<?> deleteTicketOrder(@PathVariable String id) {
+        return ticketOrderService.delete(id);
     }
 
 }
