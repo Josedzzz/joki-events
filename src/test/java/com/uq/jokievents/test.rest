@@ -81,8 +81,33 @@ Content-Type: application/json
 GET http://localhost:3000/api/distributionlocalities
 
 ### Gets a DistributionLocalitie by its id
-GET http://localhost:3000/api/distributionlocalities/66be9b37cb4b46290543b279
+GET http://localhost:3000/api/distributionlocalities/66bea18176fa940471265915
 
 ### Deletes a DistributionLocalitie by its id
-DELETE  http://localhost:3000/api/distributionlocalities/66be9b37cb4b46290543b279
+DELETE  http://localhost:3000/api/distributionlocalities/66bea18176fa940471265915
+
+### Try APIS for Event
+### Create a Event
+POST http://localhost:3000/api/events
+Content-Type: application/json
+
+{
+  "idDistributionLocality": "distributionLocalityId",
+  "name": "Event Name",
+  "address": "1234 Main St",
+  "city": "City Name",
+  "eventDate": "2024-12-31T20:00:00Z",
+  "availablePurchase": true,
+  "imageUrl": "https://example.com/event-image.jpg",
+  "imapeDistributionLocality": "https://example.com/distribution-image.jpg"
+}
+
+### Gets all events
+GET http://localhost:3000/api/events
+
+### Gets a event by its id
+GET http://localhost:3000/api/events/66bea382bac91365bfde4738
+
+### Deletes a Event by its id
+DELETE  http://localhost:3000/api/events/66bea1d676fa940471265916
 
