@@ -18,69 +18,58 @@ public class TicketController {
     private TicketService ticketService;
 
     /**
-     * Gets a list of all tickets
+     * Get all tickets
      *
-     * @return a ResponseEntity containing the list of ticket objects and an HTTP status of ok
+     * @return a ResponseEntity object with containing tickets
      */
     @GetMapping
-    public ResponseEntity<List<Ticket>> getAllTickets() {
-        List<Ticket> tickets = ticketService.findAll();
-        return new ResponseEntity<>(tickets, HttpStatus.OK);
+    public ResponseEntity<?> getAllTickets() {
+        return ticketService.findAll();
     }
 
     /**
-     * Gets a ticket by its id
+     * Get a ticket by its id
      *
-     * @param id the identifier of the ticket
-     * @return a ResponseEntity containig the ticket object and HTTP status of ok if found, otherwise the status is not found
+     * @param id the identifier of the ticket object to find
+     * @return a ResponseEntity containig the ticket
      */
     @GetMapping("/{id}")
-    public ResponseEntity<Ticket> getTicketById(@PathVariable String id) {
-        Optional<Ticket> ticket = ticketService.findById(id);
-        return ticket.map(value -> new ResponseEntity<>(value, HttpStatus.OK)).orElseGet(() -> new ResponseEntity<>(HttpStatus.NOT_FOUND));
+    public ResponseEntity<?> getTicketById(@PathVariable String id) {
+        return ticketService.findById(id);
     }
 
     /**
-     * Creates a new ticket
+     * Create a new ticket
      *
      * @param ticket the ticket object to be created
-     * @return a ResponseEntity containig the created ticket and an HTTP status of created
+     * @return a ResponseEntity containing the created ticket
      */
     @PostMapping
-    public ResponseEntity<Ticket> createTicket(@RequestBody Ticket ticket) {
-        Ticket newTicket = ticketService.save(ticket);
-        return new ResponseEntity<>(newTicket, HttpStatus.CREATED);
+    public ResponseEntity<?> createTicket(@RequestBody Ticket ticket) {
+        return ticketService.create(ticket);
     }
 
     /**
-     * Updates an existing ticket
+     * Update an existing ticket by id
      *
-     * @param id the identifier of the ticket
-     * @param ticket the ticket object containing the updated data
-     * @return a ResponseEntity containing the update ticket and an HTTP status of ok, otherwise not found
+     * @param id the identifier of the ticket object to update
+     * @param ticket the update ticket object
+     * @return a ResponseEntity containing the update ticket
      */
     @PutMapping("/{id}")
-    public ResponseEntity<Ticket> updateTicket(@PathVariable String id, @RequestBody Ticket ticket) {
-        Optional<Ticket> existingTicket = ticketService.findById(id);
-        if (existingTicket.isPresent()) {
-            ticket.setId(id);
-            Ticket updatedTicket = ticketService.save(ticket);
-            return new ResponseEntity<>(updatedTicket, HttpStatus.OK);
-        } else {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-        }
+    public ResponseEntity<?> updateTicket(@PathVariable String id, @RequestBody Ticket ticket) {
+        return ticketService.update(id, ticket);
     }
 
     /**
-     * Deletes a ticket by its id
+     * Delete ticket by id
      *
-     * @param id the identifier of the ticket object to be deleted
-     * @return a ResponseEntity with and HTTP status of ok if the deletion is succesful
+     * @param id the identifier of the ticket to delete
+     * @return a ResponseEntity object with an HTTP status
      */
     @DeleteMapping("/{id}")
-    public ResponseEntity<String> deleteTicket(@PathVariable String id) {
-        ticketService.deleteById(id);
-        return new ResponseEntity<>(HttpStatus.OK);
+    public ResponseEntity<?> deleteTicket(@PathVariable String id) {
+        return ticketService.delete(id);
     }
 
 }
