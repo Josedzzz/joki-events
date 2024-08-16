@@ -153,4 +153,26 @@ GET http://localhost:3000/api/shoppingcarts/66beac23add64e1d15052862
 ### Deletes a ShoppingCart by its id
 DELETE  http://localhost:3000/api/shoppingcarts/66beac23add64e1d15052862
 
+### Try APIS for Tickets
+# Create a ticket
+POST http://localhost:3000/api/tickets
+Content-Type: application/json
+
+{
+  "idClient": "client123",
+  "idCoupon": "coupon456",
+  "numTickets": 9,
+  "locality": "Back Row",
+  "netPaymentAmount": 100.00,
+  "finalPaymentAmount": 90.00
+}
+
+### Get all tickets
+GET http://localhost:3000/api/tickets
+
+### Get a ticket by ID
+GET http://localhost:3000/api/tickets/66bee2693671cd6da9fb0481
+
+### Delete a ticket by ID
+DELETE http://localhost:3000/api/tickets/66bee2693671cd6da9fb0481
 
