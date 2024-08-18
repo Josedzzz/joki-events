@@ -2,6 +2,7 @@ package com.uq.jokievents.model;
 
 import java.util.ArrayList;
 
+import org.bson.types.ObjectId;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
@@ -16,8 +17,8 @@ public class Client {
     private String phoneNumber;
     private String email;
     private String password;
-    private ArrayList<String> idCoupons;
-    private String idShoppingCart;
+    private ArrayList<ObjectId> idCoupons;
+    private ObjectId idShoppingCart;
     private boolean active;
 
     // Constructors
@@ -25,7 +26,7 @@ public class Client {
     }
 
     public Client(String idCard, String name, String direction, String phoneNumber, String email, String password,
-            ArrayList<String> idCoupons, String shoppingCart) {
+            ArrayList<ObjectId> idCoupons, ObjectId shoppingCart) {
         this.idCard = idCard;
         this.name = name;
         this.direction = direction;
@@ -95,19 +96,19 @@ public class Client {
         this.password = password;
     }
 
-    public ArrayList<String> getIdCoupons() {
+    public ArrayList<ObjectId> getIdCoupons() {
         return idCoupons;
     }
 
-    public void setIdCoupons(ArrayList<String> idCoupons) {
+    public void setIdCoupons(ArrayList<ObjectId> idCoupons) {
         this.idCoupons = idCoupons;
     }
 
-    public String getIdShoppingCart() {
+    public ObjectId getIdShoppingCart() {
         return idShoppingCart;
     }
 
-    public void setIdShoppingCart(String idShoppingCart) {
+    public void setIdShoppingCart(ObjectId idShoppingCart) {
         this.idShoppingCart = idShoppingCart;
     }
 

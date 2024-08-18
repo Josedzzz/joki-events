@@ -1,5 +1,6 @@
 package com.uq.jokievents.model;
 
+import org.bson.types.ObjectId;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
@@ -10,7 +11,7 @@ public class Event {
 
     @Id
     private String id;
-    private String idDistributionLocality;
+    private ObjectId idDistributionLocality;
     private String name;
     private String address;
     private String city;
@@ -22,7 +23,7 @@ public class Event {
     // Constructor
     public Event() {}
 
-    public Event(String id, String idDistributionLocality, String name, String address, String city, Date eventDate, boolean availablePurchase, String imageUrl, String imapeDistributionLocality) {
+    public Event(String id, ObjectId idDistributionLocality, String name, String address, String city, Date eventDate, boolean availablePurchase, String imageUrl, String imapeDistributionLocality) {
         this.id = id;
         this.idDistributionLocality = idDistributionLocality;
         this.name = name;
@@ -44,11 +45,11 @@ public class Event {
         this.id = id;
     }
 
-    public String getIdDistributionLocality() {
+    public ObjectId getIdDistributionLocality() {
         return idDistributionLocality;
     }
 
-    public void setIdDistributionLocality(String idDistributionLocality) {
+    public void setIdDistributionLocality(ObjectId idDistributionLocality) {
         this.idDistributionLocality = idDistributionLocality;
     }
 

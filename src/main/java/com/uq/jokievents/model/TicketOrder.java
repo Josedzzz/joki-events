@@ -1,5 +1,6 @@
 package com.uq.jokievents.model;
 
+import org.bson.types.ObjectId;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
@@ -10,7 +11,7 @@ public class TicketOrder {
 
     @Id
     private String id;
-    private String idTicket;
+    private ObjectId idTicket;
     private Date purchaseDate;
 
     // Constructor
@@ -18,7 +19,7 @@ public class TicketOrder {
 
     }
 
-    public TicketOrder(String id, String idTicket, Date purchaseDate) {
+    public TicketOrder(String id, ObjectId idTicket, Date purchaseDate) {
         this.id = id;
         this.idTicket = idTicket;
         this.purchaseDate = purchaseDate;
@@ -34,11 +35,11 @@ public class TicketOrder {
         this.id = id;
     }
 
-    public String getIdTicket() {
+    public ObjectId getIdTicket() {
         return idTicket;
     }
 
-    public void setIdTicket(String idTicket) {
+    public void setIdTicket(ObjectId idTicket) {
         this.idTicket = idTicket;
     }
 
