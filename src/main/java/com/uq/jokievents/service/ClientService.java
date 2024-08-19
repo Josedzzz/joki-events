@@ -106,4 +106,24 @@ public class ClientService {
             return new ResponseEntity<>("Failed to delete client", HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
+
+    /**
+     * Find a client by email and password
+     *
+     * @param email of the client
+     * @param password of the client
+     * @return a ResponseEntity containig the client if found, otherwise a 404 status
+     */
+    public ResponseEntity<?> findByEmailAndPassword(String email, String password) {
+        try {
+            Optional<Client> client = clientRepository.findByEmailAndPassword(email, password);
+            if (client.isPresent()) {
+                return new ResponseEntity<>(client.get(), HttpStatus.OK);
+            } else {
+                return new ResponseEntity<>("Invalid email or password", HttpStatus.NOT_FOUND);
+            }
+        } catch (Exception e) {
+            return new ResponseEntity<>("Failed to find client", HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
 }

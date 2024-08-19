@@ -4,6 +4,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -82,4 +83,16 @@ public class ClientController {
         return clientService.delete(id);
     }
 
+    /**
+     * Login client with email and password
+     *
+     * @param credentials a map containing the email and password
+     * @return a ResponseEntity containing the client if found, otherwise an error message
+     */
+    @PostMapping("/login")
+    public ResponseEntity<?> loginClient(@RequestBody Map<String, String> credentials) {
+        String email = credentials.get("email");
+        String password = credentials.get("password");
+        return clientService.findByEmailAndPassword(email, password);
+    }
 }
