@@ -1,5 +1,6 @@
 package com.uq.jokievents.model;
 
+import org.bson.types.ObjectId;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
@@ -8,8 +9,8 @@ public class Ticket {
 
     @Id
     private String id;
-    private String idClient;
-    private String idCoupon;
+    private ObjectId idClient;
+    private ObjectId idCoupon;
     private int numTickets;
     private String locality;
     private Double netPaymentAmount;
@@ -18,7 +19,7 @@ public class Ticket {
     // Contructor
     public Ticket() {}
 
-    public Ticket(String id, String idClient, String idCoupon, int numTickets, String locality, Double netPaymentAmount, Double finalPaymentAmount) {
+    public Ticket(String id, ObjectId idClient, ObjectId idCoupon, int numTickets, String locality, Double netPaymentAmount, Double finalPaymentAmount) {
         this.id = id;
         this.idClient = idClient;
         this.idCoupon = idCoupon;
@@ -38,19 +39,19 @@ public class Ticket {
         this.id = id;
     }
 
-    public String getIdClient() {
+    public ObjectId getIdClient() {
         return idClient;
     }
 
-    public void setIdClient(String idClient) {
+    public void setIdClient(ObjectId idClient) {
         this.idClient = idClient;
     }
 
-    public String getIdCoupon() {
+    public ObjectId getIdCoupon() {
         return idCoupon;
     }
 
-    public void setIdCoupon(String idCoupon) {
+    public void setIdCoupon(ObjectId idCoupon) {
         this.idCoupon = idCoupon;
     }
 

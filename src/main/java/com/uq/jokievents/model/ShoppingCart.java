@@ -1,5 +1,6 @@
 package com.uq.jokievents.model;
 
+import org.bson.types.ObjectId;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
@@ -10,16 +11,16 @@ public class ShoppingCart {
 
     @Id
     private String id;
-    private ArrayList<String> idTickets;
+    private ArrayList<ObjectId> idTickets;
     private Double totalPrice;
-    private String idClient;
+    private ObjectId idClient;
 
     //Contructors
     public ShoppingCart() {
 
     }
 
-    public ShoppingCart(String id, ArrayList<String> idTickets, Double totalPrice, String idClient) {
+    public ShoppingCart(String id, ArrayList<ObjectId> idTickets, Double totalPrice, ObjectId idClient) {
         this.id = id;
         this.idTickets = idTickets;
         this.totalPrice = totalPrice;
@@ -34,11 +35,11 @@ public class ShoppingCart {
         this.id = id;
     }
 
-    public ArrayList<String> getIdTickets() {
+    public ArrayList<ObjectId> getIdTickets() {
         return idTickets;
     }
 
-    public void setIdTickets(ArrayList<String> idTickets) {
+    public void setIdTickets(ArrayList<ObjectId> idTickets) {
         this.idTickets = idTickets;
     }
 
@@ -50,11 +51,11 @@ public class ShoppingCart {
         this.totalPrice = totalPrice;
     }
 
-    public String getIdClient() {
+    public ObjectId getIdClient() {
         return idClient;
     }
 
-    public void setIdClient(String idClient) {
+    public void setIdClient(ObjectId idClient) {
         this.idClient = idClient;
     }
 }

@@ -1,5 +1,6 @@
 package com.uq.jokievents.model;
 
+import org.bson.types.ObjectId;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
@@ -12,13 +13,13 @@ public class Admin {
     private String id;
     private String username;
     private String password;
-    private ArrayList<String> idClients;
+    private ArrayList<ObjectId> idClients;
     private boolean active;
 
     // Constructor
     public Admin() {}
 
-    public Admin(String id, String username, String password, ArrayList<String> idClients) {
+    public Admin(String id, String username, String password, ArrayList<ObjectId> idClients) {
         this.id = id;
         this.username = username;
         this.password = password;
@@ -52,11 +53,11 @@ public class Admin {
         this.password = password;
     }
 
-    public ArrayList<String> getIdClients() {
+    public ArrayList<ObjectId> getIdClients() {
         return idClients;
     }
 
-    public void setIdClients(ArrayList<String> idClients) {
+    public void setIdClients(ArrayList<ObjectId> idClients) {
         this.idClients = idClients;
     }
 
