@@ -1,14 +1,10 @@
 package com.uq.jokievents.controller;
 
+import com.uq.jokievents.records.LoginDTO;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
 import com.uq.jokievents.model.Client;
@@ -90,9 +86,7 @@ public class ClientController {
      * @return a ResponseEntity containing the client if found, otherwise an error message
      */
     @PostMapping("/login")
-    public ResponseEntity<?> loginClient(@RequestBody Map<String, String> credentials) {
-        String email = credentials.get("email");
-        String password = credentials.get("password");
-        return clientService.findByEmailAndPassword(email, password);
+    public ResponseEntity<?> loginClient(@RequestBody LoginDTO body) {
+        return clientService.findByEmailAndPassword(body.email(), body.password());
     }
 }
