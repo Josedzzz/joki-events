@@ -67,7 +67,7 @@ public class ShoppingCartController {
      * @param id the unique identifier of the shoppingcart object to be deleted
      * @return a ResponseEntity with an HTTP status of ok if the deletion is succesful
      */
-    @DeleteMapping
+    @DeleteMapping("/{id}")
     public ResponseEntity<?> deleteShoppingCart(@PathVariable String id) {
         return shoppingCartService.deleteById(id);
     }
