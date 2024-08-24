@@ -194,3 +194,12 @@ GET http://localhost:3000/api/ticketorders/66bf53d62046b27428b702ff
 
 ### Delete a ticket order by ID
 DELETE http://localhost:3000/api/ticketorders/66bf53d62046b27428b702ff
+
+### Login
+POST http://localhost:3000/api/clients/login
+Content-Type: application/json
+
+{
+  "email": "daniel@example.com",
+  "password": "daniel23"
+}
