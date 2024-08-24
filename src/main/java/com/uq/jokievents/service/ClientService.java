@@ -1,6 +1,8 @@
 package com.uq.jokievents.service;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -112,18 +114,25 @@ public class ClientService {
      *
      * @param email of the client
      * @param password of the client
-     * @return a ResponseEntity containig the client if found, otherwise a 404 status
+     * @return a ResponseEntity containing a JSON with the client's id if found, otherwise a JSON with an error message
      */
     public ResponseEntity<?> findByEmailAndPassword(String email, String password) {
         try {
             Optional<Client> client = clientRepository.findByEmailAndPassword(email, password);
             if (client.isPresent()) {
-                return new ResponseEntity<>(client.get(), HttpStatus.OK);
+                Map<String, String> response = new HashMap<>();
+                response.put("id", client.get().getId());
+                return new ResponseEntity<>(response, HttpStatus.OK);
             } else {
-                return new ResponseEntity<>("Invalid email or password", HttpStatus.NOT_FOUND);
+                Map<String, String> errorResponse = new HashMap<>();
+                errorResponse.put("message", "Invalid email or password");
+                return new ResponseEntity<>(errorResponse, HttpStatus.NOT_FOUND);
             }
         } catch (Exception e) {
-            return new ResponseEntity<>("Failed to find client", HttpStatus.INTERNAL_SERVER_ERROR);
+            Map<String, String> errorResponse = new HashMap<>();
+            errorResponse.put("message", "Failed to find client");
+            return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
+
 }
