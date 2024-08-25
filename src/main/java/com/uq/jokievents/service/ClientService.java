@@ -1,10 +1,10 @@
 package com.uq.jokievents.service;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 
+import com.uq.jokievents.records.RegisterClientDTO;
+import com.uq.jokievents.utils.ClientMapper;
+import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -17,7 +17,7 @@ import com.uq.jokievents.repository.ClientRepository;
 public class ClientService {
 
     @Autowired
-    private ClientRepository clientRepository;
+    private ClientRepository clientRepository; // Interacts with MongoDB
 
     /**
      * Get a list of all clients from the db
@@ -70,9 +70,9 @@ public class ClientService {
     /**
      * Update an existing client by id
      *
-     * @param id the identifierof the client to be update
+     * @param id the identifier of the client to be updated
      * @param client the updated client object
-     * @return a ResponseEntity containing the updated client objec and an HTTP status
+     * @return a ResponseEntity containing the updated client object and an HTTP status
      */
     public ResponseEntity<?> update(String id, Client client) {
         try {
@@ -133,6 +133,36 @@ public class ClientService {
             errorResponse.put("message", "Failed to find client");
             return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
         }
+    }
+
+    /**
+     * Registers a client from its dto instance.
+     * Is it necessary to have a dto parameter? Couldn't it be the Client class itself?
+     * @return a client
+     */
+    public Client registerNewClient(RegisterClientDTO dto) {
+        // Mapping the DTO as an entity (Client)
+        Client client = ClientMapper.INSTANCE.ClientRegisterDTOtoClient(dto);
+        // Manually assigning all the other attributes. Is this necessary?
+        client.setIdCoupons(new ArrayList<ObjectId>());
+        client.setIdShoppingCart(new ObjectId());
+        client.setActive(true);
+
+        // Save the Client to the database.
+        client = clientRepository.save(client);
+        // Return the saved Client
+        return client;
+    }
+
+    /**
+     * Return a registered client dto from a client id.
+     * @return a registerClientDto
+     */
+    public RegisterClientDTO getClientAsDto(String clientId) {
+        // Find the Client by its id
+        Client client = clientRepository.findById(clientId).orElseThrow(() -> new RuntimeException("Client not found"));
+        // Mapping the entity as a DTO
+        return ClientMapper.INSTANCE.ClientToRegisterClientDTO(client);
     }
 
 }
