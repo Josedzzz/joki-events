@@ -154,15 +154,4 @@ public class ClientService {
         return client;
     }
 
-    /**
-     * Return a registered client dto from a client id.
-     * @return a registerClientDto
-     */
-    public RegisterClientDTO getClientAsDto(String clientId) {
-        // Find the Client by its id
-        Client client = clientRepository.findById(clientId).orElseThrow(() -> new RuntimeException("Client not found"));
-        // Mapping the entity as a DTO
-        return ClientMapper.INSTANCE.ClientToRegisterClientDTO(client);
-    }
-
 }
