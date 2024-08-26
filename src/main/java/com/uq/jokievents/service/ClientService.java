@@ -1,9 +1,12 @@
 package com.uq.jokievents.service;
 
+import java.time.LocalDateTime;
 import java.util.*;
 
 import com.uq.jokievents.records.RegisterClientDTO;
 import com.uq.jokievents.utils.ClientMapper;
+import com.uq.jokievents.utils.EmailService;
+import com.uq.jokievents.utils.VerificationService;
 import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -12,12 +15,18 @@ import org.springframework.stereotype.Service;
 
 import com.uq.jokievents.model.Client;
 import com.uq.jokievents.repository.ClientRepository;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 
 @Service
 public class ClientService {
 
     @Autowired
     private ClientRepository clientRepository; // Interacts with MongoDB
+    @Autowired
+    private EmailService emailService;
+    @Autowired
+    private VerificationService verificationService;
 
     /**
      * Get a list of all clients from the db
@@ -143,10 +152,21 @@ public class ClientService {
     public Client registerNewClient(RegisterClientDTO dto) {
         // Mapping the DTO as an entity (Client)
         Client client = ClientMapper.INSTANCE.ClientRegisterDTOtoClient(dto);
-        // Manually assigning all the other attributes. Is this necessary?
+
+        // Generating a verification code and establishing an expiration date
+        String verificationCode = UUID.randomUUID().toString();
+        LocalDateTime expiration = LocalDateTime.now().plusMinutes(15);
+
+        // Manually assigning all the other attributes.
+        client.setVerificationCode(verificationCode);
+        client.setVerificationCodeExpiration(expiration);
+
         client.setIdCoupons(new ArrayList<ObjectId>());
         client.setIdShoppingCart(new ObjectId());
         client.setActive(true);
+
+        // Sending the email to the client!
+        emailService.sendVerificationMail(client.getEmail(), verificationCode);
 
         // Save the Client to the database.
         client = clientRepository.save(client);
@@ -154,4 +174,20 @@ public class ClientService {
         return client;
     }
 
+    /**
+     * Method to answer a http request to verify if a code is valid or not.
+     * @param clientId client id which is validating its account
+     * @param verificationCode verification code of the client
+     * @return boolean saying if verified or not
+     */
+    @PostMapping("/verify")
+    public ResponseEntity<String> verifyCode(@RequestParam String clientId, @RequestParam String verificationCode) {
+        boolean verified = verificationService.verifyCode(clientId, verificationCode);
+
+        if (verified) {
+            return new ResponseEntity<>("Client verified", HttpStatus.OK);
+        } else {
+            return new ResponseEntity<>("Invalid code or time expired", HttpStatus.BAD_REQUEST);
+        }
+    }
 }
