@@ -1,10 +1,12 @@
 package com.uq.jokievents.model;
 
+import lombok.Data;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.util.Map;
 
+@Data
 @Document(collection = "reports")
 public class Report {
 
@@ -22,29 +24,4 @@ public class Report {
         this.profit = profit;
     }
 
-    // Getters and setters
-
-    public String getId() {
-        return id;
-    }
-
-    public void setId(String id) {
-        this.id = id;
-    }
-
-    public Map<String, Integer> getSellDistributionLocalityes() {
-        return sellDistributionLocalityes;
-    }
-
-    public void setSellDistributionLocalityes(Map<String, Integer> sellDistributionLocalityes) {
-        this.sellDistributionLocalityes = sellDistributionLocalityes;
-    }
-
-    public double getProfit() {
-        return profit;
-    }
-
-    public void setProfit(double profit) {
-        this.profit = profit;
-    }
 }
