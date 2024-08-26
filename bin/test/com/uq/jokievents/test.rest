@@ -1,0 +1,25 @@
+### Try APIS for clients
+
+### Create a client
+POST http://localhost:3000/api/clients
+Content-Type: application/json
+
+{
+  "idCard": "123",
+  "name": "Daniel Felipe",
+  "direction": "123 Armenia",
+  "phoneNumber": "123",
+  "email": "daniel@example.com",
+  "password": "daniel123",
+  "idCoupons": ["couponA", "couponB"],
+  "idShoppingCart": "123"
+}
+
+### Gets all clients
+GET http://localhost:3000/api/clients
+
+### Gets a Client by its id
+GET http://localhost:3000/api/clients/66bc6aeedab3fd59668eb058
+
+### Deletes a Client by its id
+DELETE  http://localhost:3000/api/clients/66bc6aeedab3fd59668eb058
