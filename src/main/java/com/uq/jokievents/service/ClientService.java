@@ -129,9 +129,17 @@ public class ClientService {
         try {
             Optional<Client> client = clientRepository.findByEmailAndPassword(email, password);
             if (client.isPresent()) {
-                Map<String, String> response = new HashMap<>();
-                response.put("id", client.get().getId());
-                return new ResponseEntity<>(response, HttpStatus.OK);
+                //Verificates if the Client is active for login
+                if(!client.get().isActive()){
+                    Map<String, String> response = new HashMap<>();
+                    response.put("id", client.get().getId());
+                    return new ResponseEntity<>(response, HttpStatus.OK);
+                }
+                else{
+                    Map<String, String> errorResponse = new HashMap<>();
+                    errorResponse.put("message", "The client isn´t active");
+                    return new ResponseEntity<>(errorResponse, HttpStatus.NOT_FOUND);
+                }
             } else {
                 Map<String, String> errorResponse = new HashMap<>();
                 errorResponse.put("message", "Invalid email or password");
