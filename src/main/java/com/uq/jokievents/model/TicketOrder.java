@@ -1,11 +1,13 @@
 package com.uq.jokievents.model;
 
+import lombok.Data;
 import org.bson.types.ObjectId;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.util.Date;
 
+@Data
 @Document(collection = "ticketorders")
 public class TicketOrder {
 
@@ -25,29 +27,4 @@ public class TicketOrder {
         this.purchaseDate = purchaseDate;
     }
 
-    // Getters and setters
-
-    public String getId() {
-        return id;
-    }
-
-    public void setId(String id) {
-        this.id = id;
-    }
-
-    public ObjectId getIdTicket() {
-        return idTicket;
-    }
-
-    public void setIdTicket(ObjectId idTicket) {
-        this.idTicket = idTicket;
-    }
-
-    public Date getPurchaseDate() {
-        return purchaseDate;
-    }
-
-    public void setPurchaseDate(Date purchaseDate) {
-        this.purchaseDate = purchaseDate;
-    }
 }
