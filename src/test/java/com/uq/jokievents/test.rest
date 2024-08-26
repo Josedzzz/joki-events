@@ -6,11 +6,11 @@ Content-Type: application/json
 
 {
   "idCard": "123",
-  "name": "Daniel Felipe",
+  "name": "Juan José",
   "direction": "123 Armenia",
   "phoneNumber": "123",
-  "email": "daniel@example.com",
-  "password": "daniel123",
+  "email": "juanj@example.com",
+  "password": "juanj",
   "idCoupons": ["507f1f77bcf86cd799439011", "507f1f77bcf86cd799439012"],
   "idShoppingCart": "507f1f77bcf86cd799439013"
 }

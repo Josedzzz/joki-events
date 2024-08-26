@@ -138,7 +138,7 @@ public class ClientService {
                 else{
                     Map<String, String> errorResponse = new HashMap<>();
                     errorResponse.put("message", "The client isn´t active");
-                    return new ResponseEntity<>(errorResponse, HttpStatus.NOT_FOUND);
+                    return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
                 }
             } else {
                 Map<String, String> errorResponse = new HashMap<>();
