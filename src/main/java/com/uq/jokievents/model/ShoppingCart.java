@@ -1,11 +1,13 @@
 package com.uq.jokievents.model;
 
+import lombok.Data;
 import org.bson.types.ObjectId;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.util.ArrayList;
 
+@Data
 @Document(collection = "shoppingcarts")
 public class ShoppingCart {
 
@@ -27,35 +29,4 @@ public class ShoppingCart {
         this.idClient = idClient;
     }
 
-    public String getId() {
-        return id;
-    }
-
-    public void setId(String id) {
-        this.id = id;
-    }
-
-    public ArrayList<ObjectId> getIdTickets() {
-        return idTickets;
-    }
-
-    public void setIdTickets(ArrayList<ObjectId> idTickets) {
-        this.idTickets = idTickets;
-    }
-
-    public Double getTotalPrice() {
-        return totalPrice;
-    }
-
-    public void setTotalPrice(Double totalPrice) {
-        this.totalPrice = totalPrice;
-    }
-
-    public ObjectId getIdClient() {
-        return idClient;
-    }
-
-    public void setIdClient(ObjectId idClient) {
-        this.idClient = idClient;
-    }
 }
