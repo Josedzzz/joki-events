@@ -8,7 +8,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 @Service
@@ -105,4 +107,29 @@ public class AdminService {
         }
     }
 
+    /**
+     * Find an admin by email and password
+     *
+     * @param username of the admin
+     * @param password of the admin
+     * @return a ResponseEntity containing a JSON with the admin's id if found, otherwise a JSON with an error message
+     */
+    public ResponseEntity<?> findByUsernameAndPassword(String username, String password) {
+        try {
+            Optional<Admin> admin = adminRepository.findByUsernameAndPassword(username, password);
+            if (admin.isPresent()) {
+                Map<String, String> response = new HashMap<>();
+                response.put("id", admin.get().getId());
+                return new ResponseEntity<>(response, HttpStatus.OK);
+            } else {
+                Map<String, String> errorResponse = new HashMap<>();
+                errorResponse.put("message", "Invalid username or password for admin");
+                return new ResponseEntity<>(errorResponse, HttpStatus.NOT_FOUND);
+            }
+        } catch (Exception e) {
+            Map<String, String> errorResponse = new HashMap<>();
+            errorResponse.put("message", "Failed to find the admin");
+            return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
 }
