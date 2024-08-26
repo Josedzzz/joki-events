@@ -1,10 +1,12 @@
 package com.uq.jokievents.model;
 
+import lombok.Data;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.util.Date;
 
+@Data
 @Document(collection = "coupons")
 public class Coupon {
 
@@ -28,45 +30,4 @@ public class Coupon {
         this.isUsed = isUsed;
     }
 
-    // Getters and setters
-
-    public String getId() {
-        return id;
-    }
-
-    public void setId(String id) {
-        this.id = id;
-    }
-
-    public double getDiscountPercent() {
-        return discountPercent;
-    }
-
-    public void setDiscountPercent(double discountPercent) {
-        this.discountPercent = discountPercent;
-    }
-
-    public Date getExpirationDate() {
-        return expirationDate;
-    }
-
-    public void setExpirationDate(Date expirationDate) {
-        this.expirationDate = expirationDate;
-    }
-
-    public double getMinPurchaseQuantity() {
-        return minPurchaseQuantity;
-    }
-
-    public void setMinPurchaseQuantity(double minPurchaseQuantity) {
-        this.minPurchaseQuantity = minPurchaseQuantity;
-    }
-
-    public boolean isUsed() {
-        return isUsed;
-    }
-
-    public void setUsed(boolean used) {
-        isUsed = used;
-    }
 }
