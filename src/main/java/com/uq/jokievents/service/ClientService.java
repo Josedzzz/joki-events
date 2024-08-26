@@ -130,7 +130,7 @@ public class ClientService {
             Optional<Client> client = clientRepository.findByEmailAndPassword(email, password);
             if (client.isPresent()) {
                 //Verificates if the Client is active for login
-                if(!client.get().isActive()){
+                if(client.get().isActive()){
                     Map<String, String> response = new HashMap<>();
                     response.put("id", client.get().getId());
                     return new ResponseEntity<>(response, HttpStatus.OK);
