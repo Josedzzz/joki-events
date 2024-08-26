@@ -36,7 +36,6 @@ public class VerificationService {
             client.setActive(true);
             clientRepository.save(client);
         }
-
         return isValid;
     }
 }
