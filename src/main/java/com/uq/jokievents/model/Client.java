@@ -1,7 +1,7 @@
 package com.uq.jokievents.model;
 
 import java.util.ArrayList;
-
+import java.time.LocalDateTime;
 import lombok.Data;
 import org.bson.types.ObjectId;
 import org.springframework.data.annotation.Id;
@@ -22,6 +22,8 @@ public class Client {
     private ArrayList<ObjectId> idCoupons;
     private ObjectId idShoppingCart;
     private boolean active;
+    private String verificationCode;
+    private LocalDateTime verificationCodeExpiration;
 
     // Constructors
     public Client() {
