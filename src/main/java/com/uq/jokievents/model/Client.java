@@ -40,5 +40,7 @@ public class Client {
         this.idCoupons = idCoupons;
         this.idShoppingCart = shoppingCart;
         this.active = false;
+        this.verificationCode = null;
+        this.verificationCodeExpiration = null;
     }
 }
