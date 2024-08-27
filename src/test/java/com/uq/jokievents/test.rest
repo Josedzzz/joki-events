@@ -75,17 +75,18 @@ Content-Type: application/json
   "name": "Locality Name",
   "price": 100.0,
   "maxCapacity": 500,
-  "imapeDistributionLocality": "https://example.com/distribution-image.jpg"
+  "imapeDistributionLocality": "https://example.com/distribution-image.jpg",
+  "currentOccupancy": 0
 }
 
 ### Gets all distributionlocalities
 GET http://localhost:3000/api/distributionlocalities
 
 ### Gets a DistributionLocalitie by its id
-GET http://localhost:3000/api/distributionlocalities/66ce50d1c3bd1405f2313fea
+GET http://localhost:3000/api/distributionlocalities/66ce529c4a5f0f77f507ce4e
 
 ### Deletes a DistributionLocalitie by its id
-DELETE  http://localhost:3000/api/distributionlocalities/66c74bed3d4cfb6a3c509664
+DELETE  http://localhost:3000/api/distributionlocalities/66ce529c4a5f0f77f507ce4e
 
 ### Try APIS for Event
 ### Create a Event
@@ -106,7 +107,7 @@ Content-Type: application/json
 GET http://localhost:3000/api/events
 
 ### Gets a event by its id
-GET http://localhost:3000/api/events/66ce50ebc3bd1405f2313feb
+GET http://localhost:3000/api/events/66ce5225fe47c4012dc12761
 
 ### Deletes a Event by its id
 DELETE  http://localhost:3000/api/events/66c74c003d4cfb6a3c509665

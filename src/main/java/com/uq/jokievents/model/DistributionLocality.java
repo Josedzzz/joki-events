@@ -14,6 +14,7 @@ public class DistributionLocality {
     private double price;
     private int maxCapacity;
     private String imapeDistributionLocality;
+    private int currentOccupancy;
 
     // constructor
     public DistributionLocality() {}
@@ -24,6 +25,7 @@ public class DistributionLocality {
         this.price = price;
         this.maxCapacity = maxCapacity;
         this.imapeDistributionLocality = imapeDistributionLocality;
+        this.currentOccupancy = 0;
     }
 
 }
