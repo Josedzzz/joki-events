@@ -19,7 +19,7 @@ Content-Type: application/json
 GET http://localhost:3000/api/clients
 
 ### Gets a Client by its id
-GET http://localhost:3000/api/clients/66c74b993d4cfb6a3c509661
+GET http://localhost:3000/api/clients/66ce5091c3bd1405f2313fe7
 
 ### Deletes a Client by its id
 DELETE  http://localhost:3000/api/clients/66c74b993d4cfb6a3c509661
@@ -40,7 +40,7 @@ Content-Type: application/json
 GET http://localhost:3000/api/admins
 
 ### Gets a Admin by its id
-GET http://localhost:3000/api/admins/66c74bc23d4cfb6a3c509662
+GET http://localhost:3000/api/admins/66ce50aec3bd1405f2313fe8
 
 ### Deletes a Admin by its id
 DELETE  http://localhost:3000/api/admins/66c74bc23d4cfb6a3c509662
@@ -61,7 +61,7 @@ Content-Type: application/json
 GET http://localhost:3000/api/coupons
 
 ### Gets a Coupon by its id
-GET http://localhost:3000/api/coupons/66c74bd93d4cfb6a3c509663
+GET http://localhost:3000/api/coupons/66ce50bdc3bd1405f2313fe9
 
 ### Deletes a Coupon by its id
 DELETE  http://localhost:3000/api/coupons/66c74bd93d4cfb6a3c509663
@@ -74,14 +74,15 @@ Content-Type: application/json
 {
   "name": "Locality Name",
   "price": 100.0,
-  "maxCapacity": 500
+  "maxCapacity": 500,
+  "imapeDistributionLocality": "https://example.com/distribution-image.jpg"
 }
 
 ### Gets all distributionlocalities
 GET http://localhost:3000/api/distributionlocalities
 
 ### Gets a DistributionLocalitie by its id
-GET http://localhost:3000/api/distributionlocalities/66c74bed3d4cfb6a3c509664
+GET http://localhost:3000/api/distributionlocalities/66ce50d1c3bd1405f2313fea
 
 ### Deletes a DistributionLocalitie by its id
 DELETE  http://localhost:3000/api/distributionlocalities/66c74bed3d4cfb6a3c509664
@@ -92,21 +93,20 @@ POST http://localhost:3000/api/events
 Content-Type: application/json
 
 {
-  "idDistributionLocality": "507f1f77bcf86cd799439015",
+  "idDistributionLocality": ["507f1f77bcf86cd799439015", "507f1f77bcf86cd799439016"],
   "name": "Event Name",
   "address": "1234 Main St",
   "city": "City Name",
   "eventDate": "2024-12-31T20:00:00Z",
   "availablePurchase": true,
-  "imageUrl": "https://example.com/event-image.jpg",
-  "imapeDistributionLocality": "https://example.com/distribution-image.jpg"
+  "imageUrl": "https://example.com/event-image.jpg"
 }
 
 ### Gets all events
 GET http://localhost:3000/api/events
 
 ### Gets a event by its id
-GET http://localhost:3000/api/events/66c74c003d4cfb6a3c509665
+GET http://localhost:3000/api/events/66ce50ebc3bd1405f2313feb
 
 ### Deletes a Event by its id
 DELETE  http://localhost:3000/api/events/66c74c003d4cfb6a3c509665
