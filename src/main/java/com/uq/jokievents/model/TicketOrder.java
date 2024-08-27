@@ -5,6 +5,7 @@ import org.bson.types.ObjectId;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
+import java.time.LocalDateTime;
 import java.util.Date;
 
 @Data
@@ -14,14 +15,14 @@ public class TicketOrder {
     @Id
     private String id;
     private ObjectId idTicket;
-    private Date purchaseDate;
+    private LocalDateTime purchaseDate;
 
     // Constructor
     public TicketOrder() {
 
     }
 
-    public TicketOrder(String id, ObjectId idTicket, Date purchaseDate) {
+    public TicketOrder(String id, ObjectId idTicket, LocalDateTime purchaseDate) {
         this.id = id;
         this.idTicket = idTicket;
         this.purchaseDate = purchaseDate;

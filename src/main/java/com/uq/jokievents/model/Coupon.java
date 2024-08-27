@@ -4,6 +4,7 @@ import lombok.Data;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
+import java.time.LocalDateTime;
 import java.util.Date;
 
 @Data
@@ -13,7 +14,7 @@ public class Coupon {
     @Id
     private String id;
     private double discountPercent;
-    private Date expirationDate;
+    private LocalDateTime expirationDate;
     private double minPurchaseQuantity;
     private boolean isUsed;
 
@@ -22,7 +23,7 @@ public class Coupon {
 
     }
 
-    public Coupon(String id, double discountPercent, Date expirationDate, double minPurchaseQuantity, boolean isUsed) {
+    public Coupon(String id, double discountPercent, LocalDateTime expirationDate, double minPurchaseQuantity, boolean isUsed) {
         this.id = id;
         this.discountPercent = discountPercent;
         this.expirationDate = expirationDate;

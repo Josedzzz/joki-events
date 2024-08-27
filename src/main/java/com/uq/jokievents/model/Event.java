@@ -5,6 +5,7 @@ import org.bson.types.ObjectId;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
+import java.time.LocalDateTime;
 import java.util.Date;
 
 @Data
@@ -17,7 +18,7 @@ public class Event {
     private String name;
     private String address;
     private String city;
-    private Date eventDate;
+    private LocalDateTime eventDate;
     private boolean availablePurchase;
     private String imageUrl;
     private String imapeDistributionLocality;
@@ -25,7 +26,7 @@ public class Event {
     // Constructor
     public Event() {}
 
-    public Event(String id, ObjectId idDistributionLocality, String name, String address, String city, Date eventDate, boolean availablePurchase, String imageUrl, String imapeDistributionLocality) {
+    public Event(String id, ObjectId idDistributionLocality, String name, String address, String city, LocalDateTime eventDate, boolean availablePurchase, String imageUrl, String imapeDistributionLocality) {
         this.id = id;
         this.idDistributionLocality = idDistributionLocality;
         this.name = name;
