@@ -1,5 +1,4 @@
 ### Try APIS for clients
-
 ### Create a client
 POST http://localhost:3000/api/clients
 Content-Type: application/json
@@ -12,8 +11,12 @@ Content-Type: application/json
   "email": "daniel@example.com",
   "password": "daniel123",
   "idCoupons": ["507f1f77bcf86cd799439011", "507f1f77bcf86cd799439012"],
-  "idShoppingCart": "507f1f77bcf86cd799439013"
+  "idShoppingCart": "507f1f77bcf86cd799439013",
+  "active": true,
+  "verificationCode": "ABC123",
+  "verificationCodeExpiration": "2024-08-26T14:00:00"
 }
+
 
 ### Gets all clients
 GET http://localhost:3000/api/clients
