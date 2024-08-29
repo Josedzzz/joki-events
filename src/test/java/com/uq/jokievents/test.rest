@@ -5,11 +5,11 @@ Content-Type: application/json
 
 {
   "idCard": "123",
-  "name": "Juan José",
+  "name": "Daniel Felipe",
   "direction": "123 Armenia",
   "phoneNumber": "123",
-  "email": "juanj@example.com",
-  "password": "juanj",
+  "email": "daniel@example.com",
+  "password": "daniel123",
   "idCoupons": ["507f1f77bcf86cd799439011", "507f1f77bcf86cd799439012"],
   "idShoppingCart": "507f1f77bcf86cd799439013",
   "active": true,
@@ -22,10 +22,10 @@ Content-Type: application/json
 GET http://localhost:3000/api/clients
 
 ### Gets a Client by its id
-GET http://localhost:3000/api/clients/66c74b993d4cfb6a3c509661
+GET http://localhost:3000/api/clients/66ce55c3dbc4f56724de5322
 
 ### Deletes a Client by its id
-DELETE  http://localhost:3000/api/clients/66c74b993d4cfb6a3c509661
+DELETE  http://localhost:3000/api/clients/66ce55c3dbc4f56724de5322
 
 ### Try APIS for admins
 ### Create a admin
@@ -43,10 +43,10 @@ Content-Type: application/json
 GET http://localhost:3000/api/admins
 
 ### Gets a Admin by its id
-GET http://localhost:3000/api/admins/66c74bc23d4cfb6a3c509662
+GET http://localhost:3000/api/admins/66ce55eddbc4f56724de5323
 
 ### Deletes a Admin by its id
-DELETE  http://localhost:3000/api/admins/66c74bc23d4cfb6a3c509662
+DELETE  http://localhost:3000/api/admins/66ce55eddbc4f56724de5323
 
 ### Try APIS for coupon
 ### Create a coupon
@@ -64,10 +64,10 @@ Content-Type: application/json
 GET http://localhost:3000/api/coupons
 
 ### Gets a Coupon by its id
-GET http://localhost:3000/api/coupons/66c74bd93d4cfb6a3c509663
+GET http://localhost:3000/api/coupons/66ce5605dbc4f56724de5324
 
 ### Deletes a Coupon by its id
-DELETE  http://localhost:3000/api/coupons/66c74bd93d4cfb6a3c509663
+DELETE  http://localhost:3000/api/coupons/66ce5605dbc4f56724de5324
 
 ### Try APIS for distributionlocalities
 ### Create a distributionlocalities
@@ -77,17 +77,19 @@ Content-Type: application/json
 {
   "name": "Locality Name",
   "price": 100.0,
-  "maxCapacity": 500
+  "maxCapacity": 500,
+  "imapeDistributionLocality": "https://example.com/distribution-image.jpg",
+  "currentOccupancy": 0
 }
 
 ### Gets all distributionlocalities
 GET http://localhost:3000/api/distributionlocalities
 
 ### Gets a DistributionLocalitie by its id
-GET http://localhost:3000/api/distributionlocalities/66c74bed3d4cfb6a3c509664
+GET http://localhost:3000/api/distributionlocalities/66ce561edbc4f56724de5325
 
 ### Deletes a DistributionLocalitie by its id
-DELETE  http://localhost:3000/api/distributionlocalities/66c74bed3d4cfb6a3c509664
+DELETE  http://localhost:3000/api/distributionlocalities/66ce561edbc4f56724de5325
 
 ### Try APIS for Event
 ### Create a Event
@@ -95,24 +97,23 @@ POST http://localhost:3000/api/events
 Content-Type: application/json
 
 {
-  "idDistributionLocality": "507f1f77bcf86cd799439015",
+  "idDistributionLocality": ["507f1f77bcf86cd799439015", "507f1f77bcf86cd799439016"],
   "name": "Event Name",
   "address": "1234 Main St",
   "city": "City Name",
   "eventDate": "2024-12-31T20:00:00Z",
   "availablePurchase": true,
-  "imageUrl": "https://example.com/event-image.jpg",
-  "imapeDistributionLocality": "https://example.com/distribution-image.jpg"
+  "imageUrl": "https://example.com/event-image.jpg"
 }
 
 ### Gets all events
 GET http://localhost:3000/api/events
 
 ### Gets a event by its id
-GET http://localhost:3000/api/events/66c74c003d4cfb6a3c509665
+GET http://localhost:3000/api/events/66ce562fdbc4f56724de5326
 
 ### Deletes a Event by its id
-DELETE  http://localhost:3000/api/events/66c74c003d4cfb6a3c509665
+DELETE  http://localhost:3000/api/events/66ce562fdbc4f56724de5326
 
 ### Try APIS for Report
 ### Create a REport
@@ -131,10 +132,10 @@ Content-Type: application/json
 GET http://localhost:3000/api/reports
 
 ### Gets a Report by its id
-GET http://localhost:3000/api/reports/66c74c193d4cfb6a3c509666
+GET http://localhost:3000/api/reports/66ce5641dbc4f56724de5327
 
 ### Deletes a Report by its id
-DELETE  http://localhost:3000/api/reports/66c74c193d4cfb6a3c509666
+DELETE  http://localhost:3000/api/reports/66ce5641dbc4f56724de5327
 
 ### Try APIS for ShoppingCart
 ### Create a REport
@@ -151,10 +152,10 @@ Content-Type: application/json
 GET http://localhost:3000/api/shoppingcarts
 
 ### Gets a ShoppingCart by its id
-GET http://localhost:3000/api/shoppingcarts/66c74c313d4cfb6a3c509667
+GET http://localhost:3000/api/shoppingcarts/66ce5652dbc4f56724de5328
 
 ### Deletes a ShoppingCart by its id
-DELETE  http://localhost:3000/api/shoppingcarts/66c74c313d4cfb6a3c509667
+DELETE  http://localhost:3000/api/shoppingcarts/66ce5652dbc4f56724de5328
 
 ### Try APIS for Tickets
 # Create a ticket
@@ -174,10 +175,10 @@ Content-Type: application/json
 GET http://localhost:3000/api/tickets
 
 ### Get a ticket by ID
-GET http://localhost:3000/api/tickets/66c74c483d4cfb6a3c509668
+GET http://localhost:3000/api/tickets/66ce5666dbc4f56724de5329
 
 ### Delete a ticket by ID
-DELETE http://localhost:3000/api/tickets/66c74c483d4cfb6a3c509668
+DELETE http://localhost:3000/api/tickets/66ce5666dbc4f56724de5329
 
 ### Try APIS for TicketOrders
 ### Create a ticket order
@@ -193,7 +194,7 @@ Content-Type: application/json
 GET http://localhost:3000/api/ticketorders
 
 ### Get a ticket order by ID
-GET http://localhost:3000/api/ticketorders/66c74c5a3d4cfb6a3c509669
+GET http://localhost:3000/api/ticketorders/66ce567edbc4f56724de532a
 
 ### Delete a ticket order by ID
-DELETE http://localhost:3000/api/ticketorders/66c74c5a3d4cfb6a3c509669
+DELETE http://localhost:3000/api/ticketorders/66ce567edbc4f56724de532a
