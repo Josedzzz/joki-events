@@ -93,13 +93,14 @@ public class ClientController {
         return clientService.findByEmailAndPassword(body.email(), body.password());
     }
 
+    /**
+     * Registers a client being aware of all its parameters
+     * @param rcDto the dto that brings the front.
+     * @return an entity response.
+     */
     @PostMapping("/register")
     public ResponseEntity<Map<String, String>> registerClient(@RequestBody RegisterClientDTO rcDto) {
         // Using the service to register the client
-        Client newClient = clientService.registerNewClient(rcDto);
-        // Returning the client id, for a customized page for the new client!
-        Map<String, String> response = new HashMap<>();
-        response.put("id", newClient.getId());
-        return new ResponseEntity<>(response, HttpStatus.CREATED);
+        return clientService.registerNewClient(rcDto);
     }
 }
