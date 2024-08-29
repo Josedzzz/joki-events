@@ -6,6 +6,7 @@ import java.util.*;
 import com.uq.jokievents.records.RegisterClientDTO;
 import com.uq.jokievents.utils.ClientMapper;
 import com.uq.jokievents.utils.EmailService;
+import com.uq.jokievents.utils.Generators;
 import com.uq.jokievents.utils.VerificationService;
 import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -129,7 +130,7 @@ public class ClientService {
         try {
             Optional<Client> client = clientRepository.findByEmailAndPassword(email, password);
             if (client.isPresent()) {
-                //Verificates if the Client is active for login
+                //Checks if the Client is active for login
                 if(client.get().isActive()){
                     Map<String, String> response = new HashMap<>();
                     response.put("id", client.get().getId());
@@ -157,12 +158,12 @@ public class ClientService {
      * Is it necessary to have a dto parameter? Couldn't it be the Client class itself?
      * @return a client
      */
-    public Client registerNewClient(RegisterClientDTO dto) {
+    public ResponseEntity<Map<String, String>> registerNewClient(RegisterClientDTO dto) {
         // Mapping the DTO as an entity (Client)
         Client client = ClientMapper.INSTANCE.ClientRegisterDTOtoClient(dto);
 
         // Generating a verification code and establishing an expiration date
-        String verificationCode = UUID.randomUUID().toString();
+        String verificationCode = Generators.generateRndVerificationCode();
         LocalDateTime expiration = LocalDateTime.now().plusMinutes(15);
 
         // Manually assigning all the other attributes.
@@ -178,8 +179,11 @@ public class ClientService {
 
         // Save the Client to the database.
         client = clientRepository.save(client);
-        // Return the saved Client
-        return client;
+
+        // Returns a response entity
+        Map<String, String> response = new HashMap<>();
+        response.put("id", client.getId());
+        return new ResponseEntity<>(response, HttpStatus.CREATED);
     }
 
     /**
