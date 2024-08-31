@@ -2,6 +2,7 @@ package com.uq.jokievents.controller;
 
 import com.uq.jokievents.records.LoginDTO;
 import com.uq.jokievents.records.RegisterClientDTO;
+import com.uq.jokievents.records.VerifyClientDTO;
 import com.uq.jokievents.utils.VerificationService;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -62,7 +63,7 @@ public class ClientController {
     /**
      * Update an existing client by id
      *
-     * @param id the identifier of the client to update
+     * @param id     the identifier of the client to update
      * @param client the updated client object
      * @return a ResponseEntity containing the update client
      */
@@ -85,6 +86,7 @@ public class ClientController {
     /**
      * Login client with email and password
      * Why return the client dto as an answer
+     *
      * @param body the logindto
      * @return a ResponseEntity containing the client if found, otherwise an error message
      */
@@ -95,6 +97,7 @@ public class ClientController {
 
     /**
      * Registers a client being aware of all its parameters
+     *
      * @param rcDto the dto that brings the front.
      * @return an entity response.
      */
@@ -102,5 +105,16 @@ public class ClientController {
     public ResponseEntity<Map<String, String>> registerClient(@RequestBody RegisterClientDTO rcDto) {
         // Using the service to register the client
         return clientService.registerNewClient(rcDto);
+    }
+
+    /**
+     * Verify a clients code
+     *
+     * @param body the dto that bring the front
+     * @return an entity response
+     */
+    @PostMapping("/verify")
+    public ResponseEntity<?> verifyClient(@RequestBody VerifyClientDTO body) {
+        return clientService.verifyCode(body.id(), body.verificationCode());
     }
 }

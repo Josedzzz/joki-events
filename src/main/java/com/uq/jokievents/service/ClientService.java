@@ -190,16 +190,17 @@ public class ClientService {
      * Method to answer a http request to verify if a code is valid or not.
      * @param clientId client id which is validating its account
      * @param verificationCode verification code of the client
-     * @return boolean saying if verified or not
+     * @return a responseEntity saying if verified or not
      */
-    @PostMapping("/verify")
-    public ResponseEntity<String> verifyCode(@RequestParam String clientId, @RequestParam String verificationCode) {
+    public ResponseEntity<?> verifyCode(@RequestParam String clientId, @RequestParam String verificationCode) {
         boolean verified = verificationService.verifyCode(clientId, verificationCode);
-
+        Map<String, String> response = new HashMap<>();
         if (verified) {
-            return new ResponseEntity<>("Client verified", HttpStatus.OK);
+            response.put("message", "Client verified");
+            return new ResponseEntity<>(response, HttpStatus.OK);
         } else {
-            return new ResponseEntity<>("Invalid code or time expired", HttpStatus.BAD_REQUEST);
+            response.put("message", "Invalid code or time expired");
+            return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
         }
     }
 }
