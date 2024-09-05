@@ -4,10 +4,7 @@ import java.time.LocalDateTime;
 import java.util.*;
 
 import com.uq.jokievents.records.RegisterClientDTO;
-import com.uq.jokievents.utils.ClientMapper;
-import com.uq.jokievents.utils.EmailService;
-import com.uq.jokievents.utils.Generators;
-import com.uq.jokievents.utils.VerificationService;
+import com.uq.jokievents.utils.*;
 import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -28,6 +25,10 @@ public class ClientService {
     private EmailService emailService;
     @Autowired
     private VerificationService verificationService;
+
+    // Acces for Utils methods
+    @Autowired
+    private Utils utils;
 
     /**
      * Get a list of all clients from the db
@@ -159,12 +160,26 @@ public class ClientService {
      * @return a client
      */
     public ResponseEntity<Map<String, String>> registerNewClient(RegisterClientDTO dto) {
+
         // Mapping the DTO as an entity (Client)
         Client client = ClientMapper.INSTANCE.ClientRegisterDTOtoClient(dto);
+
+        // Verifications for Client registration
+        if(utils.existsByIdCard(client.getIdCard())){
+            Map<String, String> response = new HashMap<>();
+            response.put("message", "The idCard is in use.");
+            return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+        }
+        if(utils.existsEmailClient(client.getEmail())){
+            Map<String, String> response = new HashMap<>();
+            response.put("message", "The email is in use.");
+            return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+        }
 
         // Generating a verification code and establishing an expiration date
         String verificationCode = Generators.generateRndVerificationCode();
         LocalDateTime expiration = LocalDateTime.now().plusMinutes(15);
+
 
         // Manually assigning all the other attributes.
         client.setVerificationCode(verificationCode);
@@ -172,7 +187,7 @@ public class ClientService {
 
         client.setIdCoupons(new ArrayList<ObjectId>());
         client.setIdShoppingCart(new ObjectId());
-        client.setActive(true);
+        client.setActive(false);
 
         // Sending the email to the client!
         emailService.sendVerificationMail(client.getEmail(), verificationCode);
@@ -203,4 +218,51 @@ public class ClientService {
             return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
         }
     }
+
+    /**
+     * Check if a client with the given email already exists
+     *
+     * @param email the email to check
+     * @return a ResponseEntity indicating whether the email exists
+     */
+    public ResponseEntity<?> existsByEmail(String email) {
+        Map<String, String> response = new HashMap<>();
+        try {
+            boolean exists = clientRepository.existsByEmail(email);
+            if (exists) {
+                response.put("message", "Email is already in use");
+                return new ResponseEntity<>(response, HttpStatus.CONFLICT);
+            } else {
+                response.put("message", "Email is available");
+                return new ResponseEntity<>(response, HttpStatus.OK);
+            }
+        } catch (Exception e) {
+            response.put("message", "Failed to check email");
+            return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    /**
+     * Check if a client with the given idcard already exists
+     *
+     * @param idCard the email to check
+     * @return a ResponseEntity indicating whether the email exists
+     */
+    public ResponseEntity<?> existsByIdCard(String idCard) {
+        Map<String, String> response = new HashMap<>();
+        try {
+            boolean exists = clientRepository.existsByIdCard(idCard);
+            if (exists) {
+                response.put("message", "idCard is already in use");
+                return new ResponseEntity<>(response, HttpStatus.CONFLICT);
+            } else {
+                response.put("message", "idCard is available");
+                return new ResponseEntity<>(response, HttpStatus.OK);
+            }
+        } catch (Exception e) {
+            response.put("message", "Failed to check idCard");
+            return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
 }
