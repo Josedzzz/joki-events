@@ -1,41 +1,39 @@
-package com.uq.jokievents.service;
+package com.uq.jokievents.service.implementation;
 
-import java.time.LocalDateTime;
-import java.util.*;
-
+import com.uq.jokievents.model.Client;
 import com.uq.jokievents.records.RegisterClientDTO;
+import com.uq.jokievents.repository.ClientRepository;
+import com.uq.jokievents.service.interfaces.ClientService;
 import com.uq.jokievents.utils.*;
+import lombok.RequiredArgsConstructor;
 import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
-
-import com.uq.jokievents.model.Client;
-import com.uq.jokievents.repository.ClientRepository;
-import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.RequestParam;
 
+import java.time.LocalDateTime;
+import java.util.*;
+
 @Service
-public class ClientService {
+@Transactional
+@RequiredArgsConstructor
+public class ClientServiceImpl implements ClientService {
 
     @Autowired
-    private ClientRepository clientRepository; // Interacts with MongoDB
+    private final ClientRepository clientRepository;
     @Autowired
     private EmailService emailService;
     @Autowired
     private VerificationService verificationService;
-
-    // Acces for Utils methods
     @Autowired
     private Utils utils;
 
-    /**
-     * Get a list of all clients from the db
-     *
-     * @return a ResponseEntity containing a list of Client objects and an HTTP status of ok
-     */
-    public ResponseEntity<?> findAll() {
+
+    @Override
+    public ResponseEntity<?> findAllClients() {
         try {
             List<Client> clients = clientRepository.findAll();
             return new ResponseEntity<>(clients, HttpStatus.OK);
@@ -44,13 +42,8 @@ public class ClientService {
         }
     }
 
-    /**
-     * Get a client by id
-     *
-     * @param id the identifier of the client object
-     * @return a ResponseEntity containing the client and an HTTP status
-     */
-    public ResponseEntity<?> findById(String id) {
+    @Override
+    public ResponseEntity<?> findClientById(String id) {
         try {
             Optional<Client> client = clientRepository.findById(id);
             if (client.isPresent()) {
@@ -64,28 +57,13 @@ public class ClientService {
     }
 
     /**
-     * Create a new client
-     *
-     * @param client the client object to be created
-     * @return a ResponseEntity containing the created client object and an HTTP status
+     * TODO Parameter should be an id.
+     * @param id
+     * @param client
+     * @return
      */
-    public ResponseEntity<?> create(Client client) {
-        try {
-            Client createdClient = clientRepository.save(client);
-            return new ResponseEntity<>(createdClient, HttpStatus.CREATED);
-        } catch (Exception e) {
-            return new ResponseEntity<>("Failed to create client", HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-    }
-
-    /**
-     * Update an existing client by id
-     *
-     * @param id the identifier of the client to be updated
-     * @param client the updated client object
-     * @return a ResponseEntity containing the updated client object and an HTTP status
-     */
-    public ResponseEntity<?> update(String id, Client client) {
+    @Override
+    public ResponseEntity<?> updateClient(String id, Client client) {
         try {
             Optional<Client> existingClient = clientRepository.findById(id);
             if (existingClient.isPresent()) {
@@ -100,13 +78,8 @@ public class ClientService {
         }
     }
 
-    /**
-     * Delete a client by its id
-     *
-     * @param id the identifier of the client to delete
-     * @return a ResponseEntity with an HTTP status
-     */
-    public ResponseEntity<?> delete(String id) {
+    @Override
+    public ResponseEntity<?> deleteClient(String id) {
         try {
             Optional<Client> existingClient = clientRepository.findById(id);
             if (existingClient.isPresent()) {
@@ -120,14 +93,8 @@ public class ClientService {
         }
     }
 
-    /**
-     * Find a client by email and password
-     *
-     * @param email of the client
-     * @param password of the client
-     * @return a ResponseEntity containing a JSON with the client's id if found, otherwise a JSON with an error message
-     */
-    public ResponseEntity<?> findByEmailAndPassword(String email, String password) {
+    @Override
+    public ResponseEntity<?> findClientByEmailAndPassword(String email, String password) {
         try {
             Optional<Client> client = clientRepository.findByEmailAndPassword(email, password);
             if (client.isPresent()) {
@@ -154,11 +121,7 @@ public class ClientService {
         }
     }
 
-    /**
-     * Registers a client from its dto instance.
-     * Is it necessary to have a dto parameter? Couldn't it be the Client class itself?
-     * @return a client
-     */
+    @Override
     public ResponseEntity<Map<String, String>> registerNewClient(RegisterClientDTO dto) {
 
         // Mapping the DTO as an entity (Client)
@@ -201,12 +164,7 @@ public class ClientService {
         return new ResponseEntity<>(response, HttpStatus.CREATED);
     }
 
-    /**
-     * Method to answer a http request to verify if a code is valid or not.
-     * @param clientId client id which is validating its account
-     * @param verificationCode verification code of the client
-     * @return a responseEntity saying if verified or not
-     */
+    @Override
     public ResponseEntity<?> verifyCode(@RequestParam String clientId, @RequestParam String verificationCode) {
         boolean verified = verificationService.verifyCode(clientId, verificationCode);
         Map<String, String> response = new HashMap<>();
@@ -219,12 +177,7 @@ public class ClientService {
         }
     }
 
-    /**
-     * Check if a client with the given email already exists
-     *
-     * @param email the email to check
-     * @return a ResponseEntity indicating whether the email exists
-     */
+    @Override
     public ResponseEntity<?> existsByEmail(String email) {
         Map<String, String> response = new HashMap<>();
         try {
@@ -242,12 +195,7 @@ public class ClientService {
         }
     }
 
-    /**
-     * Check if a client with the given idcard already exists
-     *
-     * @param idCard the email to check
-     * @return a ResponseEntity indicating whether the email exists
-     */
+    @Override
     public ResponseEntity<?> existsByIdCard(String idCard) {
         Map<String, String> response = new HashMap<>();
         try {
@@ -264,5 +212,4 @@ public class ClientService {
             return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
-
 }

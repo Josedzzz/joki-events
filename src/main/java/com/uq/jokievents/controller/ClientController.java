@@ -3,8 +3,8 @@ package com.uq.jokievents.controller;
 import com.uq.jokievents.records.LoginDTO;
 import com.uq.jokievents.records.RegisterClientDTO;
 import com.uq.jokievents.records.VerifyClientDTO;
+import com.uq.jokievents.service.implementation.ClientServiceImpl;
 import com.uq.jokievents.utils.VerificationService;
-import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -12,11 +12,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 
 import com.uq.jokievents.model.Client;
-import com.uq.jokievents.service.ClientService;
 
 import org.springframework.web.bind.annotation.*;
 
-import java.util.HashMap;
 import java.util.Map;
 
 @RestController
@@ -24,7 +22,7 @@ import java.util.Map;
 public class ClientController {
 
     @Autowired
-    private ClientService clientService;
+    private ClientServiceImpl clientService;
     @Autowired
     private VerificationService verificationService;
 
@@ -35,7 +33,7 @@ public class ClientController {
      */
     @GetMapping
     public ResponseEntity<?> getAllClients() {
-        return clientService.findAll();
+        return clientService.findAllClients();
     }
 
     /**
@@ -46,18 +44,7 @@ public class ClientController {
      */
     @GetMapping("/{id}")
     public ResponseEntity<?> getClientById(@PathVariable String id) {
-        return clientService.findById(id);
-    }
-
-    /**
-     * Create a new client
-     *
-     * @param client the client object to be created
-     * @return a ResponseEntity containing the created Client
-     */
-    @PostMapping
-    public ResponseEntity<?> createClient(@RequestBody Client client) {
-        return clientService.create(client);
+        return clientService.findClientById(id);
     }
 
     /**
@@ -69,7 +56,7 @@ public class ClientController {
      */
     @PutMapping("/{id}")
     public ResponseEntity<?> updateClient(@PathVariable String id, @RequestBody Client client) {
-        return clientService.update(id, client);
+        return clientService.updateClient(id, client);
     }
 
     /**
@@ -80,7 +67,7 @@ public class ClientController {
      */
     @DeleteMapping("/{id}")
     public ResponseEntity<?> deleteClient(@PathVariable String id) {
-        return clientService.delete(id);
+        return clientService.deleteClient(id);
     }
 
     /**
@@ -92,7 +79,7 @@ public class ClientController {
      */
     @PostMapping("/login")
     public ResponseEntity<?> loginClient(@RequestBody LoginDTO body) {
-        return clientService.findByEmailAndPassword(body.email(), body.password());
+        return clientService.findClientByEmailAndPassword(body.email(), body.password());
     }
 
     /**
