@@ -24,4 +24,18 @@ public class EmailService {
         message.setText("Please use the following code to activate your account: " + verCode);
         mailSender.send(message);
     }
+
+    /**
+     * Sends a recuperation email to a client to reset their password
+     * @param to client's email
+     * @param resetLink the password reset link
+     */
+    public void sendRecuperationEmail(String to, String verCode) {
+        SimpleMailMessage message = new SimpleMailMessage();
+        message.setTo(to);
+        message.setSubject("Password Recuperation");
+        message.setText("Please use the following code to create a new password: " + verCode);
+        mailSender.send(message);
+    }
+
 }

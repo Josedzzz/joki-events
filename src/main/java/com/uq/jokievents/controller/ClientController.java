@@ -1,7 +1,8 @@
 package com.uq.jokievents.controller;
 
-import com.uq.jokievents.service.implementation.ClientServiceImpl;
-import com.uq.jokievents.utils.VerificationService;
+import com.uq.jokievents.service.interfaces.ClientService;
+import lombok.RequiredArgsConstructor;
+
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -12,23 +13,18 @@ import com.uq.jokievents.dtos.LoginClientDTO;
 import com.uq.jokievents.dtos.RegisterClientDTO;
 import com.uq.jokievents.dtos.UpdateClientDTO;
 import com.uq.jokievents.dtos.VerifyClientDTO;
-import com.uq.jokievents.model.Client;
 
 import org.springframework.web.bind.annotation.*;
-
-import java.util.Map;
 
 import javax.validation.Valid;
 
 @RestController
 @RequestMapping("/api/clients")
+@RequiredArgsConstructor
 public class ClientController {
 
     @Autowired
-    private ClientServiceImpl clientService;
-    @Autowired
-    private VerificationService verificationService;
-
+    private ClientService clientService;
     /**
      * Get all clients
      *
@@ -52,7 +48,14 @@ public class ClientController {
 
     /**
      * Update an existing client by id
-     *
+     * Example JSON:
+     * {
+     *  "idCard": "1090900900",
+     *  "phone": "3101112222",
+     *  "email": "mail@mail.com",
+     *  "name": "VeryCoolName",
+     *  "direction": "Very Cool Addres"
+     * }
      * @param id     the identifier of the client to update
      * @param client the updated client object
      * @return a ResponseEntity containing the update client
@@ -75,7 +78,11 @@ public class ClientController {
 
     /**
      * Login client with email and password
-     *
+     * Example JSON:
+     * {
+     *  "email": "mail@mail.com",
+     *  "password": "non-encrypted-password"
+     * }
      * @param body the logindto
      * @return a ResponseEntity containing the client if found, otherwise an error message
      */
@@ -86,12 +93,20 @@ public class ClientController {
 
     /**
      * Registers a client being aware of all its parameters
-     *
+     * Example JSON:
+     * {
+     *  "idCard": "1090900900",
+     *  "name": "VeryCoolName",
+     *  "address": "Very cool address",
+     *  "phone": "3003003000",
+     *  "email": "mail@mail.com",
+     *  "password": "Non-encrypted-password"
+     * }
      * @param rcDto the dto that brings the front.
      * @return an entity response.
      */
     @PostMapping("/register")
-    public ResponseEntity<Map<String, String>> registerClient(@Valid @RequestBody RegisterClientDTO rcDto) {
+    public ResponseEntity<?> registerClient(@Valid @RequestBody RegisterClientDTO rcDto) {
         // Using the service to register the client
         return clientService.registerNewClient(rcDto);
     }
@@ -99,6 +114,10 @@ public class ClientController {
     /**
      * Verify a clients code
      * Jose auth this!
+     * Example JSON:
+     * {
+     *  "verificationCode": "123456"
+     * }
      * @param body the dto that bring the front
      * @return an entity response
      */
