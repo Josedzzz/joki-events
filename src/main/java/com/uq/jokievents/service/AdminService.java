@@ -1,7 +1,7 @@
 package com.uq.jokievents.service;
 
+import com.uq.jokievents.dtos.LoginClientDTO;
 import com.uq.jokievents.model.Admin;
-import com.uq.jokievents.model.Client;
 import com.uq.jokievents.repository.AdminRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -114,8 +114,10 @@ public class AdminService {
      * @param password of the admin
      * @return a ResponseEntity containing a JSON with the admin's id if found, otherwise a JSON with an error message
      */
-    public ResponseEntity<?> findByUsernameAndPassword(String username, String password) {
+    public ResponseEntity<?> findByUsernameAndPassword(LoginClientDTO dto) {
         try {
+            String username = dto.getEmail();
+            String password = dto.getPassword();
             Optional<Admin> admin = adminRepository.findByUsernameAndPassword(username, password);
             if (admin.isPresent()) {
                 Map<String, String> response = new HashMap<>();

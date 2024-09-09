@@ -1,8 +1,8 @@
 package com.uq.jokievents.controller;
 
+import com.uq.jokievents.dtos.LoginClientDTO;
 import com.uq.jokievents.model.Admin;
 import com.uq.jokievents.model.Client;
-import com.uq.jokievents.records.LoginDTO;
 import com.uq.jokievents.service.AdminService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -82,7 +82,7 @@ public class AdminController {
      * @return a ResponseEntity containing the admin's id if found, otherwise an error message
      */
     @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestBody LoginDTO body) {
-        return adminService.findByUsernameAndPassword(body.email(), body.password());
+    public ResponseEntity<?> login(@RequestBody LoginClientDTO dto) {
+        return adminService.findByUsernameAndPassword(dto);
     }
 }
