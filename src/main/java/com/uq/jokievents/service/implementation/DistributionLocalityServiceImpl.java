@@ -1,8 +1,9 @@
-package com.uq.jokievents.service;
+package com.uq.jokievents.service.implementation;
 
 import com.uq.jokievents.model.Client;
 import com.uq.jokievents.model.DistributionLocality;
 import com.uq.jokievents.repository.DistributionLocalityRepository;
+import com.uq.jokievents.service.interfaces.DistributionLocalityService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -12,7 +13,7 @@ import java.util.List;
 import java.util.Optional;
 
 @Service
-public class DistributionLocalityService {
+public class DistributionLocalityServiceImpl implements DistributionLocalityService {
 
     @Autowired
     private DistributionLocalityRepository distributionLocalityRepository;
@@ -107,3 +108,4 @@ public class DistributionLocalityService {
     }
 
 }
+
