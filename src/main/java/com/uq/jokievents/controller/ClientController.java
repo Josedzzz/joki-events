@@ -83,7 +83,7 @@ public class ClientController {
      *  "email": "mail@mail.com",
      *  "password": "non-encrypted-password"
      * }
-     * @param body the logindto
+     * @param dto the logindto
      * @return a ResponseEntity containing the client if found, otherwise an error message
      */
     @PostMapping("/login")
@@ -118,7 +118,7 @@ public class ClientController {
      * {
      *  "verificationCode": "123456"
      * }
-     * @param body the dto that bring the front
+     * @param dto the dto that bring the front
      * @return an entity response
      */
     @PostMapping("/{id}/verify")
