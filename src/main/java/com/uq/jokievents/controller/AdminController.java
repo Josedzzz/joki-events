@@ -1,23 +1,14 @@
 package com.uq.jokievents.controller;
 
 import com.uq.jokievents.dtos.AuthAdminDTO;
-import com.uq.jokievents.dtos.LoginClientDTO;
 import com.uq.jokievents.dtos.RecoverPassAdminDTO;
 import com.uq.jokievents.dtos.UpdateAdminDTO;
-import com.uq.jokievents.model.Admin;
-import com.uq.jokievents.model.Client;
-import com.uq.jokievents.service.implementation.AdminServiceImpl;
 import com.uq.jokievents.service.interfaces.AdminService;
 
 import lombok.RequiredArgsConstructor;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
-import java.util.Optional;
 
 import javax.validation.Valid;
 
