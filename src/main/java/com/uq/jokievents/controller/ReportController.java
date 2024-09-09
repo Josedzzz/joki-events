@@ -1,14 +1,10 @@
 package com.uq.jokievents.controller;
 
 import com.uq.jokievents.model.Report;
-import com.uq.jokievents.service.ReportService;
+import com.uq.jokievents.service.interfaces.ReportService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
-import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/reports")
