@@ -1,7 +1,9 @@
 package com.uq.jokievents.utils;
 
+import com.uq.jokievents.dtos.RegisterClientDTO;
+import com.uq.jokievents.dtos.UpdateClientDTO;
 import com.uq.jokievents.model.Client;
-import com.uq.jokievents.records.RegisterClientDTO;
+
 import org.mapstruct.Mapper;
 import org.mapstruct.factory.Mappers;
 
@@ -9,8 +11,11 @@ import org.mapstruct.factory.Mappers;
 public interface ClientMapper {
     ClientMapper INSTANCE = Mappers.getMapper(ClientMapper.class);
 
-    // Cliente a DTO
+    // Cliente a RegistrarCliente
     RegisterClientDTO  ClientToRegisterClientDTO(Client client);
-    // DTO a Cliente
+    // RegistrarCliente a Cliente
     Client ClientRegisterDTOtoClient(RegisterClientDTO dto);
+
+    UpdateClientDTO ClientToUpdateClientDTO(Client client);
+    Client UpdateClientDTOtoClient(UpdateClientDTO dto);
 }

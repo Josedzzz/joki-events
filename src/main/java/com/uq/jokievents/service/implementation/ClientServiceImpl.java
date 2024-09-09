@@ -1,7 +1,10 @@
 package com.uq.jokievents.service.implementation;
 
+import com.uq.jokievents.dtos.LoginClientDTO;
+import com.uq.jokievents.dtos.RegisterClientDTO;
+import com.uq.jokievents.dtos.UpdateClientDTO;
+import com.uq.jokievents.dtos.VerifyClientDTO;
 import com.uq.jokievents.model.Client;
-import com.uq.jokievents.records.RegisterClientDTO;
 import com.uq.jokievents.repository.ClientRepository;
 import com.uq.jokievents.service.interfaces.ClientService;
 import com.uq.jokievents.utils.*;
@@ -12,7 +15,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.bind.annotation.RequestParam;
 
 import java.time.LocalDateTime;
 import java.util.*;
@@ -38,7 +40,7 @@ public class ClientServiceImpl implements ClientService {
             List<Client> clients = clientRepository.findAll();
             return new ResponseEntity<>(clients, HttpStatus.OK);
         } catch (Exception e) {
-            return new ResponseEntity<>("Failed clients request", HttpStatus.INTERNAL_SERVER_ERROR);
+            return new ResponseEntity<>("Failed client request", HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -57,25 +59,33 @@ public class ClientServiceImpl implements ClientService {
     }
 
     /**
-     * TODO Parameter should be an id.
-     * @param id
-     * @param client
-     * @return
+     * Updates a client from a dto.
+     * @param id String
+     * @param client UpdateClientDTO
+     * @return ResponseEntity
      */
     @Override
-    public ResponseEntity<?> updateClient(String id, Client client) {
+    public ResponseEntity<?> updateClient(String id, UpdateClientDTO dto) {
+
+
         try {
             Optional<Client> existingClient = clientRepository.findById(id);
             if (existingClient.isPresent()) {
-                client.setId(id);
-                Client updatedClient = clientRepository.save(client);
+
+                Client client = existingClient.get();
+                client.setIdCard(dto.getIdCard());
+                client.setPhoneNumber(dto.getPhone());
+                client.setEmail(dto.getEmail());
+                client.setName(dto.getName());
+                client.setDirection(dto.getDirection());
+                Client updatedClient = clientRepository.save(client);   
                 return new ResponseEntity<>(updatedClient, HttpStatus.OK);
             } else {
                 return new ResponseEntity<>("Client not found", HttpStatus.NOT_FOUND);
             }
         } catch (Exception e) {
             return new ResponseEntity<>("Failed to update client", HttpStatus.INTERNAL_SERVER_ERROR);
-        }
+        }   
     }
 
     @Override
@@ -94,8 +104,10 @@ public class ClientServiceImpl implements ClientService {
     }
 
     @Override
-    public ResponseEntity<?> findClientByEmailAndPassword(String email, String password) {
+    public ResponseEntity<?> findClientByEmailAndPassword(LoginClientDTO dto) {
         try {
+            String email = dto.getEmail();
+            String password = dto.getPassword();
             Optional<Client> client = clientRepository.findByEmailAndPassword(email, password);
             if (client.isPresent()) {
                 //Checks if the Client is active for login
@@ -106,17 +118,17 @@ public class ClientServiceImpl implements ClientService {
                 }
                 else{
                     Map<String, String> errorResponse = new HashMap<>();
-                    errorResponse.put("message", "The client isn't active");
+                    errorResponse.put("Error", "The client isn't active");
                     return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
                 }
             } else {
                 Map<String, String> errorResponse = new HashMap<>();
-                errorResponse.put("message", "Invalid email or password");
+                errorResponse.put("Error", "Invalid email or password");
                 return new ResponseEntity<>(errorResponse, HttpStatus.NOT_FOUND);
             }
         } catch (Exception e) {
             Map<String, String> errorResponse = new HashMap<>();
-            errorResponse.put("message", "Failed to find client");
+            errorResponse.put("Error", "Failed to find client");
             return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
@@ -130,12 +142,12 @@ public class ClientServiceImpl implements ClientService {
         // Verifications for Client registration
         if(utils.existsByIdCard(client.getIdCard())){
             Map<String, String> response = new HashMap<>();
-            response.put("message", "The idCard is in use.");
+            response.put("Error", "The identification card is in use");
             return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
         }
         if(utils.existsEmailClient(client.getEmail())){
             Map<String, String> response = new HashMap<>();
-            response.put("message", "The email is in use.");
+            response.put("Error", "The email is in use");
             return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
         }
 
@@ -148,7 +160,7 @@ public class ClientServiceImpl implements ClientService {
         client.setVerificationCode(verificationCode);
         client.setVerificationCodeExpiration(expiration);
 
-        client.setIdCoupons(new ArrayList<ObjectId>());
+        client.setIdCoupons(new ArrayList<>());
         client.setIdShoppingCart(new ObjectId());
         client.setActive(false);
 
@@ -165,14 +177,15 @@ public class ClientServiceImpl implements ClientService {
     }
 
     @Override
-    public ResponseEntity<?> verifyCode(@RequestParam String clientId, @RequestParam String verificationCode) {
+    public ResponseEntity<?> verifyCode(String clientId, VerifyClientDTO dto) {
+        String verificationCode = dto.getVerificationCode();
         boolean verified = verificationService.verifyCode(clientId, verificationCode);
         Map<String, String> response = new HashMap<>();
         if (verified) {
-            response.put("message", "Client verified");
+            response.put("Success", "Client verified");
             return new ResponseEntity<>(response, HttpStatus.OK);
         } else {
-            response.put("message", "Invalid code or time expired");
+            response.put("Error", "Invalid code or time expired");
             return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
         }
     }
@@ -183,14 +196,14 @@ public class ClientServiceImpl implements ClientService {
         try {
             boolean exists = clientRepository.existsByEmail(email);
             if (exists) {
-                response.put("message", "Email is already in use");
+                response.put("Error", "Email is already in use");
                 return new ResponseEntity<>(response, HttpStatus.CONFLICT);
             } else {
-                response.put("message", "Email is available");
+                response.put("Success", "Email is available");
                 return new ResponseEntity<>(response, HttpStatus.OK);
             }
         } catch (Exception e) {
-            response.put("message", "Failed to check email");
+            response.put("Error", "Failed to check email");
             return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
@@ -201,14 +214,14 @@ public class ClientServiceImpl implements ClientService {
         try {
             boolean exists = clientRepository.existsByIdCard(idCard);
             if (exists) {
-                response.put("message", "idCard is already in use");
+                response.put("Error", "Identification card is already in use");
                 return new ResponseEntity<>(response, HttpStatus.CONFLICT);
             } else {
-                response.put("message", "idCard is available");
+                response.put("Success", "Identification card is available");
                 return new ResponseEntity<>(response, HttpStatus.OK);
             }
         } catch (Exception e) {
-            response.put("message", "Failed to check idCard");
+            response.put("Error", "Failed to check idCard");
             return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }

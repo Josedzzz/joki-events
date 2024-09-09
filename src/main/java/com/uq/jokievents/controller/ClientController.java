@@ -1,8 +1,5 @@
 package com.uq.jokievents.controller;
 
-import com.uq.jokievents.records.LoginDTO;
-import com.uq.jokievents.records.RegisterClientDTO;
-import com.uq.jokievents.records.VerifyClientDTO;
 import com.uq.jokievents.service.implementation.ClientServiceImpl;
 import com.uq.jokievents.utils.VerificationService;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -11,11 +8,17 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 
+import com.uq.jokievents.dtos.LoginClientDTO;
+import com.uq.jokievents.dtos.RegisterClientDTO;
+import com.uq.jokievents.dtos.UpdateClientDTO;
+import com.uq.jokievents.dtos.VerifyClientDTO;
 import com.uq.jokievents.model.Client;
 
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
+
+import javax.validation.Valid;
 
 @RestController
 @RequestMapping("/api/clients")
@@ -55,7 +58,7 @@ public class ClientController {
      * @return a ResponseEntity containing the update client
      */
     @PutMapping("/{id}")
-    public ResponseEntity<?> updateClient(@PathVariable String id, @RequestBody Client client) {
+    public ResponseEntity<?> updateClient(@PathVariable String id, @RequestBody UpdateClientDTO client) {
         return clientService.updateClient(id, client);
     }
 
@@ -72,14 +75,13 @@ public class ClientController {
 
     /**
      * Login client with email and password
-     * Why return the client dto as an answer
      *
      * @param body the logindto
      * @return a ResponseEntity containing the client if found, otherwise an error message
      */
     @PostMapping("/login")
-    public ResponseEntity<?> loginClient(@RequestBody LoginDTO body) {
-        return clientService.findClientByEmailAndPassword(body.email(), body.password());
+    public ResponseEntity<?> loginClient(@RequestBody LoginClientDTO dto) {
+        return clientService.findClientByEmailAndPassword(dto);
     }
 
     /**
@@ -89,20 +91,20 @@ public class ClientController {
      * @return an entity response.
      */
     @PostMapping("/register")
-    public ResponseEntity<Map<String, String>> registerClient(@RequestBody RegisterClientDTO rcDto) {
+    public ResponseEntity<Map<String, String>> registerClient(@Valid @RequestBody RegisterClientDTO rcDto) {
         // Using the service to register the client
         return clientService.registerNewClient(rcDto);
     }
 
     /**
      * Verify a clients code
-     *
+     * Jose auth this!
      * @param body the dto that bring the front
      * @return an entity response
      */
-    @PostMapping("/verify")
-    public ResponseEntity<?> verifyClient(@RequestBody VerifyClientDTO body) {
-        return clientService.verifyCode(body.id(), body.verificationCode());
+    @PostMapping("/{id}/verify")
+    public ResponseEntity<?> verifyClient(@PathVariable String id, @RequestBody VerifyClientDTO dto) {
+        return clientService.verifyCode(id, dto);
     }
 
     /**

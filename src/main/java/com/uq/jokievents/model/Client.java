@@ -12,14 +12,14 @@ import org.springframework.data.mongodb.core.mapping.Document;
 public class Client {
 
     @Id
-    private String id; // Should it be in dto, or will mongo take care of it?
-    private String idCard; // Kind of a country given identifier. In dto
-    private String name; // In dto
-    private String direction; // Deberías ser "address" pero me da miedo cambiarlo. In dto
-    private String phoneNumber; // In dto
-    private String email; // In dto
-    private String password; // In dto
-    private ArrayList<ObjectId> idCoupons;
+    private String id; // Mongo will take care of it.
+    private String idCard; // Kind of a country given identifier.
+    private String name;
+    private String direction; // Deberías ser "address" pero me da miedo cambiarlo.
+    private String phoneNumber;
+    private String email;
+    private String password;
+    private ArrayList<ObjectId> idCoupons; // TODO Implementar la clase CouponID (¿Cómo sé qué no eres uno de ellos?)
     private ObjectId idShoppingCart;
     private boolean active;
     private String verificationCode;
