@@ -2,10 +2,14 @@ package com.uq.jokievents.service.implementation;
 
 import javax.validation.Valid;
 
+import com.uq.jokievents.dtos.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import com.uq.jokievents.model.Admin;
+import com.uq.jokievents.model.Coupon;
 import com.uq.jokievents.repository.AdminRepository;
+import com.uq.jokievents.repository.CouponRepository;
+
 import java.time.LocalDateTime;
 
 import org.springframework.http.ResponseEntity;
@@ -14,9 +18,6 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.RequestBody;
 import java.util.*;
 
-import com.uq.jokievents.dtos.AuthAdminDTO;
-import com.uq.jokievents.dtos.RecoverPassAdminDTO;
-import com.uq.jokievents.dtos.UpdateAdminDTO;
 import com.uq.jokievents.service.interfaces.AdminService;
 import com.uq.jokievents.utils.EmailService;
 import com.uq.jokievents.utils.Generators;
@@ -31,7 +32,9 @@ public class AdminServiceImpl implements AdminService{
     @Autowired
     private final AdminRepository adminRepository;
     @Autowired
-    private EmailService emailService;
+    private final EmailService emailService;
+    @Autowired
+    private final CouponRepository couponRepository;
 
     @Override
     public ResponseEntity<?> updateAdmin(String id, @Valid @RequestBody UpdateAdminDTO dto) {
@@ -152,4 +155,42 @@ public class AdminServiceImpl implements AdminService{
             return new ResponseEntity<>("Password recovery failed", HttpStatus.INTERNAL_SERVER_ERROR);
         }
     } 
+
+    @Override
+    public ResponseEntity<?> createCoupon(CreateCouponDTO dto) {
+        Coupon coupon = new Coupon();
+        coupon.setName(dto.getName());
+        coupon.setDiscountPercent(dto.getDiscount());
+        coupon.setExpirationDate(dto.getExpirationDate());
+        coupon.setMinPurchaseQuantity(dto.getMinPurchaseAmount());
+        
+        Coupon savedCoupon = couponRepository.save(coupon);
+        return new ResponseEntity<>(savedCoupon, HttpStatus.CREATED);
+    }
+
+    @Override
+    public ResponseEntity<?> updateCoupon(String id, @Valid UpdateCouponDTO dto) {
+        try {
+            Optional<Coupon> optionalCoupon = couponRepository.findById(id);
+
+            if (optionalCoupon.isPresent()) {
+                Coupon coupon = optionalCoupon.get();
+
+                // Update the fields
+                coupon.setDiscountPercent(dto.getDiscount());
+                coupon.setExpirationDate(dto.getExpirationDate());
+                coupon.setMinPurchaseQuantity(dto.getMinPurchaseQuantity());
+
+                // Save the updated coupon
+                Coupon updatedCoupon = couponRepository.save(coupon);
+
+                return new ResponseEntity<>(updatedCoupon, HttpStatus.OK);
+            } else {
+                return new ResponseEntity<>("Coupon not found", HttpStatus.NOT_FOUND);
+            }
+        } catch (Exception e) {
+            return new ResponseEntity<>("Failed to update coupon", HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
 }
