@@ -136,7 +136,7 @@ public class ClientServiceImpl implements ClientService {
 
     @Override
     public ResponseEntity<?> registerNewClient(RegisterClientDTO dto) {
-
+        // TODO Check if I really need to use a Mapper here, if anywhere else.
         // Mapping the DTO as an entity (Client)
         Client client = ClientMapper.INSTANCE.ClientRegisterDTOtoClient(dto);
 
@@ -165,7 +165,7 @@ public class ClientServiceImpl implements ClientService {
         emailService.sendVerificationMail(client.getEmail(), verificationCode);
 
         // Save the Client to the database.
-        client = clientRepository.save(client);
+        clientRepository.save(client);
 
         // Returns a response entity
         return new ResponseEntity<>(client.getId(), HttpStatus.CREATED);
@@ -176,6 +176,12 @@ public class ClientServiceImpl implements ClientService {
         String verificationCode = dto.getVerificationCode();
         boolean verified = verificationService.verifyCode(clientId, verificationCode);
         if (verified) {
+            Optional<Client> client = clientRepository.findById(clientId);
+            if(client.isPresent()){
+                Client unverifiedClient = client.get();
+                unverifiedClient.setActive(true);
+                clientRepository.save(unverifiedClient);
+            }
             return new ResponseEntity<>("Client verified", HttpStatus.OK);
         } else {
             return new ResponseEntity<>("Invalid code or time expired", HttpStatus.BAD_REQUEST);

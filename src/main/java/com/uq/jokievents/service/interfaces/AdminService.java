@@ -1,10 +1,7 @@
 package com.uq.jokievents.service.interfaces;
 
+import com.uq.jokievents.dtos.*;
 import org.springframework.http.ResponseEntity;
-
-import com.uq.jokievents.dtos.AuthAdminDTO;
-import com.uq.jokievents.dtos.RecoverPassAdminDTO;
-import com.uq.jokievents.dtos.UpdateAdminDTO;
 
 public interface AdminService {
     
@@ -13,4 +10,6 @@ public interface AdminService {
     ResponseEntity<?> loginAdmin(AuthAdminDTO dto); // Fuck them dtos
     ResponseEntity<?> sendRecoverPasswordCode(String email);
     ResponseEntity<?> recoverPassword(RecoverPassAdminDTO dto);
+    ResponseEntity<?> createCoupon(CreateCouponDTO dto);
+    ResponseEntity<?> updateCoupon(String id, UpdateCouponDTO dto);
 }
