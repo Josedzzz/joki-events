@@ -1,27 +1,22 @@
 package com.uq.jokievents.controller;
 
 import com.uq.jokievents.dtos.AuthAdminDTO;
-import com.uq.jokievents.dtos.CreateCouponDTO;
 import com.uq.jokievents.dtos.RecoverPassAdminDTO;
 import com.uq.jokievents.dtos.UpdateAdminDTO;
 import com.uq.jokievents.service.interfaces.AdminService;
 
 import lombok.RequiredArgsConstructor;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
-
-// TODO implement updateCoupon() from AdminServiceImpl
 
 @RestController
 @RequestMapping("/api/admin")
 @RequiredArgsConstructor
 public class AdminController {
 
-    @Autowired
     private final AdminService adminService;
 
     /**
@@ -77,21 +72,4 @@ public class AdminController {
     public ResponseEntity<?> recoverPassword(@Valid @RequestBody RecoverPassAdminDTO dto) {
         return adminService.recoverPassword(dto);
     }
-
-    /**
-     * Example JSON:
-     * {
-     *  "name": "ABC123",
-     *  "discount": 15.0,
-     *  "expirationDate": "2024-12-31T23:59:59",
-     *  "minPurchaseAmount": 100.0   
-     * }
-     * @param dto CreateCouponDTO
-     * @return ResponseEntity
-     */
-    @PostMapping("/create-coupon")
-    public ResponseEntity<?> createCoupon(@Valid @RequestBody CreateCouponDTO dto) {
-        return adminService.createCoupon(dto);
-    }
-    
 }
