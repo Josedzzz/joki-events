@@ -21,21 +21,22 @@ public class Event {
     private String address;
     private String city;
     private LocalDateTime eventDate;
-    private boolean availablePurchase;
-    private String imageUrl;
+    private boolean availableForPurchase;
+    private int totalAvailableSeatsForPurchase;
+    private String imageUrl; //TODO implement images asap.
 
     // Constructor
     public Event() {}
 
-    public Event(String id, String name, String address, String city, LocalDateTime eventDate, boolean availablePurchase, String imageUrl, String imapeDistributionLocality) {
+    public Event(String id, List<ObjectId> idDistributionLocality, String name, String address, String city, LocalDateTime eventDate, boolean availableForPurchase, int totalAvailableSeatsForPurchase, String imageUrl) {
         this.id = id;
-        this.idDistributionLocality = new ArrayList<>();
+        this.idDistributionLocality = idDistributionLocality;
         this.name = name;
         this.address = address;
         this.city = city;
         this.eventDate = eventDate;
-        this.availablePurchase = availablePurchase;
+        this.availableForPurchase = availableForPurchase;
+        this.totalAvailableSeatsForPurchase = totalAvailableSeatsForPurchase;
         this.imageUrl = imageUrl;
     }
-
 }
