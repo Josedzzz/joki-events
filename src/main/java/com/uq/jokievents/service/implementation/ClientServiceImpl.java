@@ -64,18 +64,24 @@ public class ClientServiceImpl implements ClientService {
     /**
      * Updates a client from a dto.
      * @param id String
-     * @param client UpdateClientDTO
+     * @param dto UpdateClientDTO
      * @return ResponseEntity
      */
     @Override
     public ResponseEntity<?> updateClient(String id, @Valid @RequestBody UpdateClientDTO dto) {
-
-
         try {
             Optional<Client> existingClient = clientRepository.findById(id);
             if (existingClient.isPresent()) {
-
                 Client client = existingClient.get();
+
+                // Verifications for Client update
+                if(!client.getIdCard().equals(dto.getIdCard()) && utils.existsByIdCard(dto.getIdCard())){
+                    return new ResponseEntity<>("The identification card is in use", HttpStatus.BAD_REQUEST);
+                }
+                if(!client.getEmail().equals(dto.getEmail()) && utils.existsEmailClient(dto.getEmail())){
+                    return new ResponseEntity<>("The email is in use", HttpStatus.BAD_REQUEST);
+                }
+
                 client.setIdCard(dto.getIdCard());
                 client.setPhoneNumber(dto.getPhone());
                 client.setEmail(dto.getEmail());
