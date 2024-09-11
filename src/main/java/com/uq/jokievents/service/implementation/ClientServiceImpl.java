@@ -173,7 +173,7 @@ public class ClientServiceImpl implements ClientService {
 
     @Override
     public ResponseEntity<?> verifyCode(String clientId, VerifyClientDTO dto) {
-        String verificationCode = dto.getVerificationCode();
+        String verificationCode = dto.verificationCode();
         boolean verified = verificationService.verifyCode(clientId, verificationCode);
         if (verified) {
             Optional<Client> client = clientRepository.findById(clientId);
