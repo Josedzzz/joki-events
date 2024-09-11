@@ -44,11 +44,11 @@ public class AdminServiceImpl implements AdminService{
                 Admin admin = existingAdmin.get();
                 
                 // Por si acaso 
-                if (dto.getUsername() != null) {
+                if (dto.username() != null) {
                     return new ResponseEntity<>("Username cannot be updated", HttpStatus.BAD_REQUEST);
                 }
 
-                admin.setEmail(dto.getEmail());
+                admin.setEmail(dto.email());
 
                 Admin updatedAdmin = adminRepository.save(admin);
                 return new ResponseEntity<>(updatedAdmin, HttpStatus.OK);
@@ -79,8 +79,8 @@ public class AdminServiceImpl implements AdminService{
     @Override
     public ResponseEntity<?> loginAdmin(@Valid @RequestBody AuthAdminDTO dto) {
         try {
-            String username = dto.getUsername();
-            String password = dto.getPassword();
+            String username = dto.username();
+            String password = dto.password();
             Optional<Admin> admin = adminRepository.findByUsernameAndPassword(username, password);
             if (admin.isPresent()) {
                 return new ResponseEntity<>("Login successful", HttpStatus.OK);
@@ -127,9 +127,9 @@ public class AdminServiceImpl implements AdminService{
 
         try {
             // Validate if the user exists
-            String email = dto.getEmail();
-            String verificationCode =  dto.getVerificationCode();
-            String newPassword = dto.getNewPassword(); // Soon to be encrypted xdxdxdxdxd
+            String email = dto.email();
+            String verificationCode =  dto.verificationCode();
+            String newPassword = dto.newPassword(); // Soon to be encrypted xdxdxdxdxd
             Optional<Admin> adminOptional = adminRepository.findByEmail(email);
             if (!adminOptional.isPresent()) {
                 return new ResponseEntity<>("Admin not found", HttpStatus.NOT_FOUND);
@@ -159,10 +159,10 @@ public class AdminServiceImpl implements AdminService{
     @Override
     public ResponseEntity<?> createCoupon(CreateCouponDTO dto) {
         Coupon coupon = new Coupon();
-        coupon.setName(dto.getName());
-        coupon.setDiscountPercent(dto.getDiscount());
-        coupon.setExpirationDate(dto.getExpirationDate());
-        coupon.setMinPurchaseQuantity(dto.getMinPurchaseAmount());
+        coupon.setName(dto.name());
+        coupon.setDiscountPercent(dto.discount());
+        coupon.setExpirationDate(dto.expirationDate());
+        coupon.setMinPurchaseQuantity(dto.minPurchaseAmount());
         
         Coupon savedCoupon = couponRepository.save(coupon);
         return new ResponseEntity<>(savedCoupon, HttpStatus.CREATED);
