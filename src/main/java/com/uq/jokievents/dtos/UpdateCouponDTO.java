@@ -18,6 +18,6 @@ public record UpdateCouponDTO(
 
         @NotNull(message = "Minimum purchase amount cannot be null")
         @Min(value = 0, message = "Minimum purchase amount must be greater than or equal to 0")
-        double minPurchaseQuantity
+        double minPurchaseAmount
 ) {}
 
