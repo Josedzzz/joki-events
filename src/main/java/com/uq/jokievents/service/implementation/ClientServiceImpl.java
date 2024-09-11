@@ -41,9 +41,11 @@ public class ClientServiceImpl implements ClientService {
     public ResponseEntity<?> findAllClients() {
         try {
             List<Client> clients = clientRepository.findAll();
-            return new ResponseEntity<>(clients, HttpStatus.OK);
+            ApiResponse<String> response = new ApiResponse<>("Success", "Clients found", null);
+            return new ResponseEntity<>(response, HttpStatus.OK);
         } catch (Exception e) {
-            return new ResponseEntity<>("Failed client request", HttpStatus.INTERNAL_SERVER_ERROR);
+            ApiResponse<String> response = new ApiResponse<>("Error", "Clients not found", null);
+            return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -52,12 +54,15 @@ public class ClientServiceImpl implements ClientService {
         try {
             Optional<Client> client = clientRepository.findById(id);
             if (client.isPresent()) {
-                return new ResponseEntity<>(client.get(), HttpStatus.OK);
+                ApiResponse<Client> response = new ApiResponse<>("Success", "Client found", client.get());
+                return new ResponseEntity<>(response, HttpStatus.OK);
             } else {
-                return new ResponseEntity<>("Client not found", HttpStatus.NOT_FOUND);
+                ApiResponse<String> response = new ApiResponse<>("Error", "Client not found", null);
+                return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
             }
         } catch (Exception e) {
-            return new ResponseEntity<>("Failed client request", HttpStatus.INTERNAL_SERVER_ERROR);
+            ApiResponse<Client> response = new ApiResponse<>("Error", "Failed client request", null);
+            return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -76,10 +81,12 @@ public class ClientServiceImpl implements ClientService {
 
                 // Verifications for Client update
                 if(!client.getIdCard().equals(dto.idCard()) && utils.existsByIdCard(dto.idCard())){
-                    return new ResponseEntity<>("The identification card is in use", HttpStatus.BAD_REQUEST);
+                    ApiResponse<String> response = new ApiResponse<>("Error", "The identification card is in use", null);
+                    return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
                 }
                 if(!client.getEmail().equals(dto.email()) && utils.existsEmailClient(dto.email())){
-                    return new ResponseEntity<>("The email is in use", HttpStatus.BAD_REQUEST);
+                    ApiResponse<String> response = new ApiResponse<>("Error", "The email is in use", null);
+                    return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
                 }
 
                 client.setIdCard(dto.idCard());
@@ -87,13 +94,16 @@ public class ClientServiceImpl implements ClientService {
                 client.setEmail(dto.email());
                 client.setName(dto.name());
                 client.setDirection(dto.direction());
-                Client updatedClient = clientRepository.save(client);   
+                Client updatedClient = clientRepository.save(client);
+                ApiResponse<Client> response = new ApiResponse<>("Success", "Client updated successfully", updatedClient);
                 return new ResponseEntity<>(updatedClient, HttpStatus.OK);
             } else {
-                return new ResponseEntity<>("Client not found", HttpStatus.NOT_FOUND);
+                ApiResponse<String> response = new ApiResponse<>("Error", "Client not found", null);
+                return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
             }
         } catch (Exception e) {
-            return new ResponseEntity<>("Failed to update client", HttpStatus.INTERNAL_SERVER_ERROR);
+            ApiResponse<String> response = new ApiResponse<>("Error", "Failed to update client", null);
+            return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
         }   
     }
 
@@ -103,17 +113,20 @@ public class ClientServiceImpl implements ClientService {
             Optional<Client> existingClient = clientRepository.findById(id);
             if (existingClient.isPresent()) {
                 clientRepository.deleteById(id);
-                return new ResponseEntity<>("Client deleted", HttpStatus.OK);
+                ApiResponse<String> response = new ApiResponse<>("Success", "Client extermination complete", null);
+                return new ResponseEntity<>(response, HttpStatus.OK);
             } else {
-                return new ResponseEntity<>("Client not found", HttpStatus.NOT_FOUND);
+                ApiResponse<String> response = new ApiResponse<>("Error", "Client not found", null);
+                return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
             }
         } catch (Exception e) {
-            return new ResponseEntity<>("Failed to delete client", HttpStatus.INTERNAL_SERVER_ERROR);
+            ApiResponse<String> response = new ApiResponse<>("Error", "Failed to delete client", null);
+            return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
     @Override
-    public ResponseEntity<?> findClientByEmailAndPassword(@Valid LoginClientDTO dto) {
+    public ResponseEntity<?> loginClient(@Valid LoginClientDTO dto) {
         try {
             String email = dto.email();
             String password = dto.password();
@@ -121,16 +134,20 @@ public class ClientServiceImpl implements ClientService {
             if (client.isPresent()) {
                 //Checks if the Client is active for login
                 if(client.get().isActive()){
-                    return new ResponseEntity<>(client.get().getId(), HttpStatus.OK);
+                    ApiResponse<String> response = new ApiResponse<>("Success", "Client login done", client.get().getId());
+                    return new ResponseEntity<>(response, HttpStatus.OK);
                 }
                 else{
-                    return new ResponseEntity<>("The client isn't active", HttpStatus.BAD_REQUEST);
+                    ApiResponse<String> response = new ApiResponse<>("Error", "The client is not active", null);
+                    return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
                 }
             } else {
-                return new ResponseEntity<>("Invalid email or password", HttpStatus.NOT_FOUND);
+                ApiResponse<String> response = new ApiResponse<>("Error", "Invalid email or password", null);
+                return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
             }
         } catch (Exception e) {
-            return new ResponseEntity<>("Failed to find client", HttpStatus.INTERNAL_SERVER_ERROR);
+            ApiResponse<String> response = new ApiResponse<>("Error", "Failed to find client", null);
+            return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -147,10 +164,12 @@ public class ClientServiceImpl implements ClientService {
 
         // Verifications for Client registration
         if(utils.existsByIdCard(client.getIdCard())){
-            return new ResponseEntity<>("The identification card is in use", HttpStatus.BAD_REQUEST);
+            ApiResponse<String> response = new ApiResponse<>("Error", "The identification card is in use", null);
+            return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
         }
         if(utils.existsEmailClient(client.getEmail())){
-            return new ResponseEntity<>("The email is in use", HttpStatus.BAD_REQUEST);
+            ApiResponse<String> response = new ApiResponse<>("Error", "The email is in use", null);
+            return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
         }
 
         // Generating a verification code and establishing an expiration date
@@ -173,7 +192,8 @@ public class ClientServiceImpl implements ClientService {
         clientRepository.save(client);
 
         // Returns a response entity
-        return new ResponseEntity<>(client.getId(), HttpStatus.CREATED);
+        ApiResponse<String> response = new ApiResponse<>("Success", "Client registered successfully", client.getId());
+        return new ResponseEntity<>(response, HttpStatus.CREATED);
     }
 
     @Override
@@ -187,9 +207,11 @@ public class ClientServiceImpl implements ClientService {
                 unverifiedClient.setActive(true);
                 clientRepository.save(unverifiedClient);
             }
-            return new ResponseEntity<>("Client verified", HttpStatus.OK);
+            ApiResponse<String> response = new ApiResponse<>("Success", "Client verification done", null);
+            return new ResponseEntity<>(response, HttpStatus.OK);
         } else {
-            return new ResponseEntity<>("Invalid code or time expired", HttpStatus.BAD_REQUEST);
+            ApiResponse<String> response = new ApiResponse<>("Error", "Invalid code or time expired", null);
+            return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
         }
     }
 
@@ -198,12 +220,15 @@ public class ClientServiceImpl implements ClientService {
         try {
             boolean exists = clientRepository.existsByEmail(email);
             if (exists) {
-                return new ResponseEntity<>("Email is already in use", HttpStatus.CONFLICT);
+                ApiResponse<String> response = new ApiResponse<>("Error", "The email is in use", null);
+                return new ResponseEntity<>(response, HttpStatus.CONFLICT);
             } else {
-                return new ResponseEntity<>("Email is available", HttpStatus.OK);
+                ApiResponse<String> response = new ApiResponse<>("Success", "The email is available", null);
+                return new ResponseEntity<>(response, HttpStatus.OK);
             }
         } catch (Exception e) {
-            return new ResponseEntity<>("Failed to check email", HttpStatus.INTERNAL_SERVER_ERROR);
+            ApiResponse<String> response = new ApiResponse<>("Error", "Failed to check existence of email", null);
+            return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -212,12 +237,15 @@ public class ClientServiceImpl implements ClientService {
         try {
             boolean exists = clientRepository.existsByIdCard(idCard);
             if (exists) {
-                return new ResponseEntity<>("Identification card is already in use", HttpStatus.CONFLICT);
+                ApiResponse<String> response = new ApiResponse<>("Error", "Identification card is already in use", null);
+                return new ResponseEntity<>(response, HttpStatus.CONFLICT);
             } else {
-                return new ResponseEntity<>("Identification card is available", HttpStatus.OK);
+                ApiResponse<String> response = new ApiResponse<>("Success", "Identification card is available", null);
+                return new ResponseEntity<>(response, HttpStatus.OK);
             }
         } catch (Exception e) {
-            return new ResponseEntity<>("Failed to check identification card", HttpStatus.INTERNAL_SERVER_ERROR);
+            ApiResponse<String> response = new ApiResponse<>("Error", "Failed to check identification card", null);
+            return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 }
