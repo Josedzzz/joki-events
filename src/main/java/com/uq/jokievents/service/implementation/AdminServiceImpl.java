@@ -3,6 +3,7 @@ package com.uq.jokievents.service.implementation;
 import javax.validation.Valid;
 
 import com.uq.jokievents.dtos.*;
+import com.uq.jokievents.utils.ApiResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import com.uq.jokievents.model.Admin;
@@ -45,18 +46,22 @@ public class AdminServiceImpl implements AdminService{
                 
                 // Por si acaso 
                 if (dto.username() != null) {
-                    return new ResponseEntity<>("Username cannot be updated", HttpStatus.BAD_REQUEST);
+                    ApiResponse<String> response = new ApiResponse<>("Error", "Username cannot be updated", null);
+                    return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
                 }
 
                 admin.setEmail(dto.email());
 
                 Admin updatedAdmin = adminRepository.save(admin);
-                return new ResponseEntity<>(updatedAdmin, HttpStatus.OK);
+                ApiResponse<Admin> response = new ApiResponse<>("Success", "Admin update done", updatedAdmin);
+                return new ResponseEntity<>(response, HttpStatus.OK);
             } else {
-                return new ResponseEntity<>("Admin not found", HttpStatus.NOT_FOUND);
+                ApiResponse<String> response = new ApiResponse<>("Error", "Admin not found", null);
+                return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
             }
         } catch (Exception e) {
-            return new ResponseEntity<>("Failed to update admin", HttpStatus.INTERNAL_SERVER_ERROR);
+            ApiResponse<String> response = new ApiResponse<>("Error", "Failed to update admin", null);
+            return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -66,12 +71,15 @@ public class AdminServiceImpl implements AdminService{
             Optional<Admin> existingAdmin = adminRepository.findById(id);
             if (existingAdmin.isPresent()) {
                 adminRepository.deleteById(id);
-                return new ResponseEntity<>("Admin deleted successfully", HttpStatus.OK);
+                ApiResponse<String> response = new ApiResponse<>("Success", "Admin exterminated", null);
+                return new ResponseEntity<>(response, HttpStatus.OK);
             } else {
-                return new ResponseEntity<>("Admin not found", HttpStatus.NOT_FOUND);
+                ApiResponse<String> response = new ApiResponse<>("Error", "Admin not found", null);
+                return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
             }
         } catch (Exception e) {
-            return new ResponseEntity<>("Failed to delete admin", HttpStatus.INTERNAL_SERVER_ERROR);
+            ApiResponse<String> response = new ApiResponse<>("Error", "Failed to delete admin", null);
+            return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
     
@@ -83,12 +91,15 @@ public class AdminServiceImpl implements AdminService{
             String password = dto.password();
             Optional<Admin> admin = adminRepository.findByUsernameAndPassword(username, password);
             if (admin.isPresent()) {
-                return new ResponseEntity<>("Login successful", HttpStatus.OK);
+                ApiResponse<String> response = new ApiResponse<>("Success", "Login done", null);
+                return new ResponseEntity<>(response, HttpStatus.OK);
             } else {
-                return new ResponseEntity<>("Invalid username or password", HttpStatus.UNAUTHORIZED);
+                ApiResponse<String> response = new ApiResponse<>("Error", "Invalid username or password", null);
+                return new ResponseEntity<>(response, HttpStatus.UNAUTHORIZED);
             }
         } catch (Exception e) {
-            return new ResponseEntity<>("Login failed", HttpStatus.INTERNAL_SERVER_ERROR);
+            ApiResponse<String> response = new ApiResponse<>("Error", "Login failed", null);
+            return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
     
@@ -98,7 +109,8 @@ public class AdminServiceImpl implements AdminService{
             // Validate if the admin exists by email
             Optional<Admin> adminOptional = adminRepository.findByEmail(email);
             if (!adminOptional.isPresent()) {
-                return new ResponseEntity<>("Admin not found", HttpStatus.NOT_FOUND);
+                ApiResponse<String> response = new ApiResponse<>("Error", "Admin not found.", null);
+                return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
             }
     
             Admin admin = adminOptional.get();
@@ -115,10 +127,12 @@ public class AdminServiceImpl implements AdminService{
     
             // Send the recovery email
             emailService.sendRecuperationEmail(admin.getEmail(), verificationCode);
-    
-            return new ResponseEntity<>("Recovery code sent successfully", HttpStatus.OK);
+
+            ApiResponse<String> response = new ApiResponse<>("Success", "Recovery code sent", null);
+            return new ResponseEntity<>(response, HttpStatus.OK);
         } catch (Exception e) {
-            return new ResponseEntity<>("Failed to send recovery code", HttpStatus.INTERNAL_SERVER_ERROR);
+            ApiResponse<String> response = new ApiResponse<>("Error", "Failed to send recovery code", null);
+            return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
     
@@ -129,30 +143,35 @@ public class AdminServiceImpl implements AdminService{
             // Validate if the user exists
             String email = dto.email();
             String verificationCode =  dto.verificationCode();
-            String newPassword = dto.newPassword(); // Soon to be encrypted xdxdxdxdxd
+            String newPassword = dto.newPassword(); // Soon to be encrypted
             Optional<Admin> adminOptional = adminRepository.findByEmail(email);
-            if (!adminOptional.isPresent()) {
-                return new ResponseEntity<>("Admin not found", HttpStatus.NOT_FOUND);
+            if (!adminOptional.isPresent()) { // Shouldn't this be the root conditional? Whatever!!!
+                ApiResponse<String> response = new ApiResponse<>("Error", "Admin not found", null);
+                return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
             }
     
             Admin admin = adminOptional.get();
             // Check if the verification code is expired
             if (admin.getVerificationCodeExpiration().isBefore(LocalDateTime.now())) {
-                return new ResponseEntity<>("Verification code has expired", HttpStatus.UNAUTHORIZED);
+                ApiResponse<String> response = new ApiResponse<>("Error", "Verification code has expired", null);
+                return new ResponseEntity<>(response, HttpStatus.UNAUTHORIZED);
             }
             // Verify if the code matches (assuming the admin entity has a verification code field) (Jose will make sure of it)
             if (!admin.getVerificationCode().equals(verificationCode)) {
-                return new ResponseEntity<>("Invalid verification code", HttpStatus.UNAUTHORIZED);
+                ApiResponse<String> response = new ApiResponse<>("Error", "Invalid verification code", null);
+                return new ResponseEntity<>(response, HttpStatus.UNAUTHORIZED);
             }
     
             // Update the password
             admin.setPassword(newPassword);  // Will hash the password soon!
             admin.setVerificationCode("");
             adminRepository.save(admin);
-    
-            return new ResponseEntity<>("Password updated successfully", HttpStatus.OK);
+
+            ApiResponse<String> response = new ApiResponse<>("Success", "Password recovery done", null);
+            return new ResponseEntity<>(response, HttpStatus.OK);
         } catch (Exception e) {
-            return new ResponseEntity<>("Password recovery failed", HttpStatus.INTERNAL_SERVER_ERROR);
+            ApiResponse<String> response = new ApiResponse<>("Error", "Password recovery failed", null);
+            return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
         }
     } 
 
@@ -163,9 +182,10 @@ public class AdminServiceImpl implements AdminService{
         coupon.setDiscountPercent(dto.discount());
         coupon.setExpirationDate(dto.expirationDate());
         coupon.setMinPurchaseQuantity(dto.minPurchaseAmount());
-        
+
         Coupon savedCoupon = couponRepository.save(coupon);
-        return new ResponseEntity<>(savedCoupon, HttpStatus.CREATED);
+        ApiResponse<Coupon> response = new ApiResponse<>("Success", "Created coupon done", savedCoupon);
+        return new ResponseEntity<>(response, HttpStatus.CREATED);
     }
 
     @Override
@@ -183,13 +203,15 @@ public class AdminServiceImpl implements AdminService{
 
                 // Save the updated coupon
                 Coupon updatedCoupon = couponRepository.save(coupon);
-
-                return new ResponseEntity<>(updatedCoupon, HttpStatus.OK);
+                ApiResponse<Coupon> response = new ApiResponse<>("Success", "Update coupon done", updatedCoupon);
+                return new ResponseEntity<>(response, HttpStatus.OK);
             } else {
-                return new ResponseEntity<>("Coupon not found", HttpStatus.NOT_FOUND);
+                ApiResponse<String> response = new ApiResponse<>("Error", "Coupon not found", null);
+                return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
             }
         } catch (Exception e) {
-            return new ResponseEntity<>("Failed to update coupon", HttpStatus.INTERNAL_SERVER_ERROR);
+            ApiResponse<String> response = new ApiResponse<>("Error", "Failed to update coupon", null);
+            return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
