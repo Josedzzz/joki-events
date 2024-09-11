@@ -23,6 +23,7 @@ import javax.validation.Valid;
 @RequiredArgsConstructor
 public class ClientController {
 
+    // TODO All the other outputs for the other methods (Daniel will do that I think)
     @Autowired
     private ClientService clientService;
     /**

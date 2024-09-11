@@ -137,7 +137,7 @@ public class AdminServiceImpl implements AdminService{
     }
     
     @Override
-    public ResponseEntity<?> recoverPassword(RecoverPassAdminDTO dto) {
+    public ResponseEntity<?> recoverPassword(@Valid RecoverPassAdminDTO dto) {
 
         try {
             // Validate if the user exists
@@ -176,15 +176,24 @@ public class AdminServiceImpl implements AdminService{
     } 
 
     @Override
-    public ResponseEntity<?> createCoupon(CreateCouponDTO dto) {
+    public ResponseEntity<?> createCoupon(@Valid CreateCouponDTO dto) {
+
+        // Check if a coupon with the same name already exists
+        Optional<Coupon> existingCoupon = couponRepository.findByName(dto.name());
+
+        if (existingCoupon.isPresent()) {
+            ApiResponse<String> response = new ApiResponse<>("Error", "Coupon with the same name already exists", null);
+            return new ResponseEntity<>(response, HttpStatus.CONFLICT);
+        }
+
         Coupon coupon = new Coupon();
         coupon.setName(dto.name());
         coupon.setDiscountPercent(dto.discount());
         coupon.setExpirationDate(dto.expirationDate());
-        coupon.setMinPurchaseQuantity(dto.minPurchaseAmount());
+        coupon.setMinPurchaseAmount(dto.minPurchaseAmount());
 
         Coupon savedCoupon = couponRepository.save(coupon);
-        ApiResponse<Coupon> response = new ApiResponse<>("Success", "Created coupon done", savedCoupon);
+        ApiResponse<Coupon> response = new ApiResponse<>("Success", "Coupon creation done", savedCoupon);
         return new ResponseEntity<>(response, HttpStatus.CREATED);
     }
 
@@ -199,11 +208,11 @@ public class AdminServiceImpl implements AdminService{
                 // Update the fields
                 coupon.setDiscountPercent(dto.discount());
                 coupon.setExpirationDate(dto.expirationDate());
-                coupon.setMinPurchaseQuantity(dto.minPurchaseQuantity());
+                coupon.setMinPurchaseAmount(dto.minPurchaseAmount());
 
                 // Save the updated coupon
                 Coupon updatedCoupon = couponRepository.save(coupon);
-                ApiResponse<Coupon> response = new ApiResponse<>("Success", "Update coupon done", updatedCoupon);
+                ApiResponse<Coupon> response = new ApiResponse<>("Success", "Coupon updated", updatedCoupon);
                 return new ResponseEntity<>(response, HttpStatus.OK);
             } else {
                 ApiResponse<String> response = new ApiResponse<>("Error", "Coupon not found", null);
