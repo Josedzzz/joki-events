@@ -15,7 +15,7 @@ public class Coupon {
     private String name;
     private double discountPercent;
     private LocalDateTime expirationDate;
-    private double minPurchaseQuantity;
+    private double minPurchaseAmount;
     private boolean isUsed = false;
 
     // Constructors
@@ -23,11 +23,11 @@ public class Coupon {
 
     }
 
-    public Coupon(String id, double discountPercent, LocalDateTime expirationDate, double minPurchaseQuantity) {
+    public Coupon(String id, double discountPercent, LocalDateTime expirationDate, double minPurchaseAmount) {
         this.id = id;
         this.discountPercent = discountPercent;
         this.expirationDate = expirationDate;
-        this.minPurchaseQuantity = minPurchaseQuantity;
+        this.minPurchaseAmount = minPurchaseAmount;
     }
 
 }
