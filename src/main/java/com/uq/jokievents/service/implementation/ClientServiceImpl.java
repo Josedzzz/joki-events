@@ -75,18 +75,18 @@ public class ClientServiceImpl implements ClientService {
                 Client client = existingClient.get();
 
                 // Verifications for Client update
-                if(!client.getIdCard().equals(dto.getIdCard()) && utils.existsByIdCard(dto.getIdCard())){
+                if(!client.getIdCard().equals(dto.idCard()) && utils.existsByIdCard(dto.idCard())){
                     return new ResponseEntity<>("The identification card is in use", HttpStatus.BAD_REQUEST);
                 }
-                if(!client.getEmail().equals(dto.getEmail()) && utils.existsEmailClient(dto.getEmail())){
+                if(!client.getEmail().equals(dto.email()) && utils.existsEmailClient(dto.email())){
                     return new ResponseEntity<>("The email is in use", HttpStatus.BAD_REQUEST);
                 }
 
-                client.setIdCard(dto.getIdCard());
-                client.setPhoneNumber(dto.getPhone());
-                client.setEmail(dto.getEmail());
-                client.setName(dto.getName());
-                client.setDirection(dto.getDirection());
+                client.setIdCard(dto.idCard());
+                client.setPhoneNumber(dto.phone());
+                client.setEmail(dto.email());
+                client.setName(dto.name());
+                client.setDirection(dto.direction());
                 Client updatedClient = clientRepository.save(client);   
                 return new ResponseEntity<>(updatedClient, HttpStatus.OK);
             } else {
@@ -113,10 +113,10 @@ public class ClientServiceImpl implements ClientService {
     }
 
     @Override
-    public ResponseEntity<?> findClientByEmailAndPassword(LoginClientDTO dto) {
+    public ResponseEntity<?> findClientByEmailAndPassword(@Valid LoginClientDTO dto) {
         try {
-            String email = dto.getEmail();
-            String password = dto.getPassword();
+            String email = dto.email();
+            String password = dto.password();
             Optional<Client> client = clientRepository.findByEmailAndPassword(email, password);
             if (client.isPresent()) {
                 //Checks if the Client is active for login
@@ -135,10 +135,15 @@ public class ClientServiceImpl implements ClientService {
     }
 
     @Override
-    public ResponseEntity<?> registerNewClient(RegisterClientDTO dto) {
-        // TODO Check if I really need to use a Mapper here, if anywhere else.
-        // Mapping the DTO as an entity (Client)
-        Client client = ClientMapper.INSTANCE.ClientRegisterDTOtoClient(dto);
+    public ResponseEntity<?> registerNewClient(@Valid RegisterClientDTO dto) {
+        // Al final no haha
+        Client client = new Client();
+        client.setIdCard(dto.idCard());
+        client.setName(dto.name());
+        client.setDirection(dto.address());
+        client.setPhoneNumber(dto.phone());
+        client.setEmail(dto.email());
+        client.setPassword(dto.password()); // Will be encrypted soon!
 
         // Verifications for Client registration
         if(utils.existsByIdCard(client.getIdCard())){
@@ -153,7 +158,7 @@ public class ClientServiceImpl implements ClientService {
         LocalDateTime expiration = LocalDateTime.now().plusMinutes(15);
 
 
-        // Manually assigning all the other attributes.
+        // Assigning all the other attributes.
         client.setVerificationCode(verificationCode);
         client.setVerificationCodeExpiration(expiration);
 
@@ -172,7 +177,7 @@ public class ClientServiceImpl implements ClientService {
     }
 
     @Override
-    public ResponseEntity<?> verifyCode(String clientId, VerifyClientDTO dto) {
+    public ResponseEntity<?> verifyCode(String clientId, @Valid VerifyClientDTO dto) {
         String verificationCode = dto.verificationCode();
         boolean verified = verificationService.verifyCode(clientId, verificationCode);
         if (verified) {
