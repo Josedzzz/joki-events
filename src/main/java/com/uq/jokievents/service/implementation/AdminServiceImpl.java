@@ -177,9 +177,9 @@ public class AdminServiceImpl implements AdminService{
                 Coupon coupon = optionalCoupon.get();
 
                 // Update the fields
-                coupon.setDiscountPercent(dto.getDiscount());
-                coupon.setExpirationDate(dto.getExpirationDate());
-                coupon.setMinPurchaseQuantity(dto.getMinPurchaseQuantity());
+                coupon.setDiscountPercent(dto.discount());
+                coupon.setExpirationDate(dto.expirationDate());
+                coupon.setMinPurchaseQuantity(dto.minPurchaseQuantity());
 
                 // Save the updated coupon
                 Coupon updatedCoupon = couponRepository.save(coupon);
