@@ -5,14 +5,13 @@ import javax.validation.constraints.Null;
 import javax.validation.constraints.Size;
 
 import lombok.Data;
-@Data
-public class AuthAdminDTO {
+public record AuthAdminDTO (
 
     @Null(message = "Username cannot be null")
     @Size(min = 2, max = 50, message = "Name must be between 2 and 50 characters")
-    private String username;
+    String username,
     
     @NotBlank(message = "Password cannot be blank")
     @Size(min = 4, message = "Password must be at least 4 characters long")
-    private String password;
-}
+    String password
+) {}
