@@ -14,7 +14,7 @@ public interface ClientService {
     ResponseEntity<?> findClientById(String clientId);
     ResponseEntity<?> updateClient(String id, UpdateClientDTO client); // Shall I add the ID to the dto class?
     ResponseEntity<?> deleteClient(String id);
-    ResponseEntity<?> findClientByEmailAndPassword(LoginClientDTO dto);
+    ResponseEntity<?> loginClient(LoginClientDTO dto);
     ResponseEntity<?> registerNewClient(RegisterClientDTO dto);
     ResponseEntity<?> verifyCode(String clientId, VerifyClientDTO dto); // Shall I add the ID to the dto class? x2!
     ResponseEntity<?> existsByEmail(String email);

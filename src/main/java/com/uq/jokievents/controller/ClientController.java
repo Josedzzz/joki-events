@@ -88,7 +88,7 @@ public class ClientController {
      */
     @PostMapping("/login")
     public ResponseEntity<?> loginClient(@RequestBody LoginClientDTO dto) {
-        return clientService.findClientByEmailAndPassword(dto);
+        return clientService.loginClient(dto);
     }
 
     /**
