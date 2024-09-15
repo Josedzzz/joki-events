@@ -3,6 +3,10 @@ package com.uq.jokievents.service.implementation;
 import javax.validation.Valid;
 
 import com.uq.jokievents.dtos.*;
+import com.uq.jokievents.model.Locality;
+import com.uq.jokievents.model.Event;
+import com.uq.jokievents.repository.EventRepository;
+import com.uq.jokievents.repository.LocalityRepository;
 import com.uq.jokievents.utils.ApiResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -18,6 +22,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.RequestBody;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import com.uq.jokievents.service.interfaces.AdminService;
 import com.uq.jokievents.utils.EmailService;
@@ -36,6 +41,10 @@ public class AdminServiceImpl implements AdminService{
     private final EmailService emailService;
     @Autowired
     private final CouponRepository couponRepository;
+    @Autowired
+    private final EventRepository eventRepository;
+    @Autowired
+    private LocalityRepository localityRepository;
 
     @Override
     public ResponseEntity<?> updateAdmin(String id, @Valid @RequestBody UpdateAdminDTO dto) {
@@ -85,7 +94,7 @@ public class AdminServiceImpl implements AdminService{
     
 
     @Override
-    public ResponseEntity<?> loginAdmin(@Valid @RequestBody AuthAdminDTO dto) {
+    public ResponseEntity<?> loginAdmin(@Valid AuthAdminDTO dto) {
         try {
             String username = dto.username();
             String password = dto.password();
@@ -224,4 +233,128 @@ public class AdminServiceImpl implements AdminService{
         }
     }
 
+    public ResponseEntity<?> deleteCoupon(String id){
+        try {
+            Optional<Coupon> existingCoupon = couponRepository.findById(id);
+            if (existingCoupon.isPresent()) {
+                couponRepository.deleteById(id);
+                ApiResponse<String> response = new ApiResponse<>("Success", "Coupon deleted", null);
+                return new ResponseEntity<>(response, HttpStatus.OK);
+            } else {
+                // Could this ever happen?
+                ApiResponse<String> response = new ApiResponse<>("Error", "Coupon not found", null);
+                return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
+            }
+        } catch (Exception e) {
+            ApiResponse<String> response = new ApiResponse<>("Error", "Failed to delete coupon", null);
+            return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    // TODO Tell Jose this exists
+    public ResponseEntity<?> deleteAllCoupons() {
+        try {
+            couponRepository.deleteAll();
+            ApiResponse<String> response = new ApiResponse<>("Success", "All coupons deleted", null);
+            return new ResponseEntity<>(response, HttpStatus.OK);
+        } catch (Exception e) {
+            ApiResponse<String> response = new ApiResponse<>("Error", "Failed to delete all coupons", null);
+            return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+
+    @Override
+    public ResponseEntity<?> addEvent(@Valid HandleEventDTO dto) {
+        try {
+            Event event = new Event(
+                    dto.name(),
+                    dto.city(),
+                    dto.address(),
+                    dto.date(),
+                    dto.totalAvailablePlaces(),
+                    dto.eventImageURL(),
+                    dto.localities().stream().map(localityDTO ->
+                            new Locality(
+                                    localityDTO.name(),
+                                    localityDTO.price(),
+                                    localityDTO.maxCapacity(),
+                                    localityDTO.localityImageURL()
+                            )
+                    ).collect(Collectors.toList())
+            );
+            eventRepository.save(event);
+            ApiResponse<Event> response = new ApiResponse<>("Success", "Event created successfully", event);
+            return new ResponseEntity<>(response, HttpStatus.CREATED);
+        } catch (Exception e) {
+            ApiResponse<String> response = new ApiResponse<>("Error", "Failed to create event", null);
+            return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @Override
+    public ResponseEntity<?> updateEvent(String eventId, @Valid HandleEventDTO dto) {
+        try {
+            Optional<Event> existingEvent = eventRepository.findById(eventId);
+            Optional<Locality> existingLocalities = localityRepository.findById(dto.());
+            if (existingEvent.isPresent()) {
+                Event event = existingEvent.get();
+
+                // Update event fields with data from the DTO
+                event.setName(dto.name());
+                event.setCity(dto.city());
+                event.setAddress(dto.address());
+                event.setEventDate(dto.date());
+                event.setTotalAvailablePlaces(dto.totalAvailablePlaces());
+                event.setEventImageUrl(dto.eventImageURL());
+                event.setLocalities(dto.localities().stream().map(localityDTO ->
+                        new Locality(
+                                localityDTO.name(),
+                                localityDTO.price(),
+                                localityDTO.maxCapacity(),
+                                localityDTO.localityImageURL()
+                        )
+                ).collect(Collectors.toList()));
+
+                // Save the updated event back to the repository
+                eventRepository.save(event);
+                ApiResponse<String> response = new ApiResponse<>("Success", "Event updated successfully", null);
+                return new ResponseEntity<>(response, HttpStatus.OK);
+            } else {
+                ApiResponse<String> response = new ApiResponse<>("Error", "Event not found", null);
+                return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
+            }
+        } catch (Exception e) {
+            ApiResponse<String> response = new ApiResponse<>("Error", "Failed to update event", null);
+            return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    public ResponseEntity<?> deleteEvent(String id){
+        try {
+            Optional<Event> existingEvent = eventRepository.findById(id);
+            if (existingEvent.isPresent()) {
+                eventRepository.deleteById(id);
+                ApiResponse<String> response = new ApiResponse<>("Success", "Event deleted", null);
+                return new ResponseEntity<>(response, HttpStatus.OK);
+            } else {
+                ApiResponse<String> response = new ApiResponse<>("Error", "Event not found", null);
+                return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
+            }
+        } catch (Exception e) {
+            ApiResponse<String> response = new ApiResponse<>("Error", "Failed to delete Event", null);
+            return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    public ResponseEntity<?> deleteAllEvents() {
+        try {
+            eventRepository.deleteAll();
+            ApiResponse<String> response = new ApiResponse<>("Success", "All events deleted", null);
+            return new ResponseEntity<>(response, HttpStatus.OK);
+        } catch (Exception e) {
+            ApiResponse<String> response = new ApiResponse<>("Error", "Failed to delete all events", null);
+            return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
 }

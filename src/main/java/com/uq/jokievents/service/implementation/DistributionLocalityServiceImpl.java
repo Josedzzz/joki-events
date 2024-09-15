@@ -1,8 +1,7 @@
 package com.uq.jokievents.service.implementation;
 
-import com.uq.jokievents.model.Client;
-import com.uq.jokievents.model.DistributionLocality;
-import com.uq.jokievents.repository.DistributionLocalityRepository;
+import com.uq.jokievents.model.Locality;
+import com.uq.jokievents.repository.LocalityRepository;
 import com.uq.jokievents.service.interfaces.DistributionLocalityService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -16,7 +15,7 @@ import java.util.Optional;
 public class DistributionLocalityServiceImpl implements DistributionLocalityService {
 
     @Autowired
-    private DistributionLocalityRepository distributionLocalityRepository;
+    private LocalityRepository localityRepository;
 
     /**
      * Get a list of all distributionLocality from the db
@@ -25,8 +24,8 @@ public class DistributionLocalityServiceImpl implements DistributionLocalityServ
      */
     public ResponseEntity<?> findAll() {
         try {
-            List<DistributionLocality> distributionLocality = distributionLocalityRepository.findAll();
-            return new ResponseEntity<>(distributionLocality, HttpStatus.OK);
+            List<Locality> locality = localityRepository.findAll();
+            return new ResponseEntity<>(locality, HttpStatus.OK);
         } catch (Exception e) {
             return new ResponseEntity<>("Failed distributionLocality request", HttpStatus.INTERNAL_SERVER_ERROR);
         }
@@ -40,7 +39,7 @@ public class DistributionLocalityServiceImpl implements DistributionLocalityServ
      */
     public ResponseEntity<?> findById(String id) {
         try {
-            Optional<DistributionLocality> distributionLocality = distributionLocalityRepository.findById(id);
+            Optional<Locality> distributionLocality = localityRepository.findById(id);
             if (distributionLocality.isPresent()) {
                 return new ResponseEntity<>(distributionLocality.get(), HttpStatus.OK);
             } else {
@@ -54,13 +53,13 @@ public class DistributionLocalityServiceImpl implements DistributionLocalityServ
     /**
      * Saves a new distributionLocality or updates an existing in the db
      *
-     * @param distributionLocality the distributionLocality object to be saves or updated
+     * @param locality the distributionLocality object to be saves or updated
      * @return the saved or updated report object
      */
-    public ResponseEntity<?> create(DistributionLocality distributionLocality) {
+    public ResponseEntity<?> create(Locality locality) {
         try {
-            DistributionLocality createdDistributionLocality = distributionLocalityRepository.save(distributionLocality);
-            return new ResponseEntity<>(createdDistributionLocality, HttpStatus.CREATED);
+            Locality createdLocality = localityRepository.save(locality);
+            return new ResponseEntity<>(createdLocality, HttpStatus.CREATED);
         } catch (Exception e) {
             return new ResponseEntity<>("Failed to create DistributionLocality", HttpStatus.INTERNAL_SERVER_ERROR);
         }
@@ -70,16 +69,16 @@ public class DistributionLocalityServiceImpl implements DistributionLocalityServ
      * Update an existing client by id
      *
      * @param id the identifierof the DistributionLocality to be update
-     * @param distributionLocality the updated DistributionLocality object
+     * @param locality the updated DistributionLocality object
      * @return a ResponseEntity containing the updated DistributionLocality object and an HTTP status
      */
-    public ResponseEntity<?> update(String id, DistributionLocality distributionLocality) {
+    public ResponseEntity<?> update(String id, Locality locality) {
         try {
-            Optional<DistributionLocality> existingDistributionLocality = distributionLocalityRepository.findById(id);
+            Optional<Locality> existingDistributionLocality = localityRepository.findById(id);
             if (existingDistributionLocality.isPresent()) {
-                distributionLocality.setId(id);
-                DistributionLocality updatedDistributionLocality = distributionLocalityRepository.save(distributionLocality);
-                return new ResponseEntity<>(updatedDistributionLocality, HttpStatus.OK);
+                locality.setId(id);
+                Locality updatedLocality = localityRepository.save(locality);
+                return new ResponseEntity<>(updatedLocality, HttpStatus.OK);
             } else {
                 return new ResponseEntity<>("DistributionLocality not found", HttpStatus.NOT_FOUND);
             }
@@ -95,9 +94,9 @@ public class DistributionLocalityServiceImpl implements DistributionLocalityServ
      */
     public ResponseEntity<?> deleteById(String id) {
         try {
-            Optional<DistributionLocality> existingDistributionLocality = distributionLocalityRepository.findById(id);
+            Optional<Locality> existingDistributionLocality = localityRepository.findById(id);
             if (existingDistributionLocality.isPresent()) {
-                distributionLocalityRepository.deleteById(id);
+                localityRepository.deleteById(id);
                 return new ResponseEntity<>("DistributionLocality deleted", HttpStatus.OK);
             } else {
                 return new ResponseEntity<>("DistributionLocality not found", HttpStatus.NOT_FOUND);
