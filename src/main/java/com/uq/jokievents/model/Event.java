@@ -29,7 +29,7 @@ public class Event {
     // Constructor
     public Event() {}
 
-    public Event(List<ObjectId> localities, String name, String address, String city, LocalDateTime eventDate, boolean availableForPurchase, int totalAvailableSeatsForPurchase, String eventImageUrl) {
+    public Event(List<Locality> localities, String name, String address, String city, LocalDateTime eventDate, boolean availableForPurchase, int totalAvailableSeatsForPurchase, String eventImageUrl) {
         this.localities = localities;
         this.name = name;
         this.address = address;
