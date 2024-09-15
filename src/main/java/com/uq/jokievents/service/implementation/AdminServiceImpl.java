@@ -296,7 +296,6 @@ public class AdminServiceImpl implements AdminService{
     public ResponseEntity<?> updateEvent(String eventId, @Valid HandleEventDTO dto) {
         try {
             Optional<Event> existingEvent = eventRepository.findById(eventId);
-            Optional<Locality> existingLocalities = localityRepository.findById(dto.());
             if (existingEvent.isPresent()) {
                 Event event = existingEvent.get();
 
