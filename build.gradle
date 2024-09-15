@@ -23,6 +23,7 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-mail'
 	implementation 'org.springframework.boot:spring-boot-starter-data-mongodb'
 	implementation 'javax.validation:validation-api:2.0.1.Final'
+	implementation group: 'com.auth0', name: 'java-jwt', version: '4.4.0'
 
 
 	compileOnly 'org.projectlombok:lombok'
