@@ -1,6 +1,6 @@
 package com.uq.jokievents.controller;
 
-import com.uq.jokievents.model.DistributionLocality;
+import com.uq.jokievents.model.Locality;
 import com.uq.jokievents.service.interfaces.DistributionLocalityService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -37,24 +37,24 @@ public class DistributionLocalityController {
     /**
      * Creates a new distributionLocality
      *
-     * @param distributionLocality the distributionLocality object to be saved
+     * @param locality the distributionLocality object to be saved
      * @return a ResponseEntity containing the created distributionLocality object and an HTTP status of created
      */
     @PostMapping
-    public ResponseEntity<?> createReport(@RequestBody DistributionLocality distributionLocality) {
-        return distributionLocalityService.create(distributionLocality);
+    public ResponseEntity<?> createReport(@RequestBody Locality locality) {
+        return distributionLocalityService.create(locality);
     }
 
     /**
      * Updates an existing distributionLocality
      *
      * @param id the identifier of the distributionLocality to be updated
-     * @param distributionLocality the distributionLocality object containing the update data
+     * @param locality the distributionLocality object containing the update data
      * @return a ResponseEntity containing the updated distributionLocality object and an HTTP status of ok, otherwise not found
      */
     @PutMapping("/{id}")
-    public ResponseEntity<?> updateReport(@PathVariable String id, @RequestBody DistributionLocality distributionLocality) {
-        return distributionLocalityService.update(id, distributionLocality);
+    public ResponseEntity<?> updateReport(@PathVariable String id, @RequestBody Locality locality) {
+        return distributionLocalityService.update(id, locality);
     }
 
     /**

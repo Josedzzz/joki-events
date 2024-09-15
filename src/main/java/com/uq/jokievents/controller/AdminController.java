@@ -15,9 +15,10 @@ import javax.validation.Valid;
 @RequiredArgsConstructor
 public class AdminController {
 
-    // TODO All the other outputs for the other methods (Daniel will do that I think)
+    // TODO All the other outputs for the other methods (Daniel will do that I think).
+    // TODO Authentication with Firebase.
+    // TODO JWT auth and maybe Oauth
     private final AdminService adminService;
-
     /**
      * Example JSON:
      * {
@@ -32,7 +33,6 @@ public class AdminController {
     public ResponseEntity<?> updateAdmin(@PathVariable String id, @Valid @RequestBody UpdateAdminDTO dto) {
         return adminService.updateAdmin(id, dto);
     }
-
 
     @DeleteMapping("/delete/{id}")
     public ResponseEntity<?> deleteAdminById(@PathVariable String id) {
@@ -129,5 +129,36 @@ public class AdminController {
     @PostMapping("/update-coupon/{id}")
     public ResponseEntity<?> updateCoupon(@PathVariable String id, @Valid @RequestBody UpdateCouponDTO dto) {
         return  adminService.updateCoupon(id, dto);
+    }
+
+    // TODO Ask Jose if the path (delete-coupon) is necessary for this method to be used. Logic is tickling. Same question for deleteAllCoupons() below.
+    @DeleteMapping("/delete-coupon/{id}")
+    public ResponseEntity<?> deleteCouponById(@PathVariable String id) {
+        return adminService.deleteCoupon(id);
+    }
+
+    @DeleteMapping("/delete-all-coupons")
+    public ResponseEntity<?> deleteAllCoupons() {
+        return adminService.deleteAllCoupons();
+    }
+
+    @PostMapping("/create-event")
+    public ResponseEntity<?> createEvent(@Valid @RequestBody HandleEventDTO dto) {
+        return adminService.addEvent(dto);
+    }
+
+    @PostMapping("/update-event/{id}")
+    public ResponseEntity<?> updateEvent(@PathVariable String id, @Valid @RequestBody HandleEventDTO dto) {
+        return adminService.updateEvent(id, dto);
+    }
+
+    @DeleteMapping("/delete-event/{id}")
+    public ResponseEntity<?> deleteEventById(@PathVariable String id) {
+        return adminService.deleteEvent(id);
+    }
+
+    @DeleteMapping("/delete-all-events")
+    public ResponseEntity<?> deleteAllEvents(){
+        return adminService.deleteAllEvents();
     }
 }
