@@ -6,26 +6,24 @@ import org.springframework.data.mongodb.core.mapping.Document;
 
 @Data
 @Document(collection = "distributionlocalities")
-public class DistributionLocality {
+public class Locality {
 
     @Id
-    private String id;
+    private String id;  // Mongo
     private String name;
     private double price;
     private int maxCapacity;
     private String imageDistributionLocality;
-    private int currentOccupancy;
+    private int currentOccupancy = 0;
 
     // constructor
-    public DistributionLocality() {}
+    public Locality() {}
 
-    public DistributionLocality(String id, String name, double price, int maxCapacity, String imageDistributionLocality) {
-        this.id = id;
+    public Locality(String name, double price, int maxCapacity, String imageDistributionLocality) {
         this.name = name;
         this.price = price;
         this.maxCapacity = maxCapacity;
         this.imageDistributionLocality = imageDistributionLocality;
-        this.currentOccupancy = 0;
     }
 
 }
