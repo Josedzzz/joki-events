@@ -8,6 +8,5 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface CouponRepository extends MongoRepository<Coupon, String> {
-    Optional<Coupon> findById(String id);
     Optional<Coupon> findByName(String name);
 }
