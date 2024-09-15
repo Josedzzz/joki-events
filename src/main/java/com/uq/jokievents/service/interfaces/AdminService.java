@@ -7,9 +7,16 @@ public interface AdminService {
     
     ResponseEntity<?> updateAdmin(String id, UpdateAdminDTO dto);
     ResponseEntity<?> deleteAdminById(String id);
-    ResponseEntity<?> loginAdmin(AuthAdminDTO dto); // Fuck them dtos
+    ResponseEntity<?> loginAdmin(AuthAdminDTO dto);
     ResponseEntity<?> sendRecoverPasswordCode(String email);
     ResponseEntity<?> recoverPassword(RecoverPassAdminDTO dto);
     ResponseEntity<?> createCoupon(CreateCouponDTO dto);
     ResponseEntity<?> updateCoupon(String id, UpdateCouponDTO dto);
+    ResponseEntity<?> deleteCoupon(String id);
+    ResponseEntity<?> deleteAllCoupons();
+    ResponseEntity<?> addEvent(HandleEventDTO dto);
+    ResponseEntity<?> updateEvent(String id, HandleEventDTO dto);
+    ResponseEntity<?> deleteEvent(String id);
+    ResponseEntity<?> deleteAllEvents(); // Weird use case, but, everything is covered babyboi!
+
 }
