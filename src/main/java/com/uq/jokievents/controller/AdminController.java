@@ -18,6 +18,7 @@ public class AdminController {
     // TODO All the other outputs for the other methods (Daniel will do that I think).
     // TODO Authentication with Firebase.
     // TODO JWT auth and maybe Oauth
+    // TODO Short-Lived Access Tokens + Refresh Tokens
     private final AdminService adminService;
     /**
      * Example JSON:
