@@ -18,7 +18,7 @@ public class AuthenticationController {
 
     private final AuthenticationService authenticationService;
 
-    @PostMapping("/login")
+    @PostMapping("/login-admin")
     public ResponseEntity<?> loginAdmin(@RequestBody @Valid AuthAdminDTO loginRequest) {
         return authenticationService.authenticate(loginRequest);
     }

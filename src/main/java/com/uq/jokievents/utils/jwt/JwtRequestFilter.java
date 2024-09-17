@@ -1,5 +1,7 @@
 package com.uq.jokievents.utils.jwt;
 
+import com.uq.jokievents.dtos.AuthAdminDTO;
+import com.uq.jokievents.service.interfaces.AdminService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -18,7 +20,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
 public class JwtRequestFilter extends OncePerRequestFilter {
 
     @Autowired
-    private UserDetailsService userDetailsService;
+    private AdminService adminService;
 
     @Autowired
     private JwtUtil jwtUtil;
@@ -37,12 +39,12 @@ public class JwtRequestFilter extends OncePerRequestFilter {
 
         if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
 
-            UserDetails userDetails = this.userDetailsService.loadUserByUsername(username);
+            AuthAdminDTO adminDetails = this.adminService.loadAdminByUsername(username);
 
-            if (jwtUtil.validateToken(jwt, userDetails.getUsername())) {
+            if (jwtUtil.validateToken(jwt, adminDetails.username())) {
 
                 UsernamePasswordAuthenticationToken usernamePasswordAuthenticationToken = new UsernamePasswordAuthenticationToken(
-                        userDetails, null, userDetails.getAuthorities());
+                        adminDetails, null); // adminDetails.getAuthorities()
                 usernamePasswordAuthenticationToken
                         .setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                 SecurityContextHolder.getContext().setAuthentication(usernamePasswordAuthenticationToken);

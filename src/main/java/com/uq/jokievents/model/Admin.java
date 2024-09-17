@@ -25,8 +25,7 @@ public class Admin {
     // Constructor
     public Admin() {}
 
-    public Admin(String id, String email,String username, String password, ArrayList<ObjectId> idClients) {
-        this.id = id;
+    public Admin(String email,String username, String password, ArrayList<ObjectId> idClients) {
         this.email = email;
         this.username = username;
         this.password = password;
