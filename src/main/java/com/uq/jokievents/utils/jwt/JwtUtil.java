@@ -1,6 +1,8 @@
 package com.uq.jokievents.utils.jwt;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
 
 import java.security.Key;
@@ -14,11 +16,19 @@ public class JwtUtil {
 
     // Short-lived Access Token expiration time, for now it is 15 mins long
     private final long ACCESS_TOKEN_EXPIRATION = 15 * 60 * 1000;
+    private final String SECRET_KEY = "very-strong-secret-key-that-should-be-very-long-but-right-now-it-isn't"; // System.getEnv()
+
 
     private Key getSigningKey() {
         // This is the SECRET_KEY for signing tokens. In production, this should be very secret
-        String SECRET_KEY = "very-strong-secret-key-that-should-be-very-long-but-right-now-it-isn't"; // System.getEnv()
         return Keys.hmacShaKeyFor(SECRET_KEY.getBytes());
+    }
+
+    // Generate a token from Authentication
+    public String generateToken(Authentication auth) {
+        UserDetails userDetails = (UserDetails) auth.getPrincipal();  // Extract user details from auth
+        Map<String, Object> claims = new HashMap<>();  // Claims can hold additional data, like roles if needed
+        return generateAccessToken(userDetails.getUsername(), claims);
     }
 
     // Generate Access Token to a Client or Admin
@@ -66,6 +76,27 @@ public class JwtUtil {
                 .build()
                 .parseClaimsJws(token)
                 .getBody();
+    }
+
+    public String refreshToken(String refreshToken) {
+        // Validate the refresh token
+        if (!isRefreshToken(refreshToken)) {
+            // Extract claims and generate a new access token
+            Claims claims = extractAllClaims(refreshToken);
+            // Generate a new token based on the same user details
+            return generateTokenWithClaims(claims);
+        } else {
+            throw new IllegalArgumentException("Invalid refresh token");
+        }
+    }
+
+    private String generateTokenWithClaims(Claims claims) {
+        return Jwts.builder()
+                .setClaims(claims)
+                .setIssuedAt(new Date())
+                .setExpiration(new Date(System.currentTimeMillis() + ACCESS_TOKEN_EXPIRATION))
+                .signWith(SignatureAlgorithm.HS256, SECRET_KEY)
+                .compact();
     }
 
     // Check if token is expired
