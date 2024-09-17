@@ -10,6 +10,7 @@ import org.springframework.security.config.annotation.web.WebSecurityConfigurer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfiguration;
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.web.SecurityFilterChain;
 
 import static org.springframework.security.config.Customizer.withDefaults;
@@ -27,12 +28,15 @@ public class SecurityConfig{
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-        http
-                .authorizeHttpRequests((authz) -> authz
-                        .anyRequest().authenticated()
-                )
-                .httpBasic(withDefaults());
-        return http.build();
+        return http
+                .csrf(AbstractHttpConfigurer::disable) // Type of security auth we won't handle, we may add this as one of the custom additions
+            .authorizeHttpRequests((authRequest) ->
+                authRequest
+                    .requestMatchers("/auth/**").permitAll()
+                    .anyRequest().authenticated()
+            )
+            .formLogin(withDefaults())
+            .build();
     }
 
     @Bean
