@@ -18,6 +18,7 @@ import com.uq.jokievents.repository.CouponRepository;
 import java.time.LocalDateTime;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -355,5 +356,16 @@ public class AdminServiceImpl implements AdminService{
             ApiResponse<String> response = new ApiResponse<>("Error", "Failed to delete all events", null);
             return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
         }
+    }
+
+    // Implement the loadUserByUsername method for Spring Security
+    @Override
+    public AuthAdminDTO loadAdminByUsername(String username){
+        // Fetch the admin by username (email or unique field)
+        Admin admin = adminRepository.findByUsername(username)
+                .orElseThrow(() -> new UsernameNotFoundException("Admin not found: " + username));
+
+        // Return the admin details as a Spring Security UserDetails object
+        return new AuthAdminDTO(admin.getUsername(), admin.getPassword());
     }
 }

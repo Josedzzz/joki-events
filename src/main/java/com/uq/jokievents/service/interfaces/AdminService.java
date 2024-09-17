@@ -17,6 +17,6 @@ public interface AdminService {
     ResponseEntity<?> addEvent(HandleEventDTO dto);
     ResponseEntity<?> updateEvent(String id, HandleEventDTO dto);
     ResponseEntity<?> deleteEvent(String id);
-    ResponseEntity<?> deleteAllEvents(); // Weird use case, but, everything is covered babyboi!
-
+    ResponseEntity<?> deleteAllEvents(); // Weird use case, but, everything is covered bbyboi!
+    AuthAdminDTO loadAdminByUsername(String username);
 }
