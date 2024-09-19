@@ -4,7 +4,6 @@ import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Null;
 import javax.validation.constraints.Size;
 
-import lombok.Data;
 public record AuthAdminDTO (
 
     @Null(message = "Username cannot be null")
