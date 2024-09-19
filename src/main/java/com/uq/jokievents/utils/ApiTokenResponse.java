@@ -5,8 +5,9 @@ import lombok.Data;
 
 @Data
 @AllArgsConstructor
-public class ApiResponse<T> {
+public class ApiTokenResponse<T> {
     private String status;
     private String message;
     private T data; // Generic field for additional data
+    private T token; // For tokens
 }
