@@ -2,14 +2,27 @@ package com.uq.jokievents.model;
 
 import java.util.ArrayList;
 import java.time.LocalDateTime;
+import java.util.Collection;
+import java.util.List;
+
+import com.uq.jokievents.model.enums.Role;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 import org.bson.types.ObjectId;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
 
 @Data
 @Document(collection = "clients")
-public class Client {
+@AllArgsConstructor
+@NoArgsConstructor
+@Builder
+public class Client implements UserDetails {
 
     @Id
     private String id; // Mongo will take care of it.
@@ -24,23 +37,15 @@ public class Client {
     private boolean active;
     private String verificationCode;
     private LocalDateTime verificationCodeExpiration;
+    private Role role;
 
-    // Constructors
-    public Client() {
+    @Override
+    public Collection<? extends GrantedAuthority> getAuthorities() {
+        return List.of(new SimpleGrantedAuthority(role.name()));
     }
 
-    public Client(String idCard, String name, String direction, String phoneNumber, String email, String password,
-            ArrayList<ObjectId> idCoupons, ObjectId shoppingCart) {
-        this.idCard = idCard;
-        this.name = name;
-        this.direction = direction;
-        this.phoneNumber = phoneNumber;
-        this.email = email;
-        this.password = password;
-        this.idCoupons = idCoupons;
-        this.idShoppingCart = shoppingCart;
-        this.active = false;
-        this.verificationCode = null;
-        this.verificationCodeExpiration = null;
+    @Override
+    public String getUsername() {
+        return "EVER SINCE I MET YOU";
     }
 }
