@@ -1,8 +1,11 @@
 package com.uq.jokievents.controller;
 
 import com.uq.jokievents.dtos.AuthAdminDTO;
+import com.uq.jokievents.dtos.LoginClientDTO;
+import com.uq.jokievents.dtos.RegisterClientDTO;
 import com.uq.jokievents.service.interfaces.AuthenticationService;
 import com.uq.jokievents.utils.ApiResponse;
+import com.uq.jokievents.utils.AuthResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.http.ResponseEntity;
@@ -15,18 +18,22 @@ import javax.validation.Valid;
 @RequiredArgsConstructor
 public class AuthenticationController {
 
-
     private final AuthenticationService authenticationService;
 
     @PostMapping("/login-admin")
     public ResponseEntity<?> loginAdmin(@RequestBody @Valid AuthAdminDTO loginRequest) {
-        return authenticationService.authenticate(loginRequest);
+        return ResponseEntity.ok(authenticationService.login(loginRequest));
+        // return authenticationService.authenticate(loginRequest);
     }
-// This method is to refresh a token after certain requirements
-//    @PostMapping("/refresh-token")
-//    public ResponseEntity<?> refreshToken(@RequestBody TokenRefreshRequest request) {
-//        String newToken = authenticationService.refreshToken(request);
-//        return ResponseEntity.ok(new AuthResponse(newToken));
-//    }
+
+    @PostMapping("/login-client")
+    public ResponseEntity<?> loginClient(@RequestBody @Valid LoginClientDTO loginClientRequest) {
+        return ResponseEntity.ok(authenticationService.loginClient(loginClientRequest));
+    }
+
+    @PostMapping("/register-client")
+    public ResponseEntity<?> registerClient(@RequestBody @Valid RegisterClientDTO registerClientRequest) {
+        return ResponseEntity.ok(authenticationService.registerClient(registerClientRequest));
+    }
 }
 
