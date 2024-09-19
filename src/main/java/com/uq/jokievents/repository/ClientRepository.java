@@ -5,11 +5,13 @@ import org.springframework.stereotype.Repository;
 
 import com.uq.jokievents.model.Client;
 
+import javax.swing.text.html.Option;
 import java.util.Optional;
 
 @Repository
 public interface ClientRepository extends MongoRepository<Client, String> {
     Optional<Client> findByEmailAndPassword(String email, String password);
+    Optional<Client> findByEmail(String email);
     boolean existsByEmail(String email);
     boolean existsByIdCard(String idCard);
 }
