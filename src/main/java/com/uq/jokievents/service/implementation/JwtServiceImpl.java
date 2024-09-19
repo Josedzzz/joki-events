@@ -1,18 +1,26 @@
-package com.uq.jokievents.utils.jwt;
-import io.jsonwebtoken.*;
+package com.uq.jokievents.service.implementation;
+
+import com.uq.jokievents.service.interfaces.JwtService;
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
+import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.security.Key;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Function;
-// Hayao Matsumura
-@Component
-public class JwtUtil {
+
+@Service
+@Transactional
+@RequiredArgsConstructor
+public class JwtServiceImpl implements JwtService {
 
     // Short-lived Access Token expiration time, for now it is 15 mins long
     private final long ACCESS_TOKEN_EXPIRATION = 15 * 60 * 1000;
@@ -127,4 +135,16 @@ public class JwtUtil {
         }
         return generateAccessToken(username, new HashMap<>());
     }
+
+    public String getClientToken(UserDetails client) {
+        return getClientToken(new HashMap<>(), client);
+    }
+
+    private String getClientToken(Map<String,Object> extraClaims, UserDetails client) {
+        return Jwts.builder().claims(extraClaims).subject(client.getUsername()).issuedAt(new Date(System.currentTimeMillis())).expiration(new Date(System.currentTimeMillis() + ACCESS_TOKEN_EXPIRATION))
+                .signWith(getSigningKey())
+                .compact();
+    }
+
+
 }
