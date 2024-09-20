@@ -1,13 +1,13 @@
 package com.uq.jokievents.service.implementation;
 
+import com.uq.jokievents.model.Client;
 import com.uq.jokievents.service.interfaces.JwtService;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -34,41 +34,6 @@ public class JwtServiceImpl implements JwtService {
         return Keys.hmacShaKeyFor(SECRET_KEY.getBytes());
     }
 
-    // Generate a token from Authentication
-    public String generateToken(Authentication auth) {
-        UserDetails userDetails = (UserDetails) auth.getPrincipal();  // Extract user details from auth
-        Map<String, Object> claims = new HashMap<>();  // Claims can hold additional data, like roles if needed
-        return generateAccessToken(userDetails.getUsername(), claims);
-    }
-
-    // Generate Access Token to a Client or Admin
-    public String generateAccessToken(String username, Map<String, Object> claims) {
-        return Jwts.builder()
-                .setClaims(claims)
-                .setSubject(username)
-                .setIssuedAt(new Date())
-                .setExpiration(new Date(System.currentTimeMillis() + ACCESS_TOKEN_EXPIRATION))
-                .signWith(getSigningKey(), SignatureAlgorithm.HS256)
-                .compact();
-    }
-
-    // Generate Refresh Token (used to get new access tokens)
-    public String generateRefreshToken(String username) {
-        // Refresh Token expiration time of a week
-        long REFRESH_TOKEN_EXPIRATION = 7 * 24 * 60 * 60 * 1000;
-        return Jwts.builder()
-                .setSubject(username)
-                .setIssuedAt(new Date())
-                .setExpiration(new Date(System.currentTimeMillis() + REFRESH_TOKEN_EXPIRATION))
-                .signWith(getSigningKey(), SignatureAlgorithm.HS256)
-                .compact();
-    }
-
-    // Extract username from token
-    public String extractUsername(String token) {
-        return extractClaim(token, Claims::getSubject);
-    }
-
     // Extract expiration date from token
     public Date extractExpiration(String token) {
         return extractClaim(token, Claims::getExpiration);
@@ -83,30 +48,16 @@ public class JwtServiceImpl implements JwtService {
     private Claims extractAllClaims(String token) {
         return Jwts.parser()
                 .setSigningKey(getSigningKey())
-                .build()
-                .parseClaimsJws(token)
-                .getBody();
+                .build().parseSignedClaims(token).getPayload();
     }
-
-    public String refreshToken(String refreshToken) {
-        // Validate the refresh token
-        if (!isRefreshToken(refreshToken)) {
-            // Extract claims and generate a new access token
-            Claims claims = extractAllClaims(refreshToken);
-            // Generate a new token based on the same user details
-            return generateTokenWithClaims(claims);
-        } else {
-            throw new IllegalArgumentException("Invalid refresh token");
+    // Validate token
+    public Boolean validateToken(String token) {
+        try {
+            // Check if the token is expired
+            return !isTokenExpired(token);
+        } catch (Exception e) {
+            return false; // Return false if any error occurs during validation
         }
-    }
-
-    private String generateTokenWithClaims(Claims claims) {
-        return Jwts.builder()
-                .setClaims(claims)
-                .setIssuedAt(new Date())
-                .setExpiration(new Date(System.currentTimeMillis() + ACCESS_TOKEN_EXPIRATION))
-                .signWith(SignatureAlgorithm.HS256, SECRET_KEY)
-                .compact();
     }
 
     // Check if token is expired
@@ -114,32 +65,19 @@ public class JwtServiceImpl implements JwtService {
         return extractExpiration(token).before(new Date());
     }
 
-    // Validate token
-    public Boolean validateToken(String token, String username) {
-        final String tokenUsername = extractUsername(token);
-        return (tokenUsername.equals(username) && !isTokenExpired(token));
-    }
-
-    // Check if a token is a refresh token. Will be used for requests
-    public boolean isRefreshToken(String token) {
-        try {
-            Claims claims = extractAllClaims(token);
-            return claims.getExpiration().getTime() - claims.getIssuedAt().getTime() > ACCESS_TOKEN_EXPIRATION;
-        } catch (Exception e) {
-            return false;
-        }
-    }
-
-    // Refresh an Access Token using a valid Refresh Token
-    public String refreshAccessToken(String refreshToken, String username) {
-        if (isTokenExpired(refreshToken)) {
-            throw new IllegalStateException("Refresh token is expired.");
-        }
-        return generateAccessToken(username, new HashMap<>());
-    }
-
     public String getClientToken(UserDetails client) {
-        return getClientToken(new HashMap<>(), client);
+        Client aux = new Client();
+        Map<String, Object> extraClaims = new HashMap<>();
+
+        if (client instanceof Client clientDetails) { // This makes sense for reallllll
+            String role = clientDetails.getAuthorities().stream()
+                    .map(GrantedAuthority::getAuthority)
+                    .findFirst().orElse("CLIENT");
+
+            extraClaims.put("role", role);
+            aux = clientDetails;
+        }
+        return getClientToken(extraClaims, aux);
     }
 
     private String getClientToken(Map<String,Object> extraClaims, UserDetails client) {
@@ -148,5 +86,12 @@ public class JwtServiceImpl implements JwtService {
                 .compact();
     }
 
+    public String extractRole(String token) {
+        return extractClaim(token, claims -> claims.get("role", String.class));
+    }
+
+    public String getUserIdFromToken(String token) {
+        return extractClaim(token, Claims::getSubject);
+    }
 
 }
