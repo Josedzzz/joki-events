@@ -6,6 +6,7 @@ import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
@@ -24,7 +25,8 @@ public class JwtServiceImpl implements JwtService {
 
     // Short-lived Access Token expiration time, for now it is 15 mins long
     private final long ACCESS_TOKEN_EXPIRATION = 15 * 60 * 1000;
-    private final String SECRET_KEY = "very-strong-secret-key-that-should-be-very-long-but-right-now-it-isn't"; // System.getEnv()
+    @Value("${jwt.secret}")
+    private String SECRET_KEY;
 
 
     private Key getSigningKey() {

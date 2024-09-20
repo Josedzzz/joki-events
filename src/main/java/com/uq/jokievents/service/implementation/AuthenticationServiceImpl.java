@@ -3,12 +3,15 @@ package com.uq.jokievents.service.implementation;
 import com.uq.jokievents.dtos.AuthAdminDTO;
 import com.uq.jokievents.dtos.LoginClientDTO;
 import com.uq.jokievents.dtos.RegisterClientDTO;
+import com.uq.jokievents.model.Admin;
 import com.uq.jokievents.model.Client;
 import com.uq.jokievents.model.enums.Role;
+import com.uq.jokievents.repository.AdminRepository;
 import com.uq.jokievents.repository.ClientRepository;
 import com.uq.jokievents.service.interfaces.AuthenticationService;
 import com.uq.jokievents.utils.*;
 import com.uq.jokievents.service.interfaces.JwtService;
+import lombok.NoArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,6 +26,7 @@ import org.springframework.stereotype.Service;
 import javax.validation.Valid;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -32,25 +36,64 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     private final JwtService jwtService;
     private final PasswordEncoder passwordEncoder;
     private final AuthenticationManager authenticationManager;
+    private final AdminRepository adminRepository;
 
     @Autowired
     private Utils utils;
     @Autowired
     private EmailService emailService;
 
-
     @Override
-    public ResponseEntity<?> login(AuthAdminDTO request) {
-        return null;
+    public ResponseEntity<?> loginAdmin(@Valid AuthAdminDTO request) {
+
+
+        try {
+            String username = request.username();
+            String password = request.password();
+            Optional<Admin> adminDB = adminRepository.findByUsernameAndPassword(username, password);
+            if (adminDB.isPresent()) {
+                authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(request.username(), request.password()));
+                UserDetails adminDetails = clientRepository.findByEmail(request.username()).orElse(null);
+                String token = jwtService.getClientToken(adminDetails);
+                ApiTokenResponse<String> response = new ApiTokenResponse<>("Success", "Admin logged in successfully", adminDB.get().getId(), token);
+                return new ResponseEntity<>(response, HttpStatus.CREATED);
+            } else {
+                ApiResponse<String> response = new ApiResponse<>("Error", "Invalid username or password", null);
+                return new ResponseEntity<>(response, HttpStatus.UNAUTHORIZED);
+            }
+        } catch (Exception e) {
+            ApiResponse<String> response = new ApiResponse<>("Error", "Login failed", null);
+            return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
 
     @Override
     public ResponseEntity<?> loginClient(@Valid LoginClientDTO request) {
-        authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(request.email(), request.password()));
-        UserDetails client = clientRepository.findByEmail(request.email()).orElse(null);
-        String token = jwtService.getClientToken(client);
-        ApiTokenResponse<String> response = new ApiTokenResponse<>("Success", "Client logged in successfully", null, token);
-        return new ResponseEntity<>(response, HttpStatus.CREATED);
+        try {
+            String email = request.email();
+            String password = request.password();
+            Optional<Client> clientDB = clientRepository.findByEmailAndPassword(email, password);
+            if (clientDB.isPresent()) {
+                //Checks if the Client is active for login
+                if(clientDB.get().isActive()){
+                    authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(request.email(), request.password()));
+                    UserDetails clientDetails = clientRepository.findByEmail(request.email()).orElse(null);
+                    String token = jwtService.getClientToken(clientDetails);
+                    ApiTokenResponse<String> response = new ApiTokenResponse<>("Success", "Client logged in successfully", clientDB.get().getId(), token);
+                    return new ResponseEntity<>(response, HttpStatus.CREATED);
+                }
+                else{
+                    ApiResponse<String> response = new ApiResponse<>("Error", "The client is not active", null);
+                    return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+                }
+            } else {
+                ApiResponse<String> response = new ApiResponse<>("Error", "Invalid email or password", null);
+                return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
+            }
+        } catch (Exception e) {
+            ApiResponse<String> response = new ApiResponse<>("Error", "Failed to find client", null);
+            return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
 
     @Override
@@ -62,7 +105,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
                 .direction(request.address())
                 .phoneNumber(request.phone())
                 .email(request.email())
-                .password(passwordEncoder.encode(request.password())) // Será encriptada pronto
+                .password(passwordEncoder.encode(request.password()))
                 .role(Role.CLIENT)
                 .build();
 

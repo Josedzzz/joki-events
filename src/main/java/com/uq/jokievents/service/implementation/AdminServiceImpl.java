@@ -93,26 +93,6 @@ public class AdminServiceImpl implements AdminService{
         }
     }
     
-
-    @Override
-    public ResponseEntity<?> loginAdmin(@Valid AuthAdminDTO dto) {
-        try {
-            String username = dto.username();
-            String password = dto.password();
-            Optional<Admin> admin = adminRepository.findByUsernameAndPassword(username, password);
-            if (admin.isPresent()) {
-                ApiResponse<String> response = new ApiResponse<>("Success", "Login done", null);
-                return new ResponseEntity<>(response, HttpStatus.OK);
-            } else {
-                ApiResponse<String> response = new ApiResponse<>("Error", "Invalid username or password", null);
-                return new ResponseEntity<>(response, HttpStatus.UNAUTHORIZED);
-            }
-        } catch (Exception e) {
-            ApiResponse<String> response = new ApiResponse<>("Error", "Login failed", null);
-            return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-    }
-    
     @Override
     public ResponseEntity<?> sendRecoverPasswordCode(String email) {
         try {
@@ -356,16 +336,5 @@ public class AdminServiceImpl implements AdminService{
             ApiResponse<String> response = new ApiResponse<>("Error", "Failed to delete all events", null);
             return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
         }
-    }
-
-    // Implement the loadUserByUsername method for Spring Security
-    @Override
-    public AuthAdminDTO loadAdminByUsername(String username){
-        // Fetch the admin by username (email or unique field)
-        Admin admin = adminRepository.findByUsername(username)
-                .orElseThrow(() -> new UsernameNotFoundException("Admin not found: " + username));
-
-        // Return the admin details as a Spring Security UserDetails object
-        return new AuthAdminDTO(admin.getUsername(), admin.getPassword());
     }
 }
