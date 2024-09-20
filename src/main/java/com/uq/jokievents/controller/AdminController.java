@@ -3,6 +3,7 @@ package com.uq.jokievents.controller;
 import com.uq.jokievents.dtos.*;
 import com.uq.jokievents.service.interfaces.AdminService;
 
+import com.uq.jokievents.service.interfaces.AuthenticationService;
 import lombok.RequiredArgsConstructor;
 
 import org.springframework.http.ResponseEntity;
@@ -15,11 +16,11 @@ import javax.validation.Valid;
 @RequiredArgsConstructor
 public class AdminController {
 
-    // TODO All the other outputs for the other methods (Daniel will do that I think).
     // TODO Authentication with Firebase.
-    // TODO JWT auth and maybe Oauth
-    // TODO Short-Lived Access Tokens + Refresh Tokens
+    // TODO 0auth
+    // TODO Refresh Tokens
     private final AdminService adminService;
+    private final AuthenticationService authenticationService;
     /**
      * Example JSON:
      * {
@@ -50,7 +51,7 @@ public class AdminController {
      */
     @PostMapping("/login")
     public ResponseEntity<?> loginAdmin(@Valid @RequestBody AuthAdminDTO dto) {
-        return adminService.loginAdmin(dto);
+        return authenticationService.loginAdmin(dto);
     }
 
     @PostMapping("/send-recover-code")

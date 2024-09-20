@@ -1,5 +1,6 @@
 package com.uq.jokievents.controller;
 
+import com.uq.jokievents.service.interfaces.AuthenticationService;
 import com.uq.jokievents.service.interfaces.ClientService;
 import lombok.RequiredArgsConstructor;
 
@@ -23,9 +24,9 @@ import javax.validation.Valid;
 @RequiredArgsConstructor
 public class ClientController {
 
-    // TODO All the other outputs for the other methods (Daniel will do that I think)
-    @Autowired
-    private ClientService clientService;
+    private final ClientService clientService;
+    private final AuthenticationService authenticationService;
+
     /**
      * Get all clients
      *
@@ -55,7 +56,7 @@ public class ClientController {
      *  "phone": "3101112222",
      *  "email": "mail@mail.com",
      *  "name": "VeryCoolName",
-     *  "direction": "Very Cool Addres"
+     *  "direction": "Very Cool Address"
      * }
      * @param id     the identifier of the client to update
      * @param client the updated client object
@@ -89,7 +90,7 @@ public class ClientController {
      */
     @PostMapping("/login")
     public ResponseEntity<?> loginClient(@RequestBody LoginClientDTO dto) {
-        return clientService.loginClient(dto);
+        return authenticationService.loginClient(dto);
     }
 
     /**
@@ -109,7 +110,7 @@ public class ClientController {
     @PostMapping("/register")
     public ResponseEntity<?> registerClient(@Valid @RequestBody RegisterClientDTO rcDto) {
         // Using the service to register the client
-        return clientService.registerNewClient(rcDto);
+        return authenticationService.registerClient(rcDto);
     }
 
     /**

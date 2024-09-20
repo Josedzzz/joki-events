@@ -4,8 +4,6 @@ import com.uq.jokievents.dtos.AuthAdminDTO;
 import com.uq.jokievents.dtos.LoginClientDTO;
 import com.uq.jokievents.dtos.RegisterClientDTO;
 import com.uq.jokievents.service.interfaces.AuthenticationService;
-import com.uq.jokievents.utils.ApiResponse;
-import com.uq.jokievents.utils.AuthResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.http.ResponseEntity;
@@ -22,18 +20,17 @@ public class AuthenticationController {
 
     @PostMapping("/login-admin")
     public ResponseEntity<?> loginAdmin(@RequestBody @Valid AuthAdminDTO loginRequest) {
-        return ResponseEntity.ok(authenticationService.login(loginRequest));
-        // return authenticationService.authenticate(loginRequest);
+        return authenticationService.loginAdmin(loginRequest);
     }
 
     @PostMapping("/login-client")
     public ResponseEntity<?> loginClient(@RequestBody @Valid LoginClientDTO loginClientRequest) {
-        return ResponseEntity.ok(authenticationService.loginClient(loginClientRequest));
+        return authenticationService.loginClient(loginClientRequest);
     }
 
     @PostMapping("/register-client")
     public ResponseEntity<?> registerClient(@RequestBody @Valid RegisterClientDTO registerClientRequest) {
-        return ResponseEntity.ok(authenticationService.registerClient(registerClientRequest));
+        return authenticationService.registerClient(registerClientRequest);
     }
 }
 
