@@ -7,7 +7,7 @@ import org.springframework.http.ResponseEntity;
 
 public interface AuthenticationService {
 
-    ResponseEntity<?> login(AuthAdminDTO request);
+    ResponseEntity<?> loginAdmin(AuthAdminDTO request);
     ResponseEntity<?> registerClient(RegisterClientDTO request);
     ResponseEntity<?> loginClient(LoginClientDTO request);
 

@@ -7,7 +7,6 @@ public interface AdminService {
     
     ResponseEntity<?> updateAdmin(String id, UpdateAdminDTO dto);
     ResponseEntity<?> deleteAdminById(String id);
-    ResponseEntity<?> loginAdmin(AuthAdminDTO dto);
     ResponseEntity<?> sendRecoverPasswordCode(String email);
     ResponseEntity<?> recoverPassword(RecoverPassAdminDTO dto);
     ResponseEntity<?> createCoupon(CreateCouponDTO dto);
@@ -18,5 +17,4 @@ public interface AdminService {
     ResponseEntity<?> updateEvent(String id, HandleEventDTO dto);
     ResponseEntity<?> deleteEvent(String id);
     ResponseEntity<?> deleteAllEvents(); // Weird use case, but, everything is covered bbyboi!
-    AuthAdminDTO loadAdminByUsername(String username);
 }
