@@ -46,6 +46,6 @@ public class Client implements UserDetails {
 
     @Override
     public String getUsername() {
-        return "EVER SINCE I MET YOU";
+        return email;
     }
 }

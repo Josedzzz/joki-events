@@ -13,6 +13,7 @@ import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -75,6 +76,14 @@ public class ClientServiceImpl implements ClientService {
     @Override
     public ResponseEntity<?> updateClient(String id, @Valid @RequestBody UpdateClientDTO dto) {
         try {
+
+            String loggedInClientId = (String) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+            // Check if the logged-in client is the same as the one being updated
+            if (!loggedInClientId.equals(id)) {
+                ApiResponse<String> response = new ApiResponse<>("Error", "You are not authorized to update this client", null);
+                return new ResponseEntity<>(response, HttpStatus.FORBIDDEN);
+            }
+
             Optional<Client> existingClient = clientRepository.findById(id);
             if (existingClient.isPresent()) {
                 Client client = existingClient.get();
