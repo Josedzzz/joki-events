@@ -77,8 +77,11 @@ public class ClientServiceImpl implements ClientService {
     public ResponseEntity<?> updateClient(String id, @Valid @RequestBody UpdateClientDTO dto) {
         System.out.println("Reached update client method");
         try {
+            // Extracting the logged-in client from the security context
+            Client loggedInClient = (Client) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+            String loggedInClientId = loggedInClient.getId(); // Get the client ID from the Client object
+            System.out.println("Logged client id: " + loggedInClientId);
 
-            String loggedInClientId = (String) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
             // Check if the logged-in client is the same as the one being updated
             if (!loggedInClientId.equals(id) || !SecurityContextHolder.getContext().getAuthentication().getAuthorities().contains(new SimpleGrantedAuthority("CLIENT"))) {
                 ApiResponse<String> response = new ApiResponse<>("Error", "You are not authorized to update this client", null);
@@ -90,21 +93,23 @@ public class ClientServiceImpl implements ClientService {
                 Client client = existingClient.get();
 
                 // Verifications for Client update
-                if(!client.getIdCard().equals(dto.idCard()) && utils.existsByIdCard(dto.idCard())){
+                if (!client.getIdCard().equals(dto.idCard()) && utils.existsByIdCard(dto.idCard())) {
                     ApiResponse<String> response = new ApiResponse<>("Error", "The identification card is in use", null);
                     return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
                 }
-                if(!client.getEmail().equals(dto.email()) && utils.existsEmailClient(dto.email())){
+                if (!client.getEmail().equals(dto.email()) && utils.existsEmailClient(dto.email())) {
                     ApiResponse<String> response = new ApiResponse<>("Error", "The email is in use", null);
                     return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
                 }
 
+                // Update client details
                 client.setIdCard(dto.idCard());
                 client.setPhoneNumber(dto.phone());
                 client.setEmail(dto.email());
                 client.setName(dto.name());
                 client.setDirection(dto.direction());
                 Client updatedClient = clientRepository.save(client);
+
                 ApiResponse<Client> response = new ApiResponse<>("Success", "Client updated successfully", updatedClient);
                 return new ResponseEntity<>(updatedClient, HttpStatus.OK);
             } else {
@@ -114,8 +119,9 @@ public class ClientServiceImpl implements ClientService {
         } catch (Exception e) {
             ApiResponse<String> response = new ApiResponse<>("Error", "Failed to update client", null);
             return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
-        }   
+        }
     }
+
 
     @Override
     public ResponseEntity<?> deleteClient(String id) {

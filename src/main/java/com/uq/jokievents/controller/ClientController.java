@@ -62,7 +62,7 @@ public class ClientController {
      * @param client the updated client object
      * @return a ResponseEntity containing the update client
      */
-    @PutMapping("/{id}/update")
+    @PostMapping("/{id}/update")
     public ResponseEntity<?> updateClient(@PathVariable String id, @RequestBody UpdateClientDTO client) {
         return clientService.updateClient(id, client);
     }
