@@ -48,7 +48,7 @@ public class JwtServiceImpl implements JwtService {
     private Claims extractAllClaims(String token) {
         return Jwts.parser()
                 .setSigningKey(getSigningKey())
-                .build().parseSignedClaims(token).getPayload();
+                .build().parseSignedClaims(token).getBody();
     }
     // Validate token
     public Boolean validateToken(String token) {
@@ -90,8 +90,18 @@ public class JwtServiceImpl implements JwtService {
         return extractClaim(token, claims -> claims.get("role", String.class));
     }
 
-    public String getUserIdFromToken(String token) {
+    @Override
+    public String getUsernameFromToken(String token) {
         return extractClaim(token, Claims::getSubject);
     }
 
+    @Override
+    public boolean isTokenValid(String token, UserDetails userDetails) {
+        final String username = getUsernameFromToken(token);
+        return (username.equals(userDetails.getUsername()) && !isTokenExpired(token));
+    }
+
+    public String getUserIdFromToken(String token) {
+        return extractClaim(token, Claims::getSubject);
+    }
 }

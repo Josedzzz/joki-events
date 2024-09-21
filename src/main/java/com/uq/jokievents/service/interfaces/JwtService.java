@@ -12,4 +12,8 @@ public interface JwtService {
     String getClientToken(UserDetails client);
     String getUserIdFromToken(String token);
     String extractRole(String token);
+
+    String getUsernameFromToken(String token);
+
+    boolean isTokenValid(String token, UserDetails userDetails);
 }
