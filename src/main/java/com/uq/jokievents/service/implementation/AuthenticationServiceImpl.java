@@ -45,8 +45,6 @@ public class AuthenticationServiceImpl implements AuthenticationService {
 
     @Override
     public ResponseEntity<?> loginAdmin(@Valid AuthAdminDTO request) {
-
-
         try {
             String username = request.username();
             String password = request.password();
@@ -71,13 +69,12 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     public ResponseEntity<?> loginClient(@Valid LoginClientDTO request) {
         try {
             String email = request.email();
-            String password = request.password();
-            Optional<Client> clientDB = clientRepository.findByEmailAndPassword(email, password);
-            if (clientDB.isPresent()) {
-                //Checks if the Client is active for login
-                if(clientDB.get().isActive()){
+            String rawPassword = request.password();
+            Optional<Client> clientDB = clientRepository.findByEmail(email);
+            if (clientDB.isPresent() && clientDB.get().isActive()) {
+                if(passwordEncoder.matches(rawPassword, clientDB.get().getPassword())) {
                     authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(request.email(), request.password()));
-                    UserDetails clientDetails = clientRepository.findByEmail(request.email()).orElse(null);
+                    UserDetails clientDetails = clientRepository.findByEmail(email).orElse(null);
                     String token = jwtService.getClientToken(clientDetails);
                     ApiTokenResponse<String> response = new ApiTokenResponse<>("Success", "Client logged in successfully", clientDB.get().getId(), token);
                     return new ResponseEntity<>(response, HttpStatus.CREATED);

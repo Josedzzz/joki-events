@@ -62,7 +62,7 @@ public class ClientController {
      * @param client the updated client object
      * @return a ResponseEntity containing the update client
      */
-    @PutMapping("/{id}")
+    @PutMapping("/{id}/update")
     public ResponseEntity<?> updateClient(@PathVariable String id, @RequestBody UpdateClientDTO client) {
         return clientService.updateClient(id, client);
     }
@@ -73,7 +73,7 @@ public class ClientController {
      * @param id the identifier of the client to delete
      * @return a ResponseEntity object with and HTTP status
      */
-    @DeleteMapping("/{id}")
+    @DeleteMapping("/{id}/delete")
     public ResponseEntity<?> deleteClient(@PathVariable String id) {
         return clientService.deleteClient(id);
     }

@@ -9,10 +9,10 @@ import com.uq.jokievents.repository.ClientRepository;
 import com.uq.jokievents.service.interfaces.ClientService;
 import com.uq.jokievents.utils.*;
 import lombok.RequiredArgsConstructor;
-import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -75,11 +75,12 @@ public class ClientServiceImpl implements ClientService {
      */
     @Override
     public ResponseEntity<?> updateClient(String id, @Valid @RequestBody UpdateClientDTO dto) {
+        System.out.println("Reached update client method");
         try {
 
             String loggedInClientId = (String) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
             // Check if the logged-in client is the same as the one being updated
-            if (!loggedInClientId.equals(id)) {
+            if (!loggedInClientId.equals(id) || !SecurityContextHolder.getContext().getAuthentication().getAuthorities().contains(new SimpleGrantedAuthority("CLIENT"))) {
                 ApiResponse<String> response = new ApiResponse<>("Error", "You are not authorized to update this client", null);
                 return new ResponseEntity<>(response, HttpStatus.FORBIDDEN);
             }
