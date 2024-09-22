@@ -7,7 +7,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 
 import com.uq.jokievents.dtos.LoginClientDTO;
@@ -27,15 +26,6 @@ public class ClientController {
     private final ClientService clientService;
     private final AuthenticationService authenticationService;
 
-    /**
-     * Get all clients
-     *
-     * @return a ResponseEntity object with all the contained clients
-     */
-    @GetMapping
-    public ResponseEntity<?> getAllClients() {
-        return clientService.findAllClients();
-    }
 
     /**
      * Get a client by id
@@ -74,8 +64,8 @@ public class ClientController {
      * @return a ResponseEntity object with and HTTP status
      */
     @DeleteMapping("/{id}/delete")
-    public ResponseEntity<?> deleteClient(@PathVariable String id) {
-        return clientService.deleteClient(id);
+    public ResponseEntity<?> deleteAccount(@PathVariable String id) {
+        return clientService.deleteAccount(id);
     }
 
     /**
@@ -89,7 +79,7 @@ public class ClientController {
      * @return a ResponseEntity containing the client if found, otherwise an error message
      */
     @PostMapping("/login")
-    public ResponseEntity<?> loginClient(@RequestBody LoginClientDTO dto) {
+    public ResponseEntity<?> login(@RequestBody LoginClientDTO dto) {
         return authenticationService.loginClient(dto);
     }
 

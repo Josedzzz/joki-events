@@ -31,27 +31,14 @@ public class AdminController {
      * @param dto UpdateAdminDTO
      * @return ResponseEntity
      */
-    @PutMapping("/update/{id}")
+    @PostMapping("/update/{id}")
     public ResponseEntity<?> updateAdmin(@PathVariable String id, @Valid @RequestBody UpdateAdminDTO dto) {
         return adminService.updateAdmin(id, dto);
     }
 
     @DeleteMapping("/delete/{id}")
     public ResponseEntity<?> deleteAdminById(@PathVariable String id) {
-        return adminService.deleteAdminById(id);
-    }
-    /**
-     * Example JSON:
-     * {
-     *  "username": "XD",
-     *  "password": "cool-non-encrypted-password"
-     * }
-     * @param dto AuthAdminDTO
-     * @return ResponseEntity
-     */
-    @PostMapping("/login")
-    public ResponseEntity<?> loginAdmin(@Valid @RequestBody AuthAdminDTO dto) {
-        return authenticationService.loginAdmin(dto);
+        return adminService.deleteAdminAccount(id);
     }
 
     @PostMapping("/send-recover-code")
