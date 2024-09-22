@@ -37,7 +37,7 @@ public class Client implements UserDetails {
     private boolean active;
     private String verificationCode;
     private LocalDateTime verificationCodeExpiration;
-    private Role role;
+    private Role role = Role.CLIENT;
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
