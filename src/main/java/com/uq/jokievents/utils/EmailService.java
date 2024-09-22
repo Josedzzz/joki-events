@@ -28,7 +28,7 @@ public class EmailService {
     /**
      * Sends a recuperation email to a client to reset their password
      * @param to client's email
-     * @param resetLink the password reset link
+     * @param verCode the password reset link
      */
     public void sendRecuperationEmail(String to, String verCode) {
         SimpleMailMessage message = new SimpleMailMessage();

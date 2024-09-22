@@ -1,7 +1,5 @@
 package com.uq.jokievents.service.implementation;
 
-import com.uq.jokievents.dtos.LoginClientDTO;
-import com.uq.jokievents.dtos.RegisterClientDTO;
 import com.uq.jokievents.dtos.UpdateClientDTO;
 import com.uq.jokievents.dtos.VerifyClientDTO;
 import com.uq.jokievents.model.Client;
@@ -18,7 +16,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.RequestBody;
 
-import java.time.LocalDateTime;
 import java.util.*;
 
 import javax.validation.Valid;
@@ -28,28 +25,13 @@ import javax.validation.Valid;
 @RequiredArgsConstructor
 public class ClientServiceImpl implements ClientService {
 
-    @Autowired
     private final ClientRepository clientRepository;
-    @Autowired
-    private EmailService emailService;
     @Autowired
     private VerificationService verificationService;
     @Autowired
     private Utils utils;
 
-
-    @Override
-    public ResponseEntity<?> findAllClients() {
-        try {
-            List<Client> clients = clientRepository.findAll();
-            ApiResponse<String> response = new ApiResponse<>("Success", "Clients found", null);
-            return new ResponseEntity<>(response, HttpStatus.OK);
-        } catch (Exception e) {
-            ApiResponse<String> response = new ApiResponse<>("Error", "Clients not found", null);
-            return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-    }
-
+    // TODO Check if this function is being used or will be used somewhere at some time
     @Override
     public ResponseEntity<?> findClientById(String id) {
         try {
@@ -75,19 +57,11 @@ public class ClientServiceImpl implements ClientService {
      */
     @Override
     public ResponseEntity<?> updateClient(String id, @Valid @RequestBody UpdateClientDTO dto) {
-        System.out.println("Reached update client method");
         try {
-            // Extracting the logged-in client from the security context
-            Client loggedInClient = (Client) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-            String loggedInClientId = loggedInClient.getId(); // Get the client ID from the Client object
-            System.out.println("Logged client id: " + loggedInClientId);
-
-            // Check if the logged-in client is the same as the one being updated
-            if (!loggedInClientId.equals(id) || !SecurityContextHolder.getContext().getAuthentication().getAuthorities().contains(new SimpleGrantedAuthority("CLIENT"))) {
-                ApiResponse<String> response = new ApiResponse<>("Error", "You are not authorized to update this client", null);
-                return new ResponseEntity<>(response, HttpStatus.FORBIDDEN);
+            ResponseEntity<?> verificationResponse = ClientSecurityUtils.verifyClientAccess(id);
+            if (verificationResponse != null) {
+                return verificationResponse;
             }
-
             Optional<Client> existingClient = clientRepository.findById(id);
             if (existingClient.isPresent()) {
                 Client client = existingClient.get();
@@ -111,7 +85,7 @@ public class ClientServiceImpl implements ClientService {
                 Client updatedClient = clientRepository.save(client);
 
                 ApiResponse<Client> response = new ApiResponse<>("Success", "Client updated successfully", updatedClient);
-                return new ResponseEntity<>(updatedClient, HttpStatus.OK);
+                return new ResponseEntity<>(response, HttpStatus.OK);
             } else {
                 ApiResponse<String> response = new ApiResponse<>("Error", "Client not found", null);
                 return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
@@ -124,8 +98,13 @@ public class ClientServiceImpl implements ClientService {
 
 
     @Override
-    public ResponseEntity<?> deleteClient(String id) {
+    public ResponseEntity<?> deleteAccount(String id) {
         try {
+            ResponseEntity<?> verificationResponse = ClientSecurityUtils.verifyClientAccess(id);
+            if (verificationResponse != null) {
+                return verificationResponse;
+            }
+
             Optional<Client> existingClient = clientRepository.findById(id);
             if (existingClient.isPresent()) {
                 clientRepository.deleteById(id);
@@ -143,6 +122,12 @@ public class ClientServiceImpl implements ClientService {
 
     @Override
     public ResponseEntity<?> verifyCode(String clientId, @Valid VerifyClientDTO dto) {
+
+        ResponseEntity<?> verificationResponse = ClientSecurityUtils.verifyClientAccess(clientId);
+        if (verificationResponse != null) {
+            return verificationResponse;
+        }
+
         String verificationCode = dto.verificationCode();
         boolean verified = verificationService.verifyCode(clientId, verificationCode);
         if (verified) {
@@ -193,4 +178,5 @@ public class ClientServiceImpl implements ClientService {
             return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
+
 }
