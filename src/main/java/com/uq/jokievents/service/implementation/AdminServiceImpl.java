@@ -7,6 +7,7 @@ import com.uq.jokievents.model.Locality;
 import com.uq.jokievents.model.Event;
 import com.uq.jokievents.repository.EventRepository;
 import com.uq.jokievents.repository.LocalityRepository;
+import com.uq.jokievents.utils.AdminSecurityUtils;
 import com.uq.jokievents.utils.ApiResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -34,32 +35,39 @@ import lombok.RequiredArgsConstructor;
 @Service
 @Transactional
 @RequiredArgsConstructor
+// TODO Add admin id to the functions that require it
 public class AdminServiceImpl implements AdminService{
 
-    @Autowired
     private final AdminRepository adminRepository;
-    @Autowired
     private final EmailService emailService;
-    @Autowired
     private final CouponRepository couponRepository;
-    @Autowired
     private final EventRepository eventRepository;
-    @Autowired
-    private LocalityRepository localityRepository;
+    private final LocalityRepository localityRepository;
 
     @Override
     public ResponseEntity<?> updateAdmin(String id, @Valid @RequestBody UpdateAdminDTO dto) {
+
+        ResponseEntity<?> verificationResponse = AdminSecurityUtils.verifyAdminAccess(id);
+        if (verificationResponse != null) {
+            return verificationResponse;
+        }
+
         try {
             Optional<Admin> existingAdmin = adminRepository.findById(id);
             if (existingAdmin.isPresent()) {
                 Admin admin = existingAdmin.get();
                 
-                // Por si acaso 
-                if (dto.username() != null) {
-                    ApiResponse<String> response = new ApiResponse<>("Error", "Username cannot be updated", null);
+                // Por si acaso ??? soy retrasado
+                if (dto.username() == null) {
+                    ApiResponse<String> response = new ApiResponse<>("Error", "Username field is empty", null);
+                    return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+                }
+                if (dto.email() == null) {
+                    ApiResponse<String> response = new ApiResponse<>("Error", "Email field is empty", null);
                     return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
                 }
 
+                admin.setUsername(dto.username()); // Soy retrasado!
                 admin.setEmail(dto.email());
 
                 Admin updatedAdmin = adminRepository.save(admin);
@@ -76,7 +84,13 @@ public class AdminServiceImpl implements AdminService{
     }
 
     @Override
-    public ResponseEntity<?> deleteAdminById(String id) {
+    public ResponseEntity<?> deleteAdminAccount(String id) {
+
+        ResponseEntity<?> verificationResponse = AdminSecurityUtils.verifyAdminAccess(id);
+        if (verificationResponse != null) {
+            return verificationResponse;
+        }
+
         try {
             Optional<Admin> existingAdmin = adminRepository.findById(id);
             if (existingAdmin.isPresent()) {
@@ -95,6 +109,7 @@ public class AdminServiceImpl implements AdminService{
     
     @Override
     public ResponseEntity<?> sendRecoverPasswordCode(String email) {
+
         try {
             // Validate if the admin exists by email
             Optional<Admin> adminOptional = adminRepository.findByEmail(email);

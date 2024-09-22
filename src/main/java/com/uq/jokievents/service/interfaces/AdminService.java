@@ -6,7 +6,7 @@ import org.springframework.http.ResponseEntity;
 public interface AdminService {
     
     ResponseEntity<?> updateAdmin(String id, UpdateAdminDTO dto);
-    ResponseEntity<?> deleteAdminById(String id);
+    ResponseEntity<?> deleteAdminAccount(String id);
     ResponseEntity<?> sendRecoverPasswordCode(String email);
     ResponseEntity<?> recoverPassword(RecoverPassAdminDTO dto);
     ResponseEntity<?> createCoupon(CreateCouponDTO dto);
