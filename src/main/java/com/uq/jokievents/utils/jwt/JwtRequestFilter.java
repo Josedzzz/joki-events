@@ -54,9 +54,7 @@ public class JwtRequestFilter extends OncePerRequestFilter {
                 authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                 SecurityContextHolder.getContext().setAuthentication(authentication);
             }
-
         }
-
         filterChain.doFilter(request, response);
     }
 
@@ -66,10 +64,7 @@ public class JwtRequestFilter extends OncePerRequestFilter {
                 HttpHeaders.AUTHORIZATION
         );
 
-        if (
-                StringUtils.hasText(authorizationHeader) &&
-                        authorizationHeader.startsWith("Bearer ")
-        ) {
+        if (StringUtils.hasText(authorizationHeader) && authorizationHeader.startsWith("Bearer ")) {
             return authorizationHeader.substring(7);
         }
         return null;
