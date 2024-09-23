@@ -5,13 +5,13 @@ import org.springframework.http.ResponseEntity;
 
 public interface AdminService {
     
-    ResponseEntity<?> updateAdmin(String id, UpdateAdminDTO dto);
-    ResponseEntity<?> deleteAdminAccount(String id);
+    ResponseEntity<?> updateAdmin(String adminId, UpdateAdminDTO dto);
+    ResponseEntity<?> deleteAdminAccount(String adminId);
     ResponseEntity<?> sendRecoverPasswordCode(String email);
     ResponseEntity<?> recoverPassword(RecoverPassAdminDTO dto);
     ResponseEntity<?> createCoupon(CreateCouponDTO dto);
-    ResponseEntity<?> updateCoupon(String id, UpdateCouponDTO dto);
-    ResponseEntity<?> deleteCoupon(String id);
+    ResponseEntity<?> updateCoupon(String couponId, UpdateCouponDTO dto);
+    ResponseEntity<?> deleteCoupon(String couponId);
     ResponseEntity<?> deleteAllCoupons();
     ResponseEntity<?> addEvent(HandleEventDTO dto);
     ResponseEntity<?> updateEvent(String id, HandleEventDTO dto);

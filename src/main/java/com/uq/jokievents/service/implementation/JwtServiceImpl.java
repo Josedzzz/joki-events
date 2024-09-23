@@ -84,7 +84,6 @@ public class JwtServiceImpl implements JwtService {
             extraClaims.put("role", role);
             aux = adminDetails;
         }
-        System.out.println("Admin username: "+ aux.getUsername());
         return getTokenWithClaims(extraClaims, aux);
     }
 

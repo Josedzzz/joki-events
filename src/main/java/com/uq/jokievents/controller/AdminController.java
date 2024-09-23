@@ -6,19 +6,25 @@ import com.uq.jokievents.service.interfaces.AdminService;
 import com.uq.jokievents.service.interfaces.AuthenticationService;
 import lombok.RequiredArgsConstructor;
 
+import org.springframework.context.support.DefaultMessageSourceResolvable;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.BindingResult;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/admin")
 @RequiredArgsConstructor
+@Validated
 public class AdminController {
 
     // TODO Authentication with Firebase.
     // TODO 0auth
     // TODO Refresh Tokens
+    // TODO Admin actions logger, can be one of the two additional functionalities
     private final AdminService adminService;
     private final AuthenticationService authenticationService;
     /**
@@ -27,18 +33,18 @@ public class AdminController {
      *  "username": "XD",
      *  "email": "mail@mail.com"
      * }
-     * @param id String
+     * @param adminId String
      * @param dto UpdateAdminDTO
      * @return ResponseEntity
      */
-    @PostMapping("/update/{id}")
-    public ResponseEntity<?> updateAdmin(@PathVariable String id, @Valid @RequestBody UpdateAdminDTO dto) {
-        return adminService.updateAdmin(id, dto);
+    @PostMapping("/{adminId}/update/")
+    public ResponseEntity<?> updateAdmin(@PathVariable String adminId, @Valid @RequestBody UpdateAdminDTO dto) {
+        return adminService.updateAdmin(adminId, dto);
     }
 
-    @DeleteMapping("/delete/{id}")
-    public ResponseEntity<?> deleteAdminById(@PathVariable String id) {
-        return adminService.deleteAdminAccount(id);
+    @DeleteMapping("/{adminId}/delete")
+    public ResponseEntity<?> deleteAdminById(@PathVariable String adminId) {
+        return adminService.deleteAdminAccount(adminId);
     }
 
     @PostMapping("/send-recover-code")
@@ -56,7 +62,7 @@ public class AdminController {
      * @param dto RecoverPassAdminDTO
      * @return ResponseEntity
      */
-    @PostMapping("/recover-password")
+    @PostMapping("/recover-password/")
     public ResponseEntity<?> recoverPassword(@Valid @RequestBody RecoverPassAdminDTO dto) {
         return adminService.recoverPassword(dto);
     }
@@ -111,19 +117,18 @@ public class AdminController {
      *         "used": false
      *     }
      * }
-     * @param id Coupon.id()
      * @param dto UpdateCouponDTO
      * @return ResponseEntity
      */
-    @PostMapping("/update-coupon/{id}")
-    public ResponseEntity<?> updateCoupon(@PathVariable String id, @Valid @RequestBody UpdateCouponDTO dto) {
-        return  adminService.updateCoupon(id, dto);
+    @PostMapping("/update-coupon/{couponId}")
+    public ResponseEntity<?> updateCoupon( @PathVariable String couponId, @Valid @RequestBody UpdateCouponDTO dto) {
+        return  adminService.updateCoupon(couponId, dto);
     }
 
     // TODO Ask Jose if the path (delete-coupon) is necessary for this method to be used. Logic is tickling. Same question for deleteAllCoupons() below.
-    @DeleteMapping("/delete-coupon/{id}")
-    public ResponseEntity<?> deleteCouponById(@PathVariable String id) {
-        return adminService.deleteCoupon(id);
+    @DeleteMapping("/delete-coupon/{couponId}")
+    public ResponseEntity<?> deleteCouponById( @PathVariable String couponId) {
+        return adminService.deleteCoupon(couponId);
     }
 
     @DeleteMapping("/delete-all-coupons")
@@ -142,7 +147,7 @@ public class AdminController {
     }
 
     @DeleteMapping("/delete-event/{id}")
-    public ResponseEntity<?> deleteEventById(@PathVariable String id) {
+    public ResponseEntity<?> deleteEventById(@Valid @PathVariable String id) {
         return adminService.deleteEvent(id);
     }
 

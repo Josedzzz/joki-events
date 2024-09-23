@@ -9,7 +9,6 @@ import com.uq.jokievents.repository.EventRepository;
 import com.uq.jokievents.repository.LocalityRepository;
 import com.uq.jokievents.utils.AdminSecurityUtils;
 import com.uq.jokievents.utils.ApiResponse;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import com.uq.jokievents.model.Admin;
 import com.uq.jokievents.model.Coupon;
@@ -19,7 +18,7 @@ import com.uq.jokievents.repository.CouponRepository;
 import java.time.LocalDateTime;
 
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -35,29 +34,28 @@ import lombok.RequiredArgsConstructor;
 @Service
 @Transactional
 @RequiredArgsConstructor
-// TODO Add admin id to the functions that require it
 public class AdminServiceImpl implements AdminService{
 
     private final AdminRepository adminRepository;
     private final EmailService emailService;
     private final CouponRepository couponRepository;
     private final EventRepository eventRepository;
-    private final LocalityRepository localityRepository;
+    private final PasswordEncoder passwordEncoder;
 
     @Override
-    public ResponseEntity<?> updateAdmin(String id, @Valid @RequestBody UpdateAdminDTO dto) {
+    public ResponseEntity<?> updateAdmin(String adminId, @Valid @RequestBody UpdateAdminDTO dto) {
 
-        ResponseEntity<?> verificationResponse = AdminSecurityUtils.verifyAdminAccess(id);
+        ResponseEntity<?> verificationResponse = AdminSecurityUtils.verifyAdminAccessWithId(adminId);
         if (verificationResponse != null) {
             return verificationResponse;
         }
 
         try {
-            Optional<Admin> existingAdmin = adminRepository.findById(id);
+            Optional<Admin> existingAdmin = adminRepository.findById(adminId);
             if (existingAdmin.isPresent()) {
                 Admin admin = existingAdmin.get();
-                
-                // Por si acaso ??? soy retrasado
+
+                // Si @Valid funcionara esto se quitaría
                 if (dto.username() == null) {
                     ApiResponse<String> response = new ApiResponse<>("Error", "Username field is empty", null);
                     return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
@@ -67,7 +65,7 @@ public class AdminServiceImpl implements AdminService{
                     return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
                 }
 
-                admin.setUsername(dto.username()); // Soy retrasado!
+                admin.setUsername(dto.username());
                 admin.setEmail(dto.email());
 
                 Admin updatedAdmin = adminRepository.save(admin);
@@ -84,17 +82,17 @@ public class AdminServiceImpl implements AdminService{
     }
 
     @Override
-    public ResponseEntity<?> deleteAdminAccount(String id) {
+    public ResponseEntity<?> deleteAdminAccount(String adminId) {
 
-        ResponseEntity<?> verificationResponse = AdminSecurityUtils.verifyAdminAccess(id);
+        ResponseEntity<?> verificationResponse = AdminSecurityUtils.verifyAdminAccessWithId(adminId);
         if (verificationResponse != null) {
             return verificationResponse;
         }
 
         try {
-            Optional<Admin> existingAdmin = adminRepository.findById(id);
+            Optional<Admin> existingAdmin = adminRepository.findById(adminId);
             if (existingAdmin.isPresent()) {
-                adminRepository.deleteById(id);
+                adminRepository.deleteById(adminId);
                 ApiResponse<String> response = new ApiResponse<>("Success", "Admin exterminated", null);
                 return new ResponseEntity<>(response, HttpStatus.OK);
             } else {
@@ -109,6 +107,11 @@ public class AdminServiceImpl implements AdminService{
     
     @Override
     public ResponseEntity<?> sendRecoverPasswordCode(String email) {
+
+        ResponseEntity<?> verificationResponse = AdminSecurityUtils.verifyAdminAccessWithEmail(email);
+        if (verificationResponse != null) {
+            return verificationResponse;
+        }
 
         try {
             // Validate if the admin exists by email
@@ -144,13 +147,18 @@ public class AdminServiceImpl implements AdminService{
     @Override
     public ResponseEntity<?> recoverPassword(@Valid RecoverPassAdminDTO dto) {
 
+        ResponseEntity<?> verificationResponse = AdminSecurityUtils.verifyAdminAccessWithEmail(dto.email());
+        if (verificationResponse != null) {
+            return verificationResponse;
+        }
+
         try {
             // Validate if the user exists
             String email = dto.email();
             String verificationCode =  dto.verificationCode();
-            String newPassword = dto.newPassword(); // Soon to be encrypted
+            String newPassword = passwordEncoder.encode(dto.newPassword());
             Optional<Admin> adminOptional = adminRepository.findByEmail(email);
-            if (!adminOptional.isPresent()) { // Shouldn't this be the root conditional? Whatever!!!
+            if (adminOptional.isEmpty()) {
                 ApiResponse<String> response = new ApiResponse<>("Error", "Admin not found", null);
                 return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
             }
@@ -168,7 +176,7 @@ public class AdminServiceImpl implements AdminService{
             }
     
             // Update the password
-            admin.setPassword(newPassword);  // Will hash the password soon!
+            admin.setPassword(newPassword);
             admin.setVerificationCode("");
             adminRepository.save(admin);
 
@@ -181,7 +189,12 @@ public class AdminServiceImpl implements AdminService{
     } 
 
     @Override
-    public ResponseEntity<?> createCoupon(@Valid CreateCouponDTO dto) {
+    public ResponseEntity<?> createCoupon(CreateCouponDTO dto) {
+
+        ResponseEntity<?> verificationResponse = AdminSecurityUtils.verifyAdminAccessWithRole();
+        if (verificationResponse != null) {
+            return verificationResponse;
+        }
 
         // Check if a coupon with the same name already exists
         Optional<Coupon> existingCoupon = couponRepository.findByName(dto.name());
@@ -203,9 +216,15 @@ public class AdminServiceImpl implements AdminService{
     }
 
     @Override
-    public ResponseEntity<?> updateCoupon(String id, @Valid UpdateCouponDTO dto) {
+    public ResponseEntity<?> updateCoupon(String couponId, @Valid UpdateCouponDTO dto) {
+
+        ResponseEntity<?> verificationResponse = AdminSecurityUtils.verifyAdminAccessWithRole();
+        if (verificationResponse != null) {
+            return verificationResponse;
+        }
+
         try {
-            Optional<Coupon> optionalCoupon = couponRepository.findById(id);
+            Optional<Coupon> optionalCoupon = couponRepository.findById(couponId);
 
             if (optionalCoupon.isPresent()) {
                 Coupon coupon = optionalCoupon.get();
@@ -229,11 +248,17 @@ public class AdminServiceImpl implements AdminService{
         }
     }
 
-    public ResponseEntity<?> deleteCoupon(String id){
+    public ResponseEntity<?> deleteCoupon(String couponId){
+
+        ResponseEntity<?> verificationResponse = AdminSecurityUtils.verifyAdminAccessWithRole();
+        if (verificationResponse != null) {
+            return verificationResponse;
+        }
+
         try {
-            Optional<Coupon> existingCoupon = couponRepository.findById(id);
+            Optional<Coupon> existingCoupon = couponRepository.findById(couponId);
             if (existingCoupon.isPresent()) {
-                couponRepository.deleteById(id);
+                couponRepository.deleteById(couponId);
                 ApiResponse<String> response = new ApiResponse<>("Success", "Coupon deleted", null);
                 return new ResponseEntity<>(response, HttpStatus.OK);
             } else {
@@ -247,8 +272,14 @@ public class AdminServiceImpl implements AdminService{
         }
     }
 
-    // TODO Tell Jose this exists
+    // TODO Tell Jose this exists, haven't told him yet
     public ResponseEntity<?> deleteAllCoupons() {
+
+        ResponseEntity<?> verificationResponse = AdminSecurityUtils.verifyAdminAccessWithRole();
+        if (verificationResponse != null) {
+            return verificationResponse;
+        }
+
         try {
             couponRepository.deleteAll();
             ApiResponse<String> response = new ApiResponse<>("Success", "All coupons deleted", null);
@@ -261,7 +292,13 @@ public class AdminServiceImpl implements AdminService{
 
 
     @Override
-    public ResponseEntity<?> addEvent(@Valid HandleEventDTO dto) {
+    public ResponseEntity<?> addEvent(HandleEventDTO dto) {
+
+        ResponseEntity<?> verificationResponse = AdminSecurityUtils.verifyAdminAccessWithRole();
+        if (verificationResponse != null) {
+            return verificationResponse;
+        }
+
         try {
             Event event = new Event(
                     dto.name(),
@@ -290,6 +327,12 @@ public class AdminServiceImpl implements AdminService{
 
     @Override
     public ResponseEntity<?> updateEvent(String eventId, @Valid HandleEventDTO dto) {
+
+        ResponseEntity<?> verificationResponse = AdminSecurityUtils.verifyAdminAccessWithRole();
+        if (verificationResponse != null) {
+            return verificationResponse;
+        }
+
         try {
             Optional<Event> existingEvent = eventRepository.findById(eventId);
             if (existingEvent.isPresent()) {
@@ -325,11 +368,17 @@ public class AdminServiceImpl implements AdminService{
         }
     }
 
-    public ResponseEntity<?> deleteEvent(String id){
+    public ResponseEntity<?> deleteEvent(String eventId){
+
+        ResponseEntity<?> verificationResponse = AdminSecurityUtils.verifyAdminAccessWithRole();
+        if (verificationResponse != null) {
+            return verificationResponse;
+        }
+
         try {
-            Optional<Event> existingEvent = eventRepository.findById(id);
+            Optional<Event> existingEvent = eventRepository.findById(eventId);
             if (existingEvent.isPresent()) {
-                eventRepository.deleteById(id);
+                eventRepository.deleteById(eventId);
                 ApiResponse<String> response = new ApiResponse<>("Success", "Event deleted", null);
                 return new ResponseEntity<>(response, HttpStatus.OK);
             } else {
@@ -343,6 +392,12 @@ public class AdminServiceImpl implements AdminService{
     }
 
     public ResponseEntity<?> deleteAllEvents() {
+
+        ResponseEntity<?> verificationResponse = AdminSecurityUtils.verifyAdminAccessWithRole();
+        if (verificationResponse != null) {
+            return verificationResponse;
+        }
+
         try {
             eventRepository.deleteAll();
             ApiResponse<String> response = new ApiResponse<>("Success", "All events deleted", null);
