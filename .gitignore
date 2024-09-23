@@ -45,3 +45,4 @@ out/
 ### rest ###
 /src/test/java/com/uq/jokievents/test.rest
 /src/test/java/com/uq/jokievents/.rest
+/src/main/resources/joki-events-img-repo-firebase-adminsdk-k2dzt-5632c3e6b6.json
