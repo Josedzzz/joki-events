@@ -31,38 +31,23 @@ public class ClientServiceImpl implements ClientService {
     @Autowired
     private Utils utils;
 
-    // TODO Check if this function is being used or will be used somewhere at some time
-    @Override
-    public ResponseEntity<?> findClientById(String id) {
-        try {
-            Optional<Client> client = clientRepository.findById(id);
-            if (client.isPresent()) {
-                ApiResponse<Client> response = new ApiResponse<>("Success", "Client found", client.get());
-                return new ResponseEntity<>(response, HttpStatus.OK);
-            } else {
-                ApiResponse<String> response = new ApiResponse<>("Error", "Client not found", null);
-                return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
-            }
-        } catch (Exception e) {
-            ApiResponse<Client> response = new ApiResponse<>("Error", "Failed client request", null);
-            return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-    }
-
     /**
      * Updates a client from a dto.
-     * @param id String
+     * @param clientId String
      * @param dto UpdateClientDTO
      * @return ResponseEntity
      */
     @Override
-    public ResponseEntity<?> updateClient(String id, @Valid @RequestBody UpdateClientDTO dto) {
+    public ResponseEntity<?> updateClient(String clientId, @Valid @RequestBody UpdateClientDTO dto) {
+
+        ResponseEntity<?> verificationResponse = ClientSecurityUtils.verifyClientAccessWithId(clientId);
+        if (verificationResponse != null) {
+            return verificationResponse;
+        }
+
         try {
-            ResponseEntity<?> verificationResponse = ClientSecurityUtils.verifyClientAccess(id);
-            if (verificationResponse != null) {
-                return verificationResponse;
-            }
-            Optional<Client> existingClient = clientRepository.findById(id);
+
+            Optional<Client> existingClient = clientRepository.findById(clientId);
             if (existingClient.isPresent()) {
                 Client client = existingClient.get();
 
@@ -98,16 +83,17 @@ public class ClientServiceImpl implements ClientService {
 
 
     @Override
-    public ResponseEntity<?> deleteAccount(String id) {
-        try {
-            ResponseEntity<?> verificationResponse = ClientSecurityUtils.verifyClientAccess(id);
-            if (verificationResponse != null) {
-                return verificationResponse;
-            }
+    public ResponseEntity<?> deleteAccount(String clientId) {
 
-            Optional<Client> existingClient = clientRepository.findById(id);
+        ResponseEntity<?> verificationResponse = ClientSecurityUtils.verifyClientAccessWithId(clientId);
+        if (verificationResponse != null) {
+            return verificationResponse;
+        }
+
+        try {
+            Optional<Client> existingClient = clientRepository.findById(clientId);
             if (existingClient.isPresent()) {
-                clientRepository.deleteById(id);
+                clientRepository.deleteById(clientId);
                 ApiResponse<String> response = new ApiResponse<>("Success", "Client extermination complete", null);
                 return new ResponseEntity<>(response, HttpStatus.OK);
             } else {
@@ -123,7 +109,7 @@ public class ClientServiceImpl implements ClientService {
     @Override
     public ResponseEntity<?> verifyCode(String clientId, @Valid VerifyClientDTO dto) {
 
-        ResponseEntity<?> verificationResponse = ClientSecurityUtils.verifyClientAccess(clientId);
+        ResponseEntity<?> verificationResponse = ClientSecurityUtils.verifyClientAccessWithId(clientId);
         if (verificationResponse != null) {
             return verificationResponse;
         }
@@ -147,6 +133,12 @@ public class ClientServiceImpl implements ClientService {
 
     @Override
     public ResponseEntity<?> existsByEmail(String email) {
+
+        ResponseEntity<?> verificationResponse = ClientSecurityUtils.verifyClientAccessWithRole();
+        if (verificationResponse != null) {
+            return verificationResponse;
+        }
+
         try {
             boolean exists = clientRepository.existsByEmail(email);
             if (exists) {
@@ -164,6 +156,12 @@ public class ClientServiceImpl implements ClientService {
 
     @Override
     public ResponseEntity<?> existsByIdCard(String idCard) {
+
+        ResponseEntity<?> verificationResponse = ClientSecurityUtils.verifyClientAccessWithRole();
+        if (verificationResponse != null) {
+            return verificationResponse;
+        }
+
         try {
             boolean exists = clientRepository.existsByIdCard(idCard);
             if (exists) {

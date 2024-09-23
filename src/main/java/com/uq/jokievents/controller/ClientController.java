@@ -26,18 +26,6 @@ public class ClientController {
     private final ClientService clientService;
     private final AuthenticationService authenticationService;
 
-
-    /**
-     * Get a client by id
-     *
-     * @param id the identifier object of the client to find
-     * @return a ResponseEntity containing the client
-     */
-    @GetMapping("/{id}")
-    public ResponseEntity<?> getClientById(@PathVariable String id) {
-        return clientService.findClientById(id);
-    }
-
     /**
      * Update an existing client by id
      * Example JSON:
@@ -66,41 +54,6 @@ public class ClientController {
     @DeleteMapping("/{id}/delete")
     public ResponseEntity<?> deleteAccount(@PathVariable String id) {
         return clientService.deleteAccount(id);
-    }
-
-    /**
-     * Login client with email and password
-     * Example JSON:
-     * {
-     *  "email": "mail@mail.com",
-     *  "password": "non-encrypted-password"
-     * }
-     * @param dto the logindto
-     * @return a ResponseEntity containing the client if found, otherwise an error message
-     */
-    @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestBody LoginClientDTO dto) {
-        return authenticationService.loginClient(dto);
-    }
-
-    /**
-     * Registers a client being aware of all its parameters
-     * Example JSON:
-     * {
-     *  "idCard": "1090900900",
-     *  "name": "VeryCoolName",
-     *  "address": "Very cool address",
-     *  "phone": "3003003000",
-     *  "email": "mail@mail.com",
-     *  "password": "Non-encrypted-password"
-     * }
-     * @param rcDto the dto that brings the front.
-     * @return an entity response.
-     */
-    @PostMapping("/register")
-    public ResponseEntity<?> registerClient(@Valid @RequestBody RegisterClientDTO rcDto) {
-        // Using the service to register the client
-        return authenticationService.registerClient(rcDto);
     }
 
     /**

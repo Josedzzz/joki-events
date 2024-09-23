@@ -6,8 +6,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 
-
-
 public class AdminSecurityUtils {
 
     public static ResponseEntity<?> verifyAdminAccessWithId(String id) {
@@ -20,17 +18,6 @@ public class AdminSecurityUtils {
             return new ResponseEntity<>(response, HttpStatus.FORBIDDEN);
         }
         return null; // return null if everything is okay (nothing is ever okay)
-    }
-
-    public static ResponseEntity<?> verifyAdminAccessWithEmail(String email) {
-        Admin loggedInAdmin = (Admin) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        String loggedInAdminEmail = loggedInAdmin.getEmail();
-
-        if (!loggedInAdminEmail.equals(email) ||!SecurityContextHolder.getContext().getAuthentication().getAuthorities().contains(new SimpleGrantedAuthority("ADMIN")) ) {
-            ApiResponse<String> response = new ApiResponse<>("Error", "You are not authorized to access this action.", null);
-            return new ResponseEntity<>(response, HttpStatus.FORBIDDEN);
-        }
-        return null;
     }
 
     public static ResponseEntity<?> verifyAdminAccessWithRole() {

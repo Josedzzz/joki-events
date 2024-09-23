@@ -108,7 +108,7 @@ public class AdminServiceImpl implements AdminService{
     @Override
     public ResponseEntity<?> sendRecoverPasswordCode(String email) {
 
-        ResponseEntity<?> verificationResponse = AdminSecurityUtils.verifyAdminAccessWithEmail(email);
+        ResponseEntity<?> verificationResponse = AdminSecurityUtils.verifyAdminAccessWithRole();
         if (verificationResponse != null) {
             return verificationResponse;
         }
@@ -147,7 +147,7 @@ public class AdminServiceImpl implements AdminService{
     @Override
     public ResponseEntity<?> recoverPassword(@Valid RecoverPassAdminDTO dto) {
 
-        ResponseEntity<?> verificationResponse = AdminSecurityUtils.verifyAdminAccessWithEmail(dto.email());
+        ResponseEntity<?> verificationResponse = AdminSecurityUtils.verifyAdminAccessWithRole();
         if (verificationResponse != null) {
             return verificationResponse;
         }
