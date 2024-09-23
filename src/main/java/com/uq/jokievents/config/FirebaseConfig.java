@@ -20,7 +20,7 @@ public class FirebaseConfig {
 
         FirebaseOptions options = FirebaseOptions.builder()
                 .setCredentials(GoogleCredentials.fromStream(serviceAccount))
-                .setStorageBucket("gs://joki-events-img-repo.appspot.com")
+                .setStorageBucket("joki-events-img-repo.appspot.com")
                 .build();
 
         if(FirebaseApp.getApps().isEmpty()) {
