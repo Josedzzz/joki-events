@@ -4,6 +4,7 @@ import lombok.Data;
 import org.bson.types.ObjectId;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.validation.constraints.Future;
 import javax.validation.constraints.Min;
@@ -24,12 +25,12 @@ public class Event {
     private LocalDateTime eventDate;
     private boolean availableForPurchase;
     private int totalAvailablePlaces;
-    private String eventImageUrl; //TODO implement images asap.
+    private MultipartFile eventImageUrl;
 
     // Constructor
     public Event() {}
 
-    public Event(List<Locality> localities, String name, String address, String city, LocalDateTime eventDate, boolean availableForPurchase, int totalAvailableSeatsForPurchase, String eventImageUrl) {
+    public Event(List<Locality> localities, String name, String address, String city, LocalDateTime eventDate, boolean availableForPurchase, int totalAvailableSeatsForPurchase, MultipartFile eventImageUrl) {
         this.localities = localities;
         this.name = name;
         this.address = address;

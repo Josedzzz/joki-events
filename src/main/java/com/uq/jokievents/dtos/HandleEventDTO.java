@@ -1,5 +1,7 @@
 package com.uq.jokievents.dtos;
 
+import org.springframework.web.multipart.MultipartFile;
+
 import javax.validation.Valid;
 import javax.validation.constraints.*;
 import java.time.LocalDateTime;
@@ -22,7 +24,7 @@ public record HandleEventDTO(
         int totalAvailablePlaces,
 
         @NotBlank(message = "URL is required")
-        String eventImageURL,
+        MultipartFile eventImageURL,
 
         @NotEmpty(message = "At least one locality is required")
         List<@Valid CreateLocalityDTO> localities

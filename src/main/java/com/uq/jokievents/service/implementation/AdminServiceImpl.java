@@ -7,6 +7,7 @@ import com.uq.jokievents.model.Locality;
 import com.uq.jokievents.model.Event;
 import com.uq.jokievents.repository.EventRepository;
 import com.uq.jokievents.repository.LocalityRepository;
+import com.uq.jokievents.service.interfaces.ImageService;
 import com.uq.jokievents.utils.AdminSecurityUtils;
 import com.uq.jokievents.utils.ApiResponse;
 import org.springframework.http.HttpStatus;
@@ -41,6 +42,7 @@ public class AdminServiceImpl implements AdminService{
     private final CouponRepository couponRepository;
     private final EventRepository eventRepository;
     private final PasswordEncoder passwordEncoder;
+    private final ImageService imageService;
 
     @Override
     public ResponseEntity<?> updateAdmin(String adminId, @Valid @RequestBody UpdateAdminDTO dto) {
@@ -300,13 +302,15 @@ public class AdminServiceImpl implements AdminService{
         }
 
         try {
+            String imageUrl = imageService.uploadImage(dto.eventImageURL());
+
             Event event = new Event(
                     dto.name(),
                     dto.city(),
                     dto.address(),
                     dto.date(),
                     dto.totalAvailablePlaces(),
-                    dto.eventImageURL(),
+                    imageUrl,
                     dto.localities().stream().map(localityDTO ->
                             new Locality(
                                     localityDTO.name(),
