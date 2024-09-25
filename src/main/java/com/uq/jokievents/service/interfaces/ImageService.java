@@ -6,6 +6,6 @@ import java.io.IOException;
 
 public interface ImageService {
 
-    String uploadImage(MultipartFile file) throws IOException;
+    String uploadImage(String base64Image) throws IOException;
     void deleteImage(String imageName);
 }
