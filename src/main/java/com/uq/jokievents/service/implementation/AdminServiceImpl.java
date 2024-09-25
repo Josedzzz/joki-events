@@ -7,6 +7,7 @@ import com.uq.jokievents.model.Locality;
 import com.uq.jokievents.model.Event;
 import com.uq.jokievents.repository.EventRepository;
 import com.uq.jokievents.repository.LocalityRepository;
+import com.uq.jokievents.service.interfaces.EventService;
 import com.uq.jokievents.service.interfaces.ImageService;
 import com.uq.jokievents.utils.AdminSecurityUtils;
 import com.uq.jokievents.utils.ApiResponse;
@@ -40,7 +41,8 @@ public class AdminServiceImpl implements AdminService{
     private final AdminRepository adminRepository;
     private final EmailService emailService;
     private final CouponRepository couponRepository;
-    private final EventRepository eventRepository;
+    private final EventRepository eventRepository; // TODO change it for EventService
+    private final EventService eventService;
     private final PasswordEncoder passwordEncoder;
     private final ImageService imageService;
 
@@ -320,13 +322,18 @@ public class AdminServiceImpl implements AdminService{
                             )
                     ).collect(Collectors.toList())
             );
-            eventRepository.save(event);
+            eventRepository.save(event); // TODO Make it so that the eventService instance be the one in charge. SRP is respected in this household
             ApiResponse<Event> response = new ApiResponse<>("Success", "Event created successfully", event);
             return new ResponseEntity<>(response, HttpStatus.CREATED);
         } catch (Exception e) {
             ApiResponse<String> response = new ApiResponse<>("Error", "Failed to create event", null);
             return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
         }
+    }
+
+    @Override
+    public ResponseEntity<?> getAllEventsPaginated(int page, int size) {
+        return eventService.getAllEventsPaginated(page, size);
     }
 
     @Override
