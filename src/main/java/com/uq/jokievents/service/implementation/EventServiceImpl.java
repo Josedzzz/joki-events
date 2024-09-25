@@ -1,11 +1,13 @@
 package com.uq.jokievents.service.implementation;
 
-import com.uq.jokievents.model.Client;
+import com.uq.jokievents.dtos.HandleEventDTO;
 import com.uq.jokievents.model.Event;
+import com.uq.jokievents.model.Locality;
 import com.uq.jokievents.repository.EventRepository;
 import com.uq.jokievents.service.interfaces.EventService;
+import com.uq.jokievents.service.interfaces.ImageService;
 import com.uq.jokievents.utils.ApiResponse;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -17,12 +19,14 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
+@RequiredArgsConstructor
 public class    EventServiceImpl implements EventService {
 
-    @Autowired
-    private EventRepository eventRepository;
+    private final EventRepository eventRepository;
+    private final ImageService imageService;
 
     /**
      * Get a list of all events from the db
@@ -131,6 +135,39 @@ public class    EventServiceImpl implements EventService {
         } catch (Exception e) {
             ApiResponse<String> errorResponse = new ApiResponse<>("Error", "Failed to retrieve events", null);
             return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @Override
+    public ResponseEntity<?> addEvent(HandleEventDTO dto) {
+        try {
+            String imageUrl = imageService.uploadImage(dto.eventImageBase64());
+
+            Event event = Event.builder()
+                    .name(dto.name())
+                    .address(dto.address())
+                    .city(dto.city())
+                    .eventDate(dto.date())
+                    .availableForPurchase(true)  // El negro? Mi color.
+                    .localities(dto.localities().stream().map(localityDTO ->
+                            Locality.builder()
+                                    .name(localityDTO.name())
+                                    .price(localityDTO.price())
+                                    .maxCapacity(localityDTO.maxCapacity())
+                                    .build()
+                    ).collect(Collectors.toList()))
+                    .totalAvailablePlaces(dto.totalAvailablePlaces())
+                    .eventImageUrl(imageUrl)
+                    .build();
+
+            eventRepository.save(event);
+
+            ApiResponse<Event> response = new ApiResponse<>("Success", "Event created successfully", event);
+            return new ResponseEntity<>(response, HttpStatus.CREATED);
+
+        } catch (Exception e) {
+            ApiResponse<String> response = new ApiResponse<>("Error", "Failed to create event", e.getMessage());
+            return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
