@@ -23,8 +23,8 @@ public record HandleEventDTO(
         @Min(value = 1, message = "Total available places must be at least 1")
         int totalAvailablePlaces,
 
-        @NotBlank(message = "URL is required")
-        MultipartFile eventImageURL,
+        @NotNull
+        String eventImageBase64,
 
         @NotEmpty(message = "At least one locality is required")
         List<@Valid CreateLocalityDTO> localities

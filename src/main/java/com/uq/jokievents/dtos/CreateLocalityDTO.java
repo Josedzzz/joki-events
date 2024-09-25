@@ -11,8 +11,5 @@ public record CreateLocalityDTO(
         double price,
 
         @Min(value = 1, message = "Max capacity must be at least 1")
-        int maxCapacity,
-
-        @NotBlank(message = "Image URL is required")
-        String localityImageURL
+        int maxCapacity
 ) {}
