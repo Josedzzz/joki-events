@@ -1,7 +1,9 @@
 package com.uq.jokievents.model;
 
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
-import org.bson.types.ObjectId;
+import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.web.multipart.MultipartFile;
@@ -13,35 +15,21 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 @Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 @Document(collection = "events")
 public class Event {
 
     @Id
     private String id;
-    private List<Locality> localities; // TODO Explain why I made this change to the team!
     private String name;
     private String address;
     private String city;
     private LocalDateTime eventDate;
     private boolean availableForPurchase;
+    private List<Locality> localities; // TODO Explain why I made this change to the team!
     private int totalAvailablePlaces;
-    private MultipartFile eventImageUrl;
-
-    // Constructor
-    public Event() {}
-
-    public Event(List<Locality> localities, String name, String address, String city, LocalDateTime eventDate, boolean availableForPurchase, int totalAvailableSeatsForPurchase, MultipartFile eventImageUrl) {
-        this.localities = localities;
-        this.name = name;
-        this.address = address;
-        this.city = city;
-        this.eventDate = eventDate;
-        this.availableForPurchase = availableForPurchase;
-        this.totalAvailablePlaces = totalAvailableSeatsForPurchase;
-        this.eventImageUrl = eventImageUrl;
-    }
-
-    // Method made by IntelliJ usen in AdminServiceImpl
-    public <R> Event(@NotBlank(message = "Name is required") String name, @NotBlank(message = "City is required") String city, @NotBlank(message = "Address is required") String address, @Future(message = "Date must be in the future") LocalDateTime date, @Min(value = 1, message = "Total available places must be at least 1") int i, @NotBlank(message = "URL is required") String s, R collect) {
-    }
+    private String eventImageBase64;
+    private String eventImageUrl; // For the URL after upload
 }

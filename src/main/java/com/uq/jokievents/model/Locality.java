@@ -1,10 +1,16 @@
 package com.uq.jokievents.model;
 
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 @Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 @Document(collection = "distributionlocalities")
 public class Locality {
 
@@ -13,17 +19,5 @@ public class Locality {
     private String name;
     private double price;
     private int maxCapacity;
-    private String imageDistributionLocality;
     private int currentOccupancy = 0;
-
-    // constructor
-    public Locality() {}
-
-    public Locality(String name, double price, int maxCapacity, String imageDistributionLocality) {
-        this.name = name;
-        this.price = price;
-        this.maxCapacity = maxCapacity;
-        this.imageDistributionLocality = imageDistributionLocality;
-    }
-
 }
