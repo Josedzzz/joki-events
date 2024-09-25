@@ -23,6 +23,7 @@ public interface AdminService {
     ResponseEntity<?> updateEvent(String id, HandleEventDTO dto);
     ResponseEntity<?> deleteEvent(String id);
     ResponseEntity<?> deleteAllEvents(); // Weird use case, but, everything is covered bbyboi!
+    ResponseEntity<?> getAllCouponsPaginated(int page, int size);
 }
 
 

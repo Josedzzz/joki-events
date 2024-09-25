@@ -55,7 +55,7 @@ public class AdminController {
     /**
      * Example JSON:
      * {
-     *  "email": "mail@mail.com",
+     *  "email": "mail@mail.com", // Usa este para encontrar al cliente.
      *  "verificationCode": "123456",
      *  "newPassword": "new-non-encrypted-password"
      * }
@@ -141,7 +141,7 @@ public class AdminController {
         return adminService.addEvent(dto);
     }
 
-    @GetMapping("/paginated")
+    @GetMapping("/get-paginated-events")
     public ResponseEntity<?> getAllEventsPaginated(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "16") int size) {
@@ -162,5 +162,10 @@ public class AdminController {
     @DeleteMapping("/delete-all-events")
     public ResponseEntity<?> deleteAllEvents(){
         return adminService.deleteAllEvents();
+    }
+
+    @GetMapping("/get-paginated-coupons")
+    public ResponseEntity<?> getAllCouponsPaginated(@RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "8") int size) {
+        return adminService.getAllCouponsPaginated(page,size);
     }
 }

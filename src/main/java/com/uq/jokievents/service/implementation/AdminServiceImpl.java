@@ -7,6 +7,7 @@ import com.uq.jokievents.model.Locality;
 import com.uq.jokievents.model.Event;
 import com.uq.jokievents.repository.EventRepository;
 import com.uq.jokievents.repository.LocalityRepository;
+import com.uq.jokievents.service.interfaces.CouponService;
 import com.uq.jokievents.service.interfaces.EventService;
 import com.uq.jokievents.service.interfaces.ImageService;
 import com.uq.jokievents.utils.AdminSecurityUtils;
@@ -45,6 +46,7 @@ public class AdminServiceImpl implements AdminService{
     private final EventService eventService;
     private final PasswordEncoder passwordEncoder;
     private final ImageService imageService;
+    private final CouponService couponService;
 
     @Override
     public ResponseEntity<?> updateAdmin(String adminId, @Valid @RequestBody UpdateAdminDTO dto) {
@@ -108,7 +110,7 @@ public class AdminServiceImpl implements AdminService{
             return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
-    
+
     @Override
     public ResponseEntity<?> sendRecoverPasswordCode(String email) {
 
@@ -124,19 +126,19 @@ public class AdminServiceImpl implements AdminService{
                 ApiResponse<String> response = new ApiResponse<>("Error", "Admin not found.", null);
                 return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
             }
-    
+
             Admin admin = adminOptional.get();
-    
-            // Generate a new verification code 
+
+            // Generate a new verification code
             String verificationCode = Generators.generateRndVerificationCode();
-            
+
             // Set the expiration time to 20 minutes from now
             admin.setVerificationCode(verificationCode);
             admin.setVerificationCodeExpiration(LocalDateTime.now().plusMinutes(20));
-    
+
             // Save the updated admin with the verification code and expiration time
             adminRepository.save(admin);
-    
+
             // Send the recovery email
             emailService.sendRecuperationEmail(admin.getEmail(), verificationCode);
 
@@ -147,7 +149,7 @@ public class AdminServiceImpl implements AdminService{
             return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
-    
+
     @Override
     public ResponseEntity<?> recoverPassword(@Valid RecoverPassAdminDTO dto) {
 
@@ -166,7 +168,7 @@ public class AdminServiceImpl implements AdminService{
                 ApiResponse<String> response = new ApiResponse<>("Error", "Admin not found", null);
                 return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
             }
-    
+
             Admin admin = adminOptional.get();
             // Check if the verification code is expired
             if (admin.getVerificationCodeExpiration().isBefore(LocalDateTime.now())) {
@@ -178,7 +180,7 @@ public class AdminServiceImpl implements AdminService{
                 ApiResponse<String> response = new ApiResponse<>("Error", "Invalid verification code", null);
                 return new ResponseEntity<>(response, HttpStatus.UNAUTHORIZED);
             }
-    
+
             // Update the password
             admin.setPassword(newPassword);
             admin.setVerificationCode("");
@@ -190,7 +192,7 @@ public class AdminServiceImpl implements AdminService{
             ApiResponse<String> response = new ApiResponse<>("Error", "Password recovery failed", null);
             return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
         }
-    } 
+    }
 
     @Override
     public ResponseEntity<?> createCoupon(CreateCouponDTO dto) {
@@ -294,7 +296,6 @@ public class AdminServiceImpl implements AdminService{
         }
     }
 
-
     @Override
     public ResponseEntity<?> addEvent(HandleEventDTO dto) {
 
@@ -303,32 +304,8 @@ public class AdminServiceImpl implements AdminService{
             return verificationResponse;
         }
 
-        try {
-            String imageUrl = imageService.uploadImage(dto.eventImageURL());
-
-            Event event = new Event(
-                    dto.name(),
-                    dto.city(),
-                    dto.address(),
-                    dto.date(),
-                    dto.totalAvailablePlaces(),
-                    imageUrl,
-                    dto.localities().stream().map(localityDTO ->
-                            new Locality(
-                                    localityDTO.name(),
-                                    localityDTO.price(),
-                                    localityDTO.maxCapacity(),
-                                    localityDTO.localityImageURL()
-                            )
-                    ).collect(Collectors.toList())
-            );
-            eventRepository.save(event); // TODO Make it so that the eventService instance be the one in charge. SRP is respected in this household
-            ApiResponse<Event> response = new ApiResponse<>("Success", "Event created successfully", event);
-            return new ResponseEntity<>(response, HttpStatus.CREATED);
-        } catch (Exception e) {
-            ApiResponse<String> response = new ApiResponse<>("Error", "Failed to create event", null);
-            return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
-        }
+        // Delegating the  event creation to EventService as god intended
+        return eventService.addEvent(dto);
     }
 
     @Override
@@ -344,39 +321,7 @@ public class AdminServiceImpl implements AdminService{
             return verificationResponse;
         }
 
-        try {
-            Optional<Event> existingEvent = eventRepository.findById(eventId);
-            if (existingEvent.isPresent()) {
-                Event event = existingEvent.get();
-
-                // Update event fields with data from the DTO
-                event.setName(dto.name());
-                event.setCity(dto.city());
-                event.setAddress(dto.address());
-                event.setEventDate(dto.date());
-                event.setTotalAvailablePlaces(dto.totalAvailablePlaces());
-                event.setEventImageUrl(dto.eventImageURL());
-                event.setLocalities(dto.localities().stream().map(localityDTO ->
-                        new Locality(
-                                localityDTO.name(),
-                                localityDTO.price(),
-                                localityDTO.maxCapacity(),
-                                localityDTO.localityImageURL()
-                        )
-                ).collect(Collectors.toList()));
-
-                // Save the updated event back to the repository
-                eventRepository.save(event);
-                ApiResponse<String> response = new ApiResponse<>("Success", "Event updated successfully", null);
-                return new ResponseEntity<>(response, HttpStatus.OK);
-            } else {
-                ApiResponse<String> response = new ApiResponse<>("Error", "Event not found", null);
-                return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
-            }
-        } catch (Exception e) {
-            ApiResponse<String> response = new ApiResponse<>("Error", "Failed to update event", null);
-            return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
-        }
+        return eventService.addEvent(dto); // TODO check if this is really fine
     }
 
     public ResponseEntity<?> deleteEvent(String eventId){
@@ -417,5 +362,10 @@ public class AdminServiceImpl implements AdminService{
             ApiResponse<String> response = new ApiResponse<>("Error", "Failed to delete all events", null);
             return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
         }
+    }
+
+    @Override
+    public ResponseEntity<?> getAllCouponsPaginated(int page, int size) {
+        return couponService.getAllCouponsPaginated(page, size);
     }
 }
