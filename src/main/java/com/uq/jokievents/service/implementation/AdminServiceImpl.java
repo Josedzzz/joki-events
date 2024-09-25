@@ -7,11 +7,8 @@ import com.uq.jokievents.model.Locality;
 import com.uq.jokievents.model.Event;
 import com.uq.jokievents.repository.EventRepository;
 import com.uq.jokievents.repository.LocalityRepository;
-import com.uq.jokievents.service.interfaces.CouponService;
-import com.uq.jokievents.service.interfaces.EventService;
-import com.uq.jokievents.service.interfaces.ImageService;
-import com.uq.jokievents.utils.AdminSecurityUtils;
-import com.uq.jokievents.utils.ApiResponse;
+import com.uq.jokievents.service.interfaces.*;
+import com.uq.jokievents.utils.*;
 import org.springframework.http.HttpStatus;
 import com.uq.jokievents.model.Admin;
 import com.uq.jokievents.model.Coupon;
@@ -21,16 +18,13 @@ import com.uq.jokievents.repository.CouponRepository;
 import java.time.LocalDateTime;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.RequestBody;
 import java.util.*;
 import java.util.stream.Collectors;
-
-import com.uq.jokievents.service.interfaces.AdminService;
-import com.uq.jokievents.utils.EmailService;
-import com.uq.jokievents.utils.Generators;
 
 import lombok.RequiredArgsConstructor;
 
@@ -47,9 +41,10 @@ public class AdminServiceImpl implements AdminService{
     private final PasswordEncoder passwordEncoder;
     private final ImageService imageService;
     private final CouponService couponService;
+    private final JwtService jwtService;
 
     @Override
-    public ResponseEntity<?> updateAdmin(String adminId, @Valid @RequestBody UpdateAdminDTO dto) {
+    public ResponseEntity<?> updateAdmin(String adminId, @RequestBody UpdateAdminDTO dto) {
 
         ResponseEntity<?> verificationResponse = AdminSecurityUtils.verifyAdminAccessWithId(adminId);
         if (verificationResponse != null) {
@@ -75,8 +70,14 @@ public class AdminServiceImpl implements AdminService{
                 admin.setEmail(dto.email());
 
                 Admin updatedAdmin = adminRepository.save(admin);
-                ApiResponse<Admin> response = new ApiResponse<>("Success", "Admin update done", updatedAdmin);
+                // Generar nuevo token con los datos actualizados
+                UserDetails adminDetails = adminRepository.findById(adminId).orElse(null);
+                String newToken = jwtService.getAdminToken(adminDetails);
+
+                // Devolver la respuesta con Admin en 'data' y el token en 'token'
+                ApiTokenResponse<Object> response = new ApiTokenResponse<>("Success","Admin update done", updatedAdmin, newToken);
                 return new ResponseEntity<>(response, HttpStatus.OK);
+
             } else {
                 ApiResponse<String> response = new ApiResponse<>("Error", "Admin not found", null);
                 return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
