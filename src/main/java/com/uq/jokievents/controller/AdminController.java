@@ -141,6 +141,14 @@ public class AdminController {
         return adminService.addEvent(dto);
     }
 
+    @GetMapping("/paginated")
+    public ResponseEntity<?> getAllEventsPaginated(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "16") int size) {
+
+        return adminService.getAllEventsPaginated(page, size);
+    }
+
     @PostMapping("/update-event/{id}")
     public ResponseEntity<?> updateEvent(@PathVariable String id, @Valid @RequestBody HandleEventDTO dto) {
         return adminService.updateEvent(id, dto);
