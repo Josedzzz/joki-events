@@ -2,9 +2,11 @@ package com.uq.jokievents.service.implementation;
 
 import com.uq.jokievents.dtos.UpdateClientDTO;
 import com.uq.jokievents.dtos.VerifyClientDTO;
+import com.uq.jokievents.model.Admin;
 import com.uq.jokievents.model.Client;
 import com.uq.jokievents.repository.ClientRepository;
 import com.uq.jokievents.service.interfaces.ClientService;
+import com.uq.jokievents.service.interfaces.JwtService;
 import com.uq.jokievents.utils.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,6 +14,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -26,10 +30,9 @@ import javax.validation.Valid;
 public class ClientServiceImpl implements ClientService {
 
     private final ClientRepository clientRepository;
-    @Autowired
-    private VerificationService verificationService;
-    @Autowired
-    private Utils utils;
+    private final VerificationService verificationService;
+    private final Utils utils;
+    private final JwtService jwtService;
 
     /**
      * Updates a client from a dto.
@@ -38,7 +41,7 @@ public class ClientServiceImpl implements ClientService {
      * @return ResponseEntity
      */
     @Override
-    public ResponseEntity<?> updateClient(String clientId, @Valid @RequestBody UpdateClientDTO dto) {
+    public ResponseEntity<?> updateClient(String clientId, @RequestBody UpdateClientDTO dto) {
 
         ResponseEntity<?> verificationResponse = ClientSecurityUtils.verifyClientAccessWithId(clientId);
         if (verificationResponse != null) {
@@ -46,7 +49,6 @@ public class ClientServiceImpl implements ClientService {
         }
 
         try {
-
             Optional<Client> existingClient = clientRepository.findById(clientId);
             if (existingClient.isPresent()) {
                 Client client = existingClient.get();
@@ -67,9 +69,13 @@ public class ClientServiceImpl implements ClientService {
                 client.setEmail(dto.email());
                 client.setName(dto.name());
                 client.setDirection(dto.direction());
-                Client updatedClient = clientRepository.save(client);
 
-                ApiResponse<Client> response = new ApiResponse<>("Success", "Client updated successfully", updatedClient);
+                // Actualizo el token también
+                Client updatedClient = clientRepository.save(client);
+                UserDetails clientDetails = clientRepository.findById(clientId).orElse(null);
+                String newToken = jwtService.getAdminToken(clientDetails);
+
+                ApiTokenResponse<Object> response = new ApiTokenResponse<>("Success","Admin update done", updatedClient, newToken);
                 return new ResponseEntity<>(response, HttpStatus.OK);
             } else {
                 ApiResponse<String> response = new ApiResponse<>("Error", "Client not found", null);
@@ -133,12 +139,6 @@ public class ClientServiceImpl implements ClientService {
 
     @Override
     public ResponseEntity<?> existsByEmail(String email) {
-
-        ResponseEntity<?> verificationResponse = ClientSecurityUtils.verifyClientAccessWithRole();
-        if (verificationResponse != null) {
-            return verificationResponse;
-        }
-
         try {
             boolean exists = clientRepository.existsByEmail(email);
             if (exists) {
@@ -156,12 +156,6 @@ public class ClientServiceImpl implements ClientService {
 
     @Override
     public ResponseEntity<?> existsByIdCard(String idCard) {
-
-        ResponseEntity<?> verificationResponse = ClientSecurityUtils.verifyClientAccessWithRole();
-        if (verificationResponse != null) {
-            return verificationResponse;
-        }
-
         try {
             boolean exists = clientRepository.existsByIdCard(idCard);
             if (exists) {
