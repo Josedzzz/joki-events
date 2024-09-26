@@ -9,14 +9,10 @@ import org.springframework.web.bind.annotation.RestController;
 
 import org.springframework.http.ResponseEntity;
 
-import com.uq.jokievents.dtos.LoginClientDTO;
-import com.uq.jokievents.dtos.RegisterClientDTO;
 import com.uq.jokievents.dtos.UpdateClientDTO;
 import com.uq.jokievents.dtos.VerifyClientDTO;
 
 import org.springframework.web.bind.annotation.*;
-
-import javax.validation.Valid;
 
 @RestController
 @RequestMapping("/api/clients")
@@ -96,5 +92,10 @@ public class ClientController {
     @GetMapping("/get-paginated-events")
     public ResponseEntity<?> getAllEventsPaginated(@RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "16") int size) {
         return clientService.getAllEventsPaginated(page, size);
+    }
+
+    @GetMapping("/get-client-account-info/{clientId}")
+    public ResponseEntity<?> getAccountInformation(@PathVariable String clientId) {
+        return clientService.getAccountInformation(clientId);
     }
 }

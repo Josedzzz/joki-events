@@ -1,5 +1,6 @@
 package com.uq.jokievents.service.implementation;
 
+import com.uq.jokievents.dtos.AuthAdminDTO;
 import com.uq.jokievents.dtos.UpdateClientDTO;
 import com.uq.jokievents.dtos.VerifyClientDTO;
 import com.uq.jokievents.model.Admin;
@@ -179,4 +180,38 @@ public class ClientServiceImpl implements ClientService {
     public ResponseEntity<?> getAllEventsPaginated(int page, int size) {
         return eventService.getAllEventsPaginated(page, size);
     }
+
+    @Override
+    public ResponseEntity<?> getAccountInformation(String clientId) {
+        ResponseEntity<?> verificationResponse = ClientSecurityUtils.verifyClientAccessWithId(clientId);
+        if (verificationResponse != null) {
+            return verificationResponse;
+        }
+        try {
+            Optional<Client> client = clientRepository.findById(clientId);
+            if (client.isPresent()) {
+                ApiResponse<UpdateClientDTO> response = getUpdateClientDTOApiResponse(client);
+                return new ResponseEntity<>(response, HttpStatus.OK);
+            } else {
+                ApiResponse<String> response = new ApiResponse<>("Error", "Client info not found", null);
+                return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
+            }
+        } catch (Exception e) {
+            ApiResponse<String> response = new ApiResponse<>("Error", "Failed to retrieve client info", null);
+            return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    private static ApiResponse<UpdateClientDTO> getUpdateClientDTOApiResponse(Optional<Client> client) {
+        String idCard = client.get().getIdCard();
+        String phone = client.get().getPhoneNumber();
+        String email = client.get().getEmail();
+        String name = client.get().getName();
+        String address = client.get().getDirection();
+
+        UpdateClientDTO dto = new UpdateClientDTO(idCard, phone, email, name, address);
+        return new ApiResponse<>("Success", "Client info returned", dto);
+    }
+
+
 }

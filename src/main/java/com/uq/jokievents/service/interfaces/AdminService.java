@@ -1,12 +1,7 @@
 package com.uq.jokievents.service.interfaces;
 
 import com.uq.jokievents.dtos.*;
-import com.uq.jokievents.model.Event;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.RequestParam;
-
-import java.util.HashMap;
-import java.util.Map;
 
 public interface AdminService {
     
@@ -24,6 +19,7 @@ public interface AdminService {
     ResponseEntity<?> deleteEvent(String id);
     ResponseEntity<?> deleteAllEvents(); // Weird use case, but, everything is covered bbyboi!
     ResponseEntity<?> getAllCouponsPaginated(int page, int size);
+    ResponseEntity<?> getAccountInformation(String adminId);
 }
 
 

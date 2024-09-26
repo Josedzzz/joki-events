@@ -6,14 +6,11 @@ import com.uq.jokievents.service.interfaces.AdminService;
 import com.uq.jokievents.service.interfaces.AuthenticationService;
 import lombok.RequiredArgsConstructor;
 
-import org.springframework.context.support.DefaultMessageSourceResolvable;
 import org.springframework.http.ResponseEntity;
-import org.springframework.validation.BindingResult;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
-import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/admin")
@@ -164,5 +161,10 @@ public class AdminController {
     @GetMapping("/get-paginated-coupons")
     public ResponseEntity<?> getAllCouponsPaginated(@RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "8") int size) {
         return adminService.getAllCouponsPaginated(page,size);
+    }
+
+    @GetMapping("/get-admin-account-info/{adminId}")
+    public ResponseEntity<?> getLoginInformation(@PathVariable String adminId) {
+        return adminService.getAccountInformation(adminId);
     }
 }

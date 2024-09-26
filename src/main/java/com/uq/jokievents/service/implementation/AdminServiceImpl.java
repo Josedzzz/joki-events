@@ -364,4 +364,29 @@ public class AdminServiceImpl implements AdminService{
     public ResponseEntity<?> getAllCouponsPaginated(int page, int size) {
         return couponService.getAllCouponsPaginated(page, size);
     }
+
+    @Override
+    public ResponseEntity<?> getAccountInformation(String adminId) {
+        ResponseEntity<?> verificationResponse = AdminSecurityUtils.verifyAdminAccessWithRole();
+        if (verificationResponse != null) {
+            return verificationResponse;
+        }
+        try {
+            Optional<Admin> admin = adminRepository.findById(adminId);
+            if (admin.isPresent()) {
+                String username = admin.get().getUsername();
+                String password = admin.get().getEmail(); // TODO check if this is encrypted
+
+                UpdateAdminDTO dto = new UpdateAdminDTO(username, password);
+                ApiResponse<UpdateAdminDTO> response = new ApiResponse<>("Success", "Admin info returned", dto);
+                return new ResponseEntity<>(response, HttpStatus.OK);
+            } else {
+                ApiResponse<String> response = new ApiResponse<>("Error", "Admin info not found", null);
+                return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
+            }
+        } catch (Exception e) {
+            ApiResponse<String> response = new ApiResponse<>("Error", "Failed to retrieve admin info", null);
+            return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
 }
