@@ -73,4 +73,30 @@ public class CouponServiceImpl implements CouponService {
             return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
+
+    @Override
+    public Optional<Coupon> findCouponByName(String name) {
+        return couponRepository.findByName(name);
+    }
+
+
+    @Override
+    public Optional<Coupon> findCouponInstanceById(String couponId) {
+        return couponRepository.findById(couponId);
+    }
+
+    @Override
+    public Coupon saveCoupon(Coupon coupon) {
+        return couponRepository.save(coupon);
+    }
+
+    @Override
+    public void deleteCouponById(String couponId) {
+        couponRepository.deleteById(couponId);
+    }
+
+    @Override
+    public void deleteAllCoupons(){
+        couponRepository.deleteAll();
+    }
 }

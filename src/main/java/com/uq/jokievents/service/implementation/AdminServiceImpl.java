@@ -35,11 +35,8 @@ public class AdminServiceImpl implements AdminService{
 
     private final AdminRepository adminRepository;
     private final EmailService emailService;
-    private final CouponRepository couponRepository;
-    private final EventRepository eventRepository; // TODO change it for EventService
     private final EventService eventService;
     private final PasswordEncoder passwordEncoder;
-    private final ImageService imageService;
     private final CouponService couponService;
     private final JwtService jwtService;
 
@@ -73,7 +70,6 @@ public class AdminServiceImpl implements AdminService{
                 // Generar nuevo token con los datos actualizados
                 UserDetails adminDetails = adminRepository.findById(adminId).orElse(null);
                 String newToken = jwtService.getAdminToken(adminDetails);
-
                 // Devolver la respuesta con Admin en 'data' y el token en 'token'
                 ApiTokenResponse<Object> response = new ApiTokenResponse<>("Success","Admin update done", updatedAdmin, newToken);
                 return new ResponseEntity<>(response, HttpStatus.OK);
@@ -123,7 +119,7 @@ public class AdminServiceImpl implements AdminService{
         try {
             // Validate if the admin exists by email
             Optional<Admin> adminOptional = adminRepository.findByEmail(email);
-            if (!adminOptional.isPresent()) {
+            if (adminOptional.isEmpty()) {
                 ApiResponse<String> response = new ApiResponse<>("Error", "Admin not found.", null);
                 return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
             }
@@ -204,7 +200,7 @@ public class AdminServiceImpl implements AdminService{
         }
 
         // Check if a coupon with the same name already exists
-        Optional<Coupon> existingCoupon = couponRepository.findByName(dto.name());
+        Optional<Coupon> existingCoupon = couponService.findCouponByName(dto.name());
 
         if (existingCoupon.isPresent()) {
             ApiResponse<String> response = new ApiResponse<>("Error", "Coupon with the same name already exists", null);
@@ -217,7 +213,7 @@ public class AdminServiceImpl implements AdminService{
         coupon.setExpirationDate(dto.expirationDate());
         coupon.setMinPurchaseAmount(dto.minPurchaseAmount());
 
-        Coupon savedCoupon = couponRepository.save(coupon);
+        Coupon savedCoupon = couponService.saveCoupon(coupon);
         ApiResponse<Coupon> response = new ApiResponse<>("Success", "Coupon creation done", savedCoupon);
         return new ResponseEntity<>(response, HttpStatus.CREATED);
     }
@@ -231,8 +227,7 @@ public class AdminServiceImpl implements AdminService{
         }
 
         try {
-            Optional<Coupon> optionalCoupon = couponRepository.findById(couponId);
-
+            Optional<Coupon> optionalCoupon = couponService.findCouponInstanceById(couponId);
             if (optionalCoupon.isPresent()) {
                 Coupon coupon = optionalCoupon.get();
 
@@ -242,7 +237,7 @@ public class AdminServiceImpl implements AdminService{
                 coupon.setMinPurchaseAmount(dto.minPurchaseAmount());
 
                 // Save the updated coupon
-                Coupon updatedCoupon = couponRepository.save(coupon);
+                Coupon updatedCoupon = couponService.saveCoupon(coupon);
                 ApiResponse<Coupon> response = new ApiResponse<>("Success", "Coupon updated", updatedCoupon);
                 return new ResponseEntity<>(response, HttpStatus.OK);
             } else {
@@ -263,9 +258,9 @@ public class AdminServiceImpl implements AdminService{
         }
 
         try {
-            Optional<Coupon> existingCoupon = couponRepository.findById(couponId);
+            Optional<Coupon> existingCoupon = couponService.findCouponInstanceById(couponId);
             if (existingCoupon.isPresent()) {
-                couponRepository.deleteById(couponId);
+                couponService.deleteCouponById(couponId);
                 ApiResponse<String> response = new ApiResponse<>("Success", "Coupon deleted", null);
                 return new ResponseEntity<>(response, HttpStatus.OK);
             } else {
@@ -288,7 +283,7 @@ public class AdminServiceImpl implements AdminService{
         }
 
         try {
-            couponRepository.deleteAll();
+            couponService.deleteAllCoupons();
             ApiResponse<String> response = new ApiResponse<>("Success", "All coupons deleted", null);
             return new ResponseEntity<>(response, HttpStatus.OK);
         } catch (Exception e) {
@@ -322,7 +317,7 @@ public class AdminServiceImpl implements AdminService{
             return verificationResponse;
         }
 
-        return eventService.addEvent(dto); // TODO check if this is really fine
+        return eventService.addEvent(dto);
     }
 
     public ResponseEntity<?> deleteEvent(String eventId){
@@ -333,9 +328,9 @@ public class AdminServiceImpl implements AdminService{
         }
 
         try {
-            Optional<Event> existingEvent = eventRepository.findById(eventId);
+            Optional<Event> existingEvent = eventService.getEventById(eventId); // Long life to SRP
             if (existingEvent.isPresent()) {
-                eventRepository.deleteById(eventId);
+                eventService.deleteEventById(eventId);
                 ApiResponse<String> response = new ApiResponse<>("Success", "Event deleted", null);
                 return new ResponseEntity<>(response, HttpStatus.OK);
             } else {
@@ -356,7 +351,7 @@ public class AdminServiceImpl implements AdminService{
         }
 
         try {
-            eventRepository.deleteAll();
+            eventService.deleteAllEvents();
             ApiResponse<String> response = new ApiResponse<>("Success", "All events deleted", null);
             return new ResponseEntity<>(response, HttpStatus.OK);
         } catch (Exception e) {

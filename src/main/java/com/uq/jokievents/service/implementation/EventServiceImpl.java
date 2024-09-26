@@ -23,7 +23,7 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
-public class    EventServiceImpl implements EventService {
+public class EventServiceImpl implements EventService {
 
     private final EventRepository eventRepository;
     private final ImageService imageService;
@@ -169,6 +169,21 @@ public class    EventServiceImpl implements EventService {
             ApiResponse<String> response = new ApiResponse<>("Error", "Failed to create event", e.getMessage());
             return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
         }
+    }
+
+    @Override
+    public Optional<Event> getEventById(String eventId) {
+        return eventRepository.findById(eventId);
+    }
+
+    @Override
+    public void deleteEventById(String eventId) {
+        eventRepository.deleteById(eventId);
+    }
+
+    @Override
+    public void deleteAllEvents(){
+        eventRepository.deleteAll();
     }
 
 }
