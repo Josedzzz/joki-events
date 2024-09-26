@@ -92,4 +92,9 @@ public class ClientController {
     public ResponseEntity<?> existsIdCard(@RequestParam String idCard) {
         return clientService.existsByIdCard(idCard);
     }
+
+    @GetMapping("/get-paginated-events")
+    public ResponseEntity<?> getAllEventsPaginated(@RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "16") int size) {
+        return clientService.getAllEventsPaginated(page, size);
+    }
 }

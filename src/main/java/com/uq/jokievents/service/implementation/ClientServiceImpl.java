@@ -6,6 +6,8 @@ import com.uq.jokievents.model.Admin;
 import com.uq.jokievents.model.Client;
 import com.uq.jokievents.repository.ClientRepository;
 import com.uq.jokievents.service.interfaces.ClientService;
+import com.uq.jokievents.service.interfaces.CouponService;
+import com.uq.jokievents.service.interfaces.EventService;
 import com.uq.jokievents.service.interfaces.JwtService;
 import com.uq.jokievents.utils.*;
 import lombok.RequiredArgsConstructor;
@@ -33,6 +35,8 @@ public class ClientServiceImpl implements ClientService {
     private final VerificationService verificationService;
     private final Utils utils;
     private final JwtService jwtService;
+    private final EventService eventService;
+    private final CouponService couponService;
 
     /**
      * Updates a client from a dto.
@@ -171,4 +175,8 @@ public class ClientServiceImpl implements ClientService {
         }
     }
 
+    @Override
+    public ResponseEntity<?> getAllEventsPaginated(int page, int size) {
+        return eventService.getAllEventsPaginated(page, size);
+    }
 }

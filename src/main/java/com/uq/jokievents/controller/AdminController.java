@@ -142,10 +142,7 @@ public class AdminController {
     }
 
     @GetMapping("/get-paginated-events")
-    public ResponseEntity<?> getAllEventsPaginated(
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "16") int size) {
-
+    public ResponseEntity<?> getAllEventsPaginated(@RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "16") int size) {
         return adminService.getAllEventsPaginated(page, size);
     }
 

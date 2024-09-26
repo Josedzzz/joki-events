@@ -11,4 +11,6 @@ public interface ClientService {
     ResponseEntity<?> verifyCode(String clientId, VerifyClientDTO dto);
     ResponseEntity<?> existsByEmail(String email);
     ResponseEntity<?> existsByIdCard(String idCard);
+
+    ResponseEntity<?> getAllEventsPaginated(int page, int size);
 }
