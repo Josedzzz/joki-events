@@ -1,5 +1,6 @@
 package com.uq.jokievents.model;
 
+import com.uq.jokievents.model.enums.EventType;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -32,4 +33,6 @@ public class Event {
     private int totalAvailablePlaces;
     private String eventImageBase64;
     private String eventImageUrl; // For the URL after upload
+
+    private EventType eventType;
 }

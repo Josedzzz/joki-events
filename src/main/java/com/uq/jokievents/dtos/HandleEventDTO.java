@@ -1,5 +1,6 @@
 package com.uq.jokievents.dtos;
 
+import com.uq.jokievents.model.enums.EventType;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.validation.Valid;
@@ -27,6 +28,9 @@ public record HandleEventDTO(
         String eventImageBase64,
 
         @NotEmpty(message = "At least one locality is required")
-        List<@Valid CreateLocalityDTO> localities
+        List<@Valid CreateLocalityDTO> localities,
+
+        @NotNull(message = "Event type is required")
+        EventType eventType
 ) {}
 

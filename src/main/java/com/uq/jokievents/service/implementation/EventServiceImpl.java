@@ -3,6 +3,7 @@ package com.uq.jokievents.service.implementation;
 import com.uq.jokievents.dtos.HandleEventDTO;
 import com.uq.jokievents.model.Event;
 import com.uq.jokievents.model.Locality;
+import com.uq.jokievents.model.enums.EventType;
 import com.uq.jokievents.repository.EventRepository;
 import com.uq.jokievents.service.interfaces.EventService;
 import com.uq.jokievents.service.interfaces.ImageService;
@@ -15,6 +16,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
+import java.time.format.DateTimeParseException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -27,20 +30,6 @@ public class EventServiceImpl implements EventService {
 
     private final EventRepository eventRepository;
     private final ImageService imageService;
-
-    /**
-     * Get a list of all events from the db
-     *
-     * @return a list of all event objects in the db
-     */
-    public ResponseEntity<?> findAll() {
-        try {
-            List<Event> events = eventRepository.findAll();
-            return new ResponseEntity<>(events, HttpStatus.OK);
-        } catch (Exception e) {
-            return new ResponseEntity<>("Failed event request", HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-    }
 
     /**
      * Gets an event by its id
@@ -158,6 +147,7 @@ public class EventServiceImpl implements EventService {
                     ).collect(Collectors.toList()))
                     .totalAvailablePlaces(dto.totalAvailablePlaces())
                     .eventImageUrl(imageUrl)
+                    .eventType(dto.eventType())
                     .build();
 
             eventRepository.save(event);
@@ -186,5 +176,51 @@ public class EventServiceImpl implements EventService {
         eventRepository.deleteAll();
     }
 
+    @Override
+    public ResponseEntity<?> filterEventsByEventType(EventType eventType) {
+        List<Event> events = eventRepository.findByEventType(eventType);
+        if (events.isEmpty()) {
+            return new ResponseEntity<>(new ApiResponse<>("No Events", "No events found for this type", null), HttpStatus.OK);
+        }
+        return new ResponseEntity<>(new ApiResponse<>("Success", "Events found", events), HttpStatus.OK);
+    }
+
+    @Override
+    public ResponseEntity<?> filterEventsAfterCertainDate(String date) {
+        LocalDateTime dateFilter = LocalDateTime.parse(date);
+        List<Event> events = eventRepository.findByEventDateAfter(dateFilter);
+        if (events.isEmpty()) {
+            return new ResponseEntity<>(new ApiResponse<>("No Events", "No events found after this date", null), HttpStatus.OK);
+        }
+        return new ResponseEntity<>(new ApiResponse<>("Success", "Events found", events), HttpStatus.OK);
+    }
+
+    @Override
+    public ResponseEntity<?> filterEventsBetweenDates(String startDate, String endDate) {
+        try {
+            // Parse the dates
+            LocalDateTime start = LocalDateTime.parse(startDate);
+            LocalDateTime end = LocalDateTime.parse(endDate);
+
+            if (end.isBefore(start)) {
+                return new ResponseEntity<>(new ApiResponse<>("Error", "End date must be after start date", null), HttpStatus.BAD_REQUEST);
+            }
+
+            // Fetch events between the two dates
+            List<Event> events = eventRepository.findByEventDateBetween(start, end);
+
+            if (events.isEmpty()) {
+                return new ResponseEntity<>(new ApiResponse<>("No Events", "No events found between these dates", null), HttpStatus.OK);
+            }
+
+            return new ResponseEntity<>(new ApiResponse<>("Success", "Events found", events), HttpStatus.OK);
+
+        } catch (DateTimeParseException e) {
+            // Handle invalid date format
+            return new ResponseEntity<>(new ApiResponse<>("Error", "Invalid date format. Expected format: yyyy-MM-ddTHH:mm:ss", null), HttpStatus.BAD_REQUEST);
+        } catch (Exception e) {
+            return new ResponseEntity<>(new ApiResponse<>("Error", "An error occurred", e.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
 }
 
