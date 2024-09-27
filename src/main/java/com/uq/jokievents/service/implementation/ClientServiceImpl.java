@@ -14,6 +14,7 @@ import com.uq.jokievents.service.interfaces.JwtService;
 import com.uq.jokievents.utils.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -24,6 +25,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.RequestBody;
 
+import java.time.LocalDateTime;
 import java.util.*;
 
 import javax.validation.Valid;
@@ -34,11 +36,9 @@ import javax.validation.Valid;
 public class ClientServiceImpl implements ClientService {
 
     private final ClientRepository clientRepository;
-    private final VerificationService verificationService;
     private final Utils utils;
     private final JwtService jwtService;
     private final EventService eventService;
-    private final CouponService couponService;
 
     /**
      * Updates a client from a dto.
@@ -126,22 +126,32 @@ public class ClientServiceImpl implements ClientService {
             return verificationResponse;
         }
 
-        String verificationCode = dto.verificationCode();
-        boolean verified = verificationService.verifyCode(clientId, verificationCode);
-        if (verified) {
-            Optional<Client> client = clientRepository.findById(clientId);
-            if(client.isPresent()){
-                Client unverifiedClient = client.get();
-                unverifiedClient.setActive(true);
-                clientRepository.save(unverifiedClient);
-            }
-            ApiResponse<String> response = new ApiResponse<>("Success", "Client verification done", null);
-            return new ResponseEntity<>(response, HttpStatus.OK);
-        } else {
-            ApiResponse<String> response = new ApiResponse<>("Error", "Invalid code or time expired", null);
-            return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+        Optional<Client> clientOpt = clientRepository.findById(clientId);
+        if (clientOpt.isEmpty()) {
+            throw new RuntimeException("Client not found");
         }
+
+        Client client = clientOpt.get();
+        if (client.getVerificationCode() == null || client.getVerificationCodeExpiration() == null) {
+            // TODO: Return a proper ResponseEntity here
+            throw new RuntimeException("Verification code expired");
+        }
+
+        boolean isVerified = client.getVerificationCode().equals(dto.verificationCode()) &&
+                LocalDateTime.now().isBefore(client.getVerificationCodeExpiration());
+
+        if (isVerified) {
+            client.setVerificationCode(null);
+            client.setVerificationCodeExpiration(null);
+            client.setActive(true);
+            clientRepository.save(client);
+
+            return ResponseEntity.ok(new ApiResponse<>("Success", "Client verification done", null));
+        }
+
+        return ResponseEntity.badRequest().body(new ApiResponse<>("Error", "Invalid code or time expired", null));
     }
+
 
     @Override
     public ResponseEntity<?> existsByEmail(String email) {
@@ -215,7 +225,6 @@ public class ClientServiceImpl implements ClientService {
 
     @Override
     public void saveClientInDatabase(Client client) {
-
     }
 
     private static ApiResponse<UpdateClientDTO> getUpdateClientDTOApiResponse(Optional<Client> client) {
