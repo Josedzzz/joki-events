@@ -24,7 +24,7 @@ public class SecurityConfig{
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         return http
-                .csrf(AbstractHttpConfigurer::disable) // Disable CSRF as you're handling token-based authentication
+                .csrf(AbstractHttpConfigurer::disable) // Disable CSRF as we are handling token-based authentication
                 .authorizeHttpRequests((authRequest) ->
                         authRequest
                                 .requestMatchers("/auth/**").permitAll() // Allow unauthenticated access to /auth endpoints

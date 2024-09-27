@@ -199,11 +199,11 @@ public class AdminServiceImpl implements AdminService{
             return verificationResponse;
         }
 
-        // Check if a coupon with the same name already exists
+        // Check if a coupon with the same localityName already exists
         Optional<Coupon> existingCoupon = couponService.findCouponByName(dto.name());
 
         if (existingCoupon.isPresent()) {
-            ApiResponse<String> response = new ApiResponse<>("Error", "Coupon with the same name already exists", null);
+            ApiResponse<String> response = new ApiResponse<>("Error", "Coupon with the same localityName already exists", null);
             return new ResponseEntity<>(response, HttpStatus.CONFLICT);
         }
 

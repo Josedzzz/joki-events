@@ -1,6 +1,6 @@
 package com.uq.jokievents.service.implementation;
 
-import com.uq.jokievents.model.Ticket;
+import com.uq.jokievents.model.LocalityOrder;
 import com.uq.jokievents.repository.TicketRepository;
 import com.uq.jokievents.service.interfaces.TicketService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,8 +24,8 @@ public class TicketServiceImpl implements TicketService {
      */
     public ResponseEntity<?> findAll() {
         try {
-            List<Ticket> tickets = ticketRepository.findAll();
-            return new ResponseEntity<>(tickets, HttpStatus.OK);
+            List<LocalityOrder> localityOrders = ticketRepository.findAll();
+            return new ResponseEntity<>(localityOrders, HttpStatus.OK);
         } catch (Exception e) {
             return new ResponseEntity<>("Failed tickets request", HttpStatus.INTERNAL_SERVER_ERROR);
         }
@@ -39,7 +39,7 @@ public class TicketServiceImpl implements TicketService {
      */
     public ResponseEntity<?> findById(String id) {
         try {
-            Optional<Ticket> ticket = ticketRepository.findById(id);
+            Optional<LocalityOrder> ticket = ticketRepository.findById(id);
             if (ticket.isPresent()) {
                 return new ResponseEntity<>(ticket.get(), HttpStatus.OK);
             } else {
@@ -53,13 +53,13 @@ public class TicketServiceImpl implements TicketService {
     /**
      * Create a new ticket
      *
-     * @param ticket the ticket object to be created
+     * @param localityOrder the ticket object to be created
      * @return a ResponseEntity containing the created ticket with an HTTP status
      */
-    public ResponseEntity<?> create(Ticket ticket) {
+    public ResponseEntity<?> create(LocalityOrder localityOrder) {
         try {
-            Ticket createdTicket = ticketRepository.save(ticket);
-            return new ResponseEntity<>(createdTicket, HttpStatus.CREATED);
+            LocalityOrder createdLocalityOrder = ticketRepository.save(localityOrder);
+            return new ResponseEntity<>(createdLocalityOrder, HttpStatus.CREATED);
         } catch (Exception e) {
             return new ResponseEntity<>("Failed to create a ticket", HttpStatus.INTERNAL_SERVER_ERROR);
         }
@@ -69,16 +69,16 @@ public class TicketServiceImpl implements TicketService {
      * Update an existing ticket
      *
      * @param id the identifier of the ticket to be updated
-     * @param ticket the updated ticket object
+     * @param localityOrder the updated ticket object
      * @return a ResponseEntity containing the update ticket and an HTTP status
      */
-    public ResponseEntity<?> update(String id, Ticket ticket) {
+    public ResponseEntity<?> update(String id, LocalityOrder localityOrder) {
         try {
-            Optional<Ticket> existingTicket = ticketRepository.findById(id);
+            Optional<LocalityOrder> existingTicket = ticketRepository.findById(id);
             if (existingTicket.isPresent()) {
-                ticket.setId(id);
-                Ticket updatedTicket = ticketRepository.save(ticket);
-                return new ResponseEntity<>(updatedTicket, HttpStatus.OK);
+                localityOrder.setId(id);
+                LocalityOrder updatedLocalityOrder = ticketRepository.save(localityOrder);
+                return new ResponseEntity<>(updatedLocalityOrder, HttpStatus.OK);
             } else {
                 return new ResponseEntity<>("Ticket not found", HttpStatus.NOT_FOUND);
             }
@@ -95,7 +95,7 @@ public class TicketServiceImpl implements TicketService {
      */
     public ResponseEntity<?> delete(String id) {
         try {
-            Optional<Ticket> existingTicket = ticketRepository.findById(id);
+            Optional<LocalityOrder> existingTicket = ticketRepository.findById(id);
             if (existingTicket.isPresent()) {
                 ticketRepository.deleteById(id);
                 return new ResponseEntity<>("Ticket deleted successfully", HttpStatus.OK);

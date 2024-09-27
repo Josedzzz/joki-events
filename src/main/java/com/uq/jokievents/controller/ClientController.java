@@ -20,7 +20,6 @@ import org.springframework.web.bind.annotation.*;
 public class ClientController {
 
     private final ClientService clientService;
-    private final AuthenticationService authenticationService;
 
     /**
      * Update an existing client by id
@@ -29,7 +28,7 @@ public class ClientController {
      *  "idCard": "1090900900",
      *  "phone": "3101112222",
      *  "email": "mail@mail.com",
-     *  "name": "VeryCoolName",
+     *  "localityName": "VeryCoolName",
      *  "direction": "Very Cool Address"
      * }
      * @param id     the identifier of the client to update
@@ -98,4 +97,6 @@ public class ClientController {
     public ResponseEntity<?> getAccountInformation(@PathVariable String clientId) {
         return clientService.getAccountInformation(clientId);
     }
+
+
 }

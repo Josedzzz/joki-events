@@ -67,7 +67,7 @@ public class AdminController {
     /**
      * Example input JSON:
      * {
-     *     "name": "Summer Sale",
+     *     "localityName": "Summer Sale",
      *     "discount": 15.0,
      *     "expirationDate": "2024-12-31T23:59:59",
      *     "minPurchaseAmount": 100.0
@@ -78,7 +78,7 @@ public class AdminController {
      *     "message": "Created coupon done",
      *     "data": {
      *         "id": "66e116c1f6751275233b24ff",
-     *         "name": "Summer Sale",
+     *         "localityName": "Summer Sale",
      *         "discountPercent": 15.0,
      *         "expirationDate": "2024-12-31T23:59:59",
      *         "minPurchaseQuantity": 100.0,
@@ -107,7 +107,7 @@ public class AdminController {
      *     "message": "Coupon updated",
      *     "data": {
      *         "id": "66e116c1f6751275233b24ff",
-     *         "name": "Summer Sale",
+     *         "localityName": "Summer Sale",
      *         "discountPercent": 20.0,
      *         "expirationDate": "2024-12-31T23:59:59",
      *         "minPurchaseAmount": 110.0,
@@ -123,7 +123,7 @@ public class AdminController {
     }
 
     // TODO Ask Jose if the path (delete-coupon) is necessary for this method to be used. Logic is tickling. Same question for deleteAllCoupons() below.
-    @DeleteMapping("/delete-coupon/{couponId}")
+    @PostMapping("/delete-coupon/{couponId}")
     public ResponseEntity<?> deleteCouponById( @PathVariable String couponId) {
         return adminService.deleteCoupon(couponId);
     }
@@ -148,12 +148,14 @@ public class AdminController {
         return adminService.updateEvent(id, dto);
     }
 
-    @DeleteMapping("/delete-event/{id}")
+    // POST until further notice.
+    @PostMapping("/delete-event/{id}")
     public ResponseEntity<?> deleteEventById(@Valid @PathVariable String id) {
         return adminService.deleteEvent(id);
     }
 
-    @DeleteMapping("/delete-all-events")
+    // POST until further notice.
+    @PostMapping("/delete-all-events")
     public ResponseEntity<?> deleteAllEvents(){
         return adminService.deleteAllEvents();
     }

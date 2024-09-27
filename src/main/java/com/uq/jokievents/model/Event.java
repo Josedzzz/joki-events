@@ -29,10 +29,9 @@ public class Event {
     private String city;
     private LocalDateTime eventDate;
     private boolean availableForPurchase;
-    private List<Locality> localities; // TODO Explain why I made this change to the team!
+    private List<Locality> localities;
     private int totalAvailablePlaces;
     private String eventImageBase64;
     private String eventImageUrl; // For the URL after upload
-
     private EventType eventType;
 }

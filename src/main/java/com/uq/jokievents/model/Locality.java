@@ -20,4 +20,5 @@ public class Locality {
     private double price;
     private int maxCapacity;
     private int currentOccupancy = 0;
+
 }

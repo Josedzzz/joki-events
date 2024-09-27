@@ -1,6 +1,6 @@
 package com.uq.jokievents.controller;
 
-import com.uq.jokievents.model.Ticket;
+import com.uq.jokievents.model.LocalityOrder;
 import com.uq.jokievents.service.interfaces.TicketService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -37,24 +37,24 @@ public class TicketController {
     /**
      * Create a new ticket
      *
-     * @param ticket the ticket object to be created
+     * @param localityOrder the ticket object to be created
      * @return a ResponseEntity containing the created ticket
      */
     @PostMapping
-    public ResponseEntity<?> createTicket(@RequestBody Ticket ticket) {
-        return ticketService.create(ticket);
+    public ResponseEntity<?> createTicket(@RequestBody LocalityOrder localityOrder) {
+        return ticketService.create(localityOrder);
     }
 
     /**
      * Update an existing ticket by id
      *
      * @param id the identifier of the ticket object to update
-     * @param ticket the update ticket object
+     * @param localityOrder the update ticket object
      * @return a ResponseEntity containing the update ticket
      */
     @PutMapping("/{id}")
-    public ResponseEntity<?> updateTicket(@PathVariable String id, @RequestBody Ticket ticket) {
-        return ticketService.update(id, ticket);
+    public ResponseEntity<?> updateTicket(@PathVariable String id, @RequestBody LocalityOrder localityOrder) {
+        return ticketService.update(id, localityOrder);
     }
 
     /**

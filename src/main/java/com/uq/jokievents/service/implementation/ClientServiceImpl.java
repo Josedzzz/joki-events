@@ -1,6 +1,7 @@
 package com.uq.jokievents.service.implementation;
 
 import com.uq.jokievents.dtos.AuthAdminDTO;
+import com.uq.jokievents.dtos.LocalityOrderAsClientDTO;
 import com.uq.jokievents.dtos.UpdateClientDTO;
 import com.uq.jokievents.dtos.VerifyClientDTO;
 import com.uq.jokievents.model.Admin;
@@ -120,7 +121,7 @@ public class ClientServiceImpl implements ClientService {
     @Override
     public ResponseEntity<?> verifyCode(String clientId, @Valid VerifyClientDTO dto) {
 
-        ResponseEntity<?> verificationResponse = ClientSecurityUtils.verifyClientAccessWithId(clientId);
+        ResponseEntity<?> verificationResponse = ClientSecurityUtils.verifyClientAccessWithRole();
         if (verificationResponse != null) {
             return verificationResponse;
         }
@@ -200,6 +201,21 @@ public class ClientServiceImpl implements ClientService {
             ApiResponse<String> response = new ApiResponse<>("Error", "Failed to retrieve client info", null);
             return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
         }
+    }
+
+    @Override
+    public ResponseEntity<?> orderLocality(LocalityOrderAsClientDTO dto) {
+        return null;
+    }
+
+    @Override
+    public Optional<Client> getClientFromClientId(String clientId) {
+        return Optional.empty();
+    }
+
+    @Override
+    public void saveClientInDatabase(Client client) {
+
     }
 
     private static ApiResponse<UpdateClientDTO> getUpdateClientDTOApiResponse(Optional<Client> client) {

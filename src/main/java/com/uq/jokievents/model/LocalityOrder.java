@@ -7,17 +7,16 @@ import org.bson.types.ObjectId;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
-import java.util.ArrayList;
-
 @Data
-@Document(collection = "shopping-carts")
+@Document(collection = "tickets")
 @AllArgsConstructor
 @NoArgsConstructor
-public class ShoppingCart {
+public class LocalityOrder {
 
     @Id
     private String id;
     private ObjectId idClient;
-    private ArrayList<LocalityOrder> localityOrders;
-    private Double totalPrice;
+    private int numTicketsSelected;
+    private String localityName;
+    private Double totalPaymentAmount;
 }

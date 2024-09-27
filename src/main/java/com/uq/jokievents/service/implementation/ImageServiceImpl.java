@@ -36,7 +36,7 @@ public class ImageServiceImpl implements ImageService {
         // Decode the Base64 string into a byte array
         byte[] imageBytes = Base64.getDecoder().decode(imageData);
 
-        // Create a unique file name for the image
+        // Create a unique file localityName for the image
         String fileName = String.format("%s-s%s", UUID.randomUUID(), ".png"); // Change extension as needed
 
         // Get the bucket and upload the image

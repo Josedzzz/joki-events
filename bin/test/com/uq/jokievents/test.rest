@@ -158,8 +158,8 @@ GET http://localhost:3000/api/shoppingcarts/66ce5652dbc4f56724de5328
 DELETE  http://localhost:3000/api/shoppingcarts/66ce5652dbc4f56724de5328
 
 ### Try APIS for Tickets
-# Create a ticket
-POST http://localhost:3000/api/tickets
+# Create a localityOrder
+POST http://localhost:3000/api/localityOrders
 Content-Type: application/json
 
 {
@@ -171,17 +171,17 @@ Content-Type: application/json
   "finalPaymentAmount": 90.00
 }
 
-### Get all tickets
-GET http://localhost:3000/api/tickets
+### Get all localityOrders
+GET http://localhost:3000/api/localityOrders
 
-### Get a ticket by ID
-GET http://localhost:3000/api/tickets/66ce5666dbc4f56724de5329
+### Get a localityOrder by ID
+GET http://localhost:3000/api/localityOrders/66ce5666dbc4f56724de5329
 
-### Delete a ticket by ID
-DELETE http://localhost:3000/api/tickets/66ce5666dbc4f56724de5329
+### Delete a localityOrder by ID
+DELETE http://localhost:3000/api/localityOrders/66ce5666dbc4f56724de5329
 
 ### Try APIS for TicketOrders
-### Create a ticket order
+### Create a localityOrder order
 POST http://localhost:3000/api/ticketorders
 Content-Type: application/json
 
@@ -190,11 +190,11 @@ Content-Type: application/json
   "purchaseDate": "2024-08-15T10:00:00Z"
 }
 
-### Get all ticket orders
+### Get all localityOrder orders
 GET http://localhost:3000/api/ticketorders
 
-### Get a ticket order by ID
+### Get a localityOrder order by ID
 GET http://localhost:3000/api/ticketorders/66ce567edbc4f56724de532a
 
-### Delete a ticket order by ID
+### Delete a localityOrder order by ID
 DELETE http://localhost:3000/api/ticketorders/66ce567edbc4f56724de532a
