@@ -130,14 +130,14 @@ public class EventServiceImpl implements EventService {
     @Override
     public ResponseEntity<?> addEvent(HandleEventDTO dto) {
         try {
-            String imageUrl = imageService.uploadImage(dto.eventImageBase64());
-
+            String imageUrl = imageService.uploadImage(dto.eventImageUrl());
+            String localitiesUrl = imageService.uploadImage(dto.localitiesImageUrl());
             Event event = Event.builder()
                     .name(dto.name())
                     .address(dto.address())
                     .city(dto.city())
                     .eventDate(dto.date())
-                    .availableForPurchase(true)  // El negro? Mi color.
+                    .availableForPurchase(true)  // El negro? Mi color. Si es jeje
                     .localities(dto.localities().stream().map(localityDTO ->
                             Locality.builder()
                                     .name(localityDTO.name())
@@ -147,6 +147,7 @@ public class EventServiceImpl implements EventService {
                     ).collect(Collectors.toList()))
                     .totalAvailablePlaces(dto.totalAvailablePlaces())
                     .eventImageUrl(imageUrl)
+                    .localitiesImageUrl(localitiesUrl)
                     .eventType(dto.eventType())
                     .build();
 

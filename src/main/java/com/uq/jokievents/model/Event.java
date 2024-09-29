@@ -32,5 +32,6 @@ public class Event {
     private List<Locality> localities;
     private int totalAvailablePlaces;
     private String eventImageUrl; // For the URL after upload
+    private String localitiesImageUrl;
     private EventType eventType;
 }

@@ -1,9 +1,7 @@
 package com.uq.jokievents.dtos;
 
 import com.uq.jokievents.model.enums.EventType;
-import org.springframework.web.multipart.MultipartFile;
 
-import javax.validation.Valid;
 import javax.validation.constraints.*;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -24,11 +22,14 @@ public record HandleEventDTO(
         @Min(value = 1, message = "Total available places must be at least 1")
         int totalAvailablePlaces,
 
-        @NotNull
-        String eventImageBase64,
-
         @NotEmpty(message = "At least one locality is required")
         List<CreateLocalityDTO> localities,
+
+        @NotNull
+        String eventImageUrl,
+
+        @NotNull
+        String localitiesImageUrl,
 
         @NotNull(message = "Event type is required")
         EventType eventType
