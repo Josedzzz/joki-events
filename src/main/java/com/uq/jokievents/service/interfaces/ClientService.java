@@ -18,6 +18,4 @@ public interface ClientService {
     ResponseEntity<?> getAllEventsPaginated(int page, int size);
     ResponseEntity<?> getAccountInformation(String clientId);
     ResponseEntity<?> orderLocality(LocalityOrderAsClientDTO dto);
-    Optional<Client> getClientFromClientId(String clientId);
-    void saveClientInDatabase(Client client);
 }

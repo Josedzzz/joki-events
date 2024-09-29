@@ -1,5 +1,6 @@
 package com.uq.jokievents.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -14,8 +15,9 @@ import org.springframework.data.mongodb.core.mapping.Document;
 @Document(collection = "distributionlocalities")
 public class Locality {
 
-    @Id
+    @Id @JsonIgnore
     private String id;  // Mongo
+
     private String name;
     private double price;
     private int maxCapacity;

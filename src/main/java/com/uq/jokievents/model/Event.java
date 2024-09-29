@@ -31,7 +31,6 @@ public class Event {
     private boolean availableForPurchase;
     private List<Locality> localities;
     private int totalAvailablePlaces;
-    private String eventImageBase64;
     private String eventImageUrl; // For the URL after upload
     private EventType eventType;
 }

@@ -1,26 +1,18 @@
 package com.uq.jokievents.service.implementation;
 
-import com.uq.jokievents.dtos.AuthAdminDTO;
 import com.uq.jokievents.dtos.LocalityOrderAsClientDTO;
 import com.uq.jokievents.dtos.UpdateClientDTO;
 import com.uq.jokievents.dtos.VerifyClientDTO;
-import com.uq.jokievents.model.Admin;
 import com.uq.jokievents.model.Client;
 import com.uq.jokievents.repository.ClientRepository;
 import com.uq.jokievents.service.interfaces.ClientService;
-import com.uq.jokievents.service.interfaces.CouponService;
 import com.uq.jokievents.service.interfaces.EventService;
 import com.uq.jokievents.service.interfaces.JwtService;
 import com.uq.jokievents.utils.*;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -218,14 +210,6 @@ public class ClientServiceImpl implements ClientService {
         return null;
     }
 
-    @Override
-    public Optional<Client> getClientFromClientId(String clientId) {
-        return Optional.empty();
-    }
-
-    @Override
-    public void saveClientInDatabase(Client client) {
-    }
 
     private static ApiResponse<UpdateClientDTO> getUpdateClientDTOApiResponse(Optional<Client> client) {
         String idCard = client.get().getIdCard();
@@ -237,6 +221,4 @@ public class ClientServiceImpl implements ClientService {
         UpdateClientDTO dto = new UpdateClientDTO(idCard, phone, email, name, address);
         return new ApiResponse<>("Success", "Client info returned", dto);
     }
-
-
 }
