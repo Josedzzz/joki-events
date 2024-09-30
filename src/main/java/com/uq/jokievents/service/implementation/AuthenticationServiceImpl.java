@@ -11,7 +11,6 @@ import com.uq.jokievents.repository.ClientRepository;
 import com.uq.jokievents.service.interfaces.AuthenticationService;
 import com.uq.jokievents.utils.*;
 import com.uq.jokievents.service.interfaces.JwtService;
-import lombok.NoArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -107,7 +106,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         Client client = Client.builder()
                 .idCard(request.idCard())
                 .name(request.name())
-                .direction(request.address())
+                .address(request.address())
                 .phoneNumber(request.phone())
                 .email(request.email())
                 .password(passwordEncoder.encode(request.password()))

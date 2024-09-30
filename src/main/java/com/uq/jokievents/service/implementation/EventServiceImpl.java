@@ -137,8 +137,9 @@ public class EventServiceImpl implements EventService {
                     .address(dto.address())
                     .city(dto.city())
                     .eventDate(dto.date())
-                    .availableForPurchase(true)  // El negro? Mi color. Si es jeje
+                    .availableForPurchase(true)  // El negro? Mi color. Si es, jeje
                     .localities(dto.localities().stream().map(localityDTO ->
+                            // Locality has a JsonIgnore on the id parameter
                             Locality.builder()
                                     .name(localityDTO.name())
                                     .price(localityDTO.price())
@@ -165,6 +166,11 @@ public class EventServiceImpl implements EventService {
     @Override
     public Optional<Event> getEventById(String eventId) {
         return eventRepository.findById(eventId);
+    }
+
+    @Override
+    public void saveEvent(Event event) {
+        eventRepository.save(event);
     }
 
     @Override

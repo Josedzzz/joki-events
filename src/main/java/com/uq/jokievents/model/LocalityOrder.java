@@ -1,5 +1,6 @@
 package com.uq.jokievents.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -13,9 +14,9 @@ import org.springframework.data.mongodb.core.mapping.Document;
 @NoArgsConstructor
 public class LocalityOrder {
 
-    @Id
+    @Id @JsonIgnore
     private String id;
-    private ObjectId idClient;
+
     private int numTicketsSelected;
     private String localityName;
     private Double totalPaymentAmount;

@@ -17,5 +17,5 @@ public interface ClientService {
     ResponseEntity<?> existsByIdCard(String idCard);
     ResponseEntity<?> getAllEventsPaginated(int page, int size);
     ResponseEntity<?> getAccountInformation(String clientId);
-    ResponseEntity<?> orderLocality(LocalityOrderAsClientDTO dto);
+    ResponseEntity<?> orderLocality(String clientId, LocalityOrderAsClientDTO dto);
 }

@@ -16,11 +16,10 @@ import org.springframework.data.mongodb.core.mapping.Document;
 public class Locality {
 
     @Id @JsonIgnore
-    private String id;  // Mongo
+    private String id;
 
     private String name;
     private double price;
     private int maxCapacity;
     private int currentOccupancy = 0;
-
 }

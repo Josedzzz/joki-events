@@ -4,6 +4,8 @@ import com.uq.jokievents.model.Client;
 import com.uq.jokievents.model.ShoppingCart;
 import com.uq.jokievents.repository.ShoppingCartRepository;
 import com.uq.jokievents.service.interfaces.ShoppingCartService;
+import lombok.RequiredArgsConstructor;
+import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -13,10 +15,10 @@ import java.util.List;
 import java.util.Optional;
 
 @Service
+@RequiredArgsConstructor(onConstructor_ = {@Autowired})
 public class ShoppingCartServiceImpl implements ShoppingCartService {
 
-    @Autowired
-    private ShoppingCartRepository shoppingCartRepository;
+    private  final ShoppingCartRepository shoppingCartRepository;
 
     /**
      * Get a list of all ShoppingCarts from the db
@@ -105,6 +107,16 @@ public class ShoppingCartServiceImpl implements ShoppingCartService {
         } catch (Exception e) {
             return new ResponseEntity<>("Failed to delete ShoppingCart", HttpStatus.INTERNAL_SERVER_ERROR);
         }
+    }
+
+    @Override
+    public Optional<ShoppingCart> findShoppingCartById(ObjectId idShoppingCart) {
+        return shoppingCartRepository.findById(String.valueOf(idShoppingCart));
+    }
+
+    @Override
+    public void saveShoppingCart(ShoppingCart shoppingCart) {
+        shoppingCartRepository.save(shoppingCart);
     }
 }
 

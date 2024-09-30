@@ -1,5 +1,6 @@
 package com.uq.jokievents.controller;
 
+import com.uq.jokievents.dtos.LocalityOrderAsClientDTO;
 import com.uq.jokievents.service.interfaces.AuthenticationService;
 import com.uq.jokievents.service.interfaces.ClientService;
 import lombok.RequiredArgsConstructor;
@@ -68,8 +69,7 @@ public class ClientController {
 
     /**
      * Check if an email is already in use
-     *
-     * @param email the email to check
+     *     * @param email the email to check
      * @return a ResponseEntity with the result of the check
      */
     @GetMapping("/existsByEmail")
@@ -98,5 +98,19 @@ public class ClientController {
         return clientService.getAccountInformation(clientId);
     }
 
-
+    /**
+     * Example input JSON
+     * {
+     *     "eventId": "mongo-generated-id",
+     *     "localityName": "VIP Section",
+     *     "totalPaymentAmount": 150.00,
+     *     "ticketsSelected": 3
+     * }
+     * @param dto LocalityOrderAsClientDTO
+     * @return ResponseEntity
+     */
+    @PostMapping("/order-locality/{clientId}")
+    public ResponseEntity<?> orderLocality(@PathVariable String clientId, @RequestBody LocalityOrderAsClientDTO dto) {
+        return clientService.orderLocality(clientId, dto);
+    }
 }

@@ -17,6 +17,7 @@ public interface EventService {
     ResponseEntity<?> getAllEventsPaginated(int page, int size);
     ResponseEntity<?> addEvent(HandleEventDTO dto);
     Optional<Event> getEventById(String eventId);
+    void saveEvent(Event event);
     void deleteEventById(String eventId);
     void deleteAllEvents();
     ResponseEntity<?> filterEventsByEventType(EventType eventType);

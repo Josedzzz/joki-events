@@ -1,7 +1,10 @@
 package com.uq.jokievents.service.interfaces;
 
 import com.uq.jokievents.model.ShoppingCart;
+import org.bson.types.ObjectId;
 import org.springframework.http.ResponseEntity;
+
+import java.util.Optional;
 
 public interface ShoppingCartService {
 
@@ -10,5 +13,6 @@ public interface ShoppingCartService {
     ResponseEntity<?> create(ShoppingCart shoppingCart);
     ResponseEntity<?> update(String id, ShoppingCart shoppingCart);
     ResponseEntity<?> deleteById(String id);
-
+    Optional<ShoppingCart> findShoppingCartById(ObjectId idShoppingCart);
+    void saveShoppingCart(ShoppingCart shoppingCart);
 }

@@ -19,5 +19,5 @@ public class ShoppingCart {
     private String id;
     private ObjectId idClient;
     private ArrayList<LocalityOrder> localityOrders;
-    private Double totalPrice;
+    private Double totalPrice; // Price of all the localities a client may have
 }

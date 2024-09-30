@@ -25,15 +25,15 @@ import org.springframework.security.core.userdetails.UserDetails;
 public class Client implements UserDetails {
 
     @Id
-    private String id; // Mongo will take care of it.
-    private String idCard; // Kind of a country given identifier.
+    private String id;
+    private String idCard;
     private String name;
-    private String direction; // Deberías ser "address" pero me da miedo cambiarlo.
+    private String address;
     private String phoneNumber;
     private String email;
     private String password;
     private ArrayList<ObjectId> idCoupons; // TODO Implementar la clase CouponID (¿Cómo sé qué no eres uno de ellos?)
-    private ObjectId idShoppingCart;
+    private ObjectId idShoppingCart; // This is a "pointer" to the shopping car in tne database.
     private boolean active;
     private String verificationCode;
     private LocalDateTime verificationCodeExpiration;
