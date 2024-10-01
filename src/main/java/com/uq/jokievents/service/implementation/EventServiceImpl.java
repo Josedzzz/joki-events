@@ -239,5 +239,15 @@ public class EventServiceImpl implements EventService {
     public Optional<Event> findEventByLocalityName(String localityName) {
         return eventRepository.findByLocalitiesName(localityName);
     }
+
+    @Override
+    public ResponseEntity<?> searchEvent(String eventName, String city, LocalDateTime startDate, LocalDateTime endDate, EventType eventType) {
+        try {
+            List<Event> eventList =  eventRepository.searchEvents(eventName, city, startDate, endDate, eventType);
+            return new ResponseEntity<>(new ApiResponse<>("Success", "Events found", eventList), HttpStatus.OK);
+        } catch (Exception e) {
+            return new ResponseEntity<>(new ApiResponse<>("Error", "An error occurred", e.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
 }
 

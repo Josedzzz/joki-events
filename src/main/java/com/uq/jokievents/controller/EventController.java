@@ -1,5 +1,6 @@
 package com.uq.jokievents.controller;
 
+import com.uq.jokievents.dtos.SearchEventDTO;
 import com.uq.jokievents.model.Event;
 import com.uq.jokievents.model.enums.EventType;
 import com.uq.jokievents.service.interfaces.EventService;
@@ -82,4 +83,14 @@ public class EventController {
         return eventService.filterEventsBetweenDates(startDate, endDate);
     }
 
+    @GetMapping("/search-event")
+    public ResponseEntity<?> searchEvent(@RequestBody SearchEventDTO dto) {
+        return eventService.searchEvent(
+                dto.eventName(),
+                dto.city(),
+                dto.startDate(),
+                dto.endDate(),
+                dto.eventType()
+        );
+    }
 }
