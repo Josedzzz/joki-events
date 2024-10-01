@@ -15,7 +15,4 @@ public interface ShoppingCartService {
     ResponseEntity<?> deleteById(String id);
     Optional<ShoppingCart> findShoppingCartById(String idShoppingCart);
     void saveShoppingCart(ShoppingCart shoppingCart);
-    ShoppingCart getShoppingCartById(String clientId);
-
-    Optional<ShoppingCart> findCartById(String orderId);
 }

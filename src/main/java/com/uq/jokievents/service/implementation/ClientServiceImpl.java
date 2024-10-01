@@ -284,7 +284,7 @@ public class ClientServiceImpl implements ClientService {
             LocalityOrder localityOrder = new LocalityOrder();
             localityOrder.setLocalityName(dto.localityName());
             localityOrder.setNumTicketsSelected(dto.ticketsSelected());
-            localityOrder.setTotalPaymentAmount((float) dto.totalPaymentAmount());
+            localityOrder.setTotalPaymentAmount(dto.totalPaymentAmount());
 
             shoppingCart.getLocalityOrders().add(localityOrder);
 
@@ -377,11 +377,38 @@ public class ClientServiceImpl implements ClientService {
     // This method should be called when a client clicks on the Shopping Cart button on the frontend.
     // Should only load possible to buy LocalityOrders
     // If this method does not work it may be due of EventRepository findByLocalitiesName() method.
-    // Long life to SRP
+    // FUCK SRP
     @Override
     public ResponseEntity<?> loadShoppingCart(String clientId) {
         try {
-            ShoppingCart shoppingCart = shoppingCartService.getShoppingCartById(clientId);
+
+            // Find the client
+            Optional<Client> clientOptional = clientRepository.findById(clientId);
+            if (clientOptional.isEmpty()) {
+                return null;
+            }
+
+            Client client = clientOptional.get();
+
+            // Find the client's shopping cart
+            Optional<ShoppingCart> shoppingCartOptional = shoppingCartService.findShoppingCartById(String.valueOf(client.getIdShoppingCart()));
+            if (shoppingCartOptional.isEmpty()) {
+                return null;
+            }
+
+            ShoppingCart shoppingCart = shoppingCartOptional.get();
+
+            // Filter only the LocalityOrders that can still be purchased (event.availableForPurchase == true)
+            List<LocalityOrder> validLocalityOrders = shoppingCart.getLocalityOrders().stream()
+                    .filter(localityOrder -> {
+                        Optional<Event> eventOptional = eventService.findEventByLocalityName(localityOrder.getLocalityName());
+                        return eventOptional.isPresent() && eventOptional.get().isAvailableForPurchase();
+                    })
+                    .toList();
+
+            // Update the shopping cart with the valid locality orders
+            shoppingCart.setLocalityOrders(new ArrayList<>(validLocalityOrders));
+
             ApiResponse<ShoppingCart> response = new ApiResponse<>("Success", "Shopping cart loaded", shoppingCart);
             return new ResponseEntity<>(response, HttpStatus.OK);
         } catch (Exception e) {

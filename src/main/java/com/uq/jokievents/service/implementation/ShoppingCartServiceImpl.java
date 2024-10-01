@@ -25,8 +25,6 @@ import java.util.Optional;
 public class ShoppingCartServiceImpl implements ShoppingCartService {
 
     private final ShoppingCartRepository shoppingCartRepository;
-    private final ClientService clientService;
-    private final EventService eventService;
 
     /**
      * Get a list of all ShoppingCarts from the db
@@ -125,43 +123,6 @@ public class ShoppingCartServiceImpl implements ShoppingCartService {
     @Override
     public void saveShoppingCart(ShoppingCart shoppingCart) {
         shoppingCartRepository.save(shoppingCart);
-    }
-
-    @Override
-    public ShoppingCart getShoppingCartById(String clientId) {
-        // Find the client
-        Optional<Client> clientOptional = clientService.findClientById(clientId);
-        if (clientOptional.isEmpty()) {
-            return null;
-        }
-
-        Client client = clientOptional.get();
-
-        // Find the client's shopping cart
-        Optional<ShoppingCart> shoppingCartOptional = shoppingCartRepository.findById(String.valueOf(client.getIdShoppingCart()));
-        if (shoppingCartOptional.isEmpty()) {
-            return null;
-        }
-
-        ShoppingCart shoppingCart = shoppingCartOptional.get();
-
-        // Filter only the LocalityOrders that can still be purchased (event.availableForPurchase == true)
-        List<LocalityOrder> validLocalityOrders = shoppingCart.getLocalityOrders().stream()
-                .filter(localityOrder -> {
-                    Optional<Event> eventOptional = eventService.findEventByLocalityName(localityOrder.getLocalityName());
-                    return eventOptional.isPresent() && eventOptional.get().isAvailableForPurchase();
-                })
-                .toList();
-
-        // Update the shopping cart with the valid locality orders
-        shoppingCart.setLocalityOrders(new ArrayList<>(validLocalityOrders));
-
-        return shoppingCart;
-    }
-
-    @Override
-    public Optional<ShoppingCart> findCartById(String orderId) {
-        return shoppingCartRepository.findById(orderId);
     }
 }
 

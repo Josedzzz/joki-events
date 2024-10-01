@@ -19,5 +19,5 @@ public class LocalityOrder {
 
     private int numTicketsSelected;
     private String localityName;
-    private float totalPaymentAmount;
+    private Double totalPaymentAmount;
 }

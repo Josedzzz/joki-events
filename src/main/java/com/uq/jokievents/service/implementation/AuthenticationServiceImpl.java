@@ -131,7 +131,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         client.setVerificationCode(verificationCode);
         client.setVerificationCodeExpiration(expiration);
         client.setIdCoupons(new ArrayList<>());
-        client.setIdShoppingCart(new ObjectId());
+        client.setIdShoppingCart(String.valueOf(new ObjectId()));
         client.setActive(false);
 
         // Sending the verification email
