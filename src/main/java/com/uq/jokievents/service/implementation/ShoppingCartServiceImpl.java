@@ -1,9 +1,14 @@
 package com.uq.jokievents.service.implementation;
 
 import com.uq.jokievents.model.Client;
+import com.uq.jokievents.model.Event;
+import com.uq.jokievents.model.LocalityOrder;
 import com.uq.jokievents.model.ShoppingCart;
 import com.uq.jokievents.repository.ShoppingCartRepository;
+import com.uq.jokievents.service.interfaces.ClientService;
+import com.uq.jokievents.service.interfaces.EventService;
 import com.uq.jokievents.service.interfaces.ShoppingCartService;
+import com.uq.jokievents.utils.ApiResponse;
 import lombok.RequiredArgsConstructor;
 import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -11,6 +16,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -18,7 +24,9 @@ import java.util.Optional;
 @RequiredArgsConstructor(onConstructor_ = {@Autowired})
 public class ShoppingCartServiceImpl implements ShoppingCartService {
 
-    private  final ShoppingCartRepository shoppingCartRepository;
+    private final ShoppingCartRepository shoppingCartRepository;
+    private final ClientService clientService;
+    private final EventService eventService;
 
     /**
      * Get a list of all ShoppingCarts from the db
@@ -117,6 +125,38 @@ public class ShoppingCartServiceImpl implements ShoppingCartService {
     @Override
     public void saveShoppingCart(ShoppingCart shoppingCart) {
         shoppingCartRepository.save(shoppingCart);
+    }
+
+    @Override
+    public ShoppingCart getShoppingCartById(String clientId) {
+        // Find the client
+        Optional<Client> clientOptional = clientService.findClientById(clientId);
+        if (clientOptional.isEmpty()) {
+            return null;
+        }
+
+        Client client = clientOptional.get();
+
+        // Find the client's shopping cart
+        Optional<ShoppingCart> shoppingCartOptional = shoppingCartRepository.findById(String.valueOf(client.getIdShoppingCart()));
+        if (shoppingCartOptional.isEmpty()) {
+            return null;
+        }
+
+        ShoppingCart shoppingCart = shoppingCartOptional.get();
+
+        // Filter only the LocalityOrders that can still be purchased (event.availableForPurchase == true)
+        List<LocalityOrder> validLocalityOrders = shoppingCart.getLocalityOrders().stream()
+                .filter(localityOrder -> {
+                    Optional<Event> eventOptional = eventService.findEventByLocalityName(localityOrder.getLocalityName());
+                    return eventOptional.isPresent() && eventOptional.get().isAvailableForPurchase();
+                })
+                .toList();
+
+        // Update the shopping cart with the valid locality orders
+        shoppingCart.setLocalityOrders(new ArrayList<>(validLocalityOrders));
+
+        return shoppingCart;
     }
 }
 

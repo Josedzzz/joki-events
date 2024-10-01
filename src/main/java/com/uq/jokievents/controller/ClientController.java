@@ -113,4 +113,20 @@ public class ClientController {
     public ResponseEntity<?> orderLocality(@PathVariable String clientId, @RequestBody LocalityOrderAsClientDTO dto) {
         return clientService.orderLocality(clientId, dto);
     }
+
+    /**
+     * Same input JSON as orderLocality method.
+     * @param clientId String
+     * @param dto LocalityOrderAsClientDTO
+     * @return ResponseEntity
+     */
+    @PostMapping("/cancel-locality-order/{clientId}")
+    public ResponseEntity<?> cancelLocalityOrder(@PathVariable String clientId, @RequestBody LocalityOrderAsClientDTO dto) {
+        return clientService.cancelLocalityOrder(clientId, dto);
+    }
+
+    @PostMapping("/load-shopping-cart/{clientId}")
+    public ResponseEntity<?> cancelLocalityOrder(@PathVariable String clientId) {
+        return clientService.loadShoppingCart(clientId);
+    }
 }

@@ -20,4 +20,5 @@ public interface ClientService {
     ResponseEntity<?> orderLocality(String clientId, LocalityOrderAsClientDTO dto);
     ResponseEntity<?> cancelLocalityOrder(String clientId, LocalityOrderAsClientDTO dto);
     ResponseEntity<?> loadShoppingCart(String clientId);
+    Optional<Client> findClientById(String clientId);
 }
