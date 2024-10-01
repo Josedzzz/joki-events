@@ -33,7 +33,7 @@ public class Client implements UserDetails {
     private String email;
     private String password;
     private ArrayList<ObjectId> idCoupons; // TODO Implementar la clase CouponID (¿Cómo sé qué no eres uno de ellos?)
-    private ObjectId idShoppingCart; // This is a "pointer" to the shopping car in tne database.
+    private String idShoppingCart; // This is a "pointer" to the shopping car in tne database.
     private boolean active;
     private String verificationCode;
     private LocalDateTime verificationCodeExpiration;

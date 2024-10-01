@@ -118,8 +118,8 @@ public class ShoppingCartServiceImpl implements ShoppingCartService {
     }
 
     @Override
-    public Optional<ShoppingCart> findShoppingCartById(ObjectId idShoppingCart) {
-        return shoppingCartRepository.findById(String.valueOf(idShoppingCart));
+    public Optional<ShoppingCart> findShoppingCartById(String idShoppingCart) {
+        return shoppingCartRepository.findById(idShoppingCart);
     }
 
     @Override
@@ -157,6 +157,11 @@ public class ShoppingCartServiceImpl implements ShoppingCartService {
         shoppingCart.setLocalityOrders(new ArrayList<>(validLocalityOrders));
 
         return shoppingCart;
+    }
+
+    @Override
+    public Optional<ShoppingCart> findCartById(String orderId) {
+        return shoppingCartRepository.findById(orderId);
     }
 }
 

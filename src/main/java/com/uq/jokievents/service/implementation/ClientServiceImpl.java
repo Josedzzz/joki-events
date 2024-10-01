@@ -284,7 +284,7 @@ public class ClientServiceImpl implements ClientService {
             LocalityOrder localityOrder = new LocalityOrder();
             localityOrder.setLocalityName(dto.localityName());
             localityOrder.setNumTicketsSelected(dto.ticketsSelected());
-            localityOrder.setTotalPaymentAmount(dto.totalPaymentAmount());
+            localityOrder.setTotalPaymentAmount((float) dto.totalPaymentAmount());
 
             shoppingCart.getLocalityOrders().add(localityOrder);
 
