@@ -17,6 +17,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 @Data
 @Document(collection = "clients")
 @RequiredArgsConstructor
+@AllArgsConstructor
 @Builder
 public class Client implements UserDetails {
 
@@ -32,7 +33,8 @@ public class Client implements UserDetails {
     private boolean active;
     private String verificationCode;
     private LocalDateTime verificationCodeExpiration;
-    private final Role role = Role.CLIENT;
+    @Builder.Default
+    private Role role = Role.CLIENT;
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
