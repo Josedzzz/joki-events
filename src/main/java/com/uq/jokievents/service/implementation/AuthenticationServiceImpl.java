@@ -110,7 +110,6 @@ public class AuthenticationServiceImpl implements AuthenticationService {
                 .phoneNumber(request.phone())
                 .email(request.email())
                 .password(passwordEncoder.encode(request.password()))
-                .role(Role.CLIENT)
                 .build();
 
         // Few verifications for client registration
@@ -130,7 +129,6 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         // Assigning other attributes
         client.setVerificationCode(verificationCode);
         client.setVerificationCodeExpiration(expiration);
-        client.setIdCoupons(new ArrayList<>());
         client.setIdShoppingCart(String.valueOf(new ObjectId()));
         client.setActive(false);
 

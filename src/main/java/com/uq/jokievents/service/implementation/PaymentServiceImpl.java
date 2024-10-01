@@ -1,5 +1,6 @@
 package com.uq.jokievents.service.implementation;
 
+import com.mercadopago.client.preference.PreferenceItemRequest;
 import com.mercadopago.resources.preference.Preference;
 import com.mercadopago.resources.preference.PreferenceItem;
 import com.mercadopago.resources.preference.PreferencePayer;
@@ -28,88 +29,78 @@ public class PaymentServiceImpl implements PaymentService {
     private final ShoppingCartService shoppingCartService;
     private final ClientService clientService;
 
-    static {
-        // Initialize MercadoPago SDK with your credentials (access token). XD
-        // MercadoPago.SDK.setAccessToken("YOUR_ACCESS_TOKEN");
-    }
 
     @Override
     public Preference doPayment(String orderId, String clientId) throws Exception {
-        // Fetch the client's shopping cart
-        ShoppingCart shoppingCart = shoppingCartService.findShoppingCartById(clientId).orElseThrow(() -> new Exception("Shopping cart not found"));
-        Client client = clientService.findClientById(clientId).orElseThrow(() -> new Exception("Client not found"));
 
-        // Create a preference object
-        Preference preference = new Preference();
+        // Creo que es mejor añadir un eventId a LocalityOrder. No se manejan órdenes en sí, se podría implementar con algo que combine el ShoppingCart y TicketOrder (localidades + hora)
+        // Creo que es mejor hacer los pagos con PayU y es válido según el proyecto.
 
-        // Add items to the preference
-        List<PreferenceItem> items = new ArrayList<>();
-        for (LocalityOrder localityOrder : shoppingCart.getLocalityOrders()) {
-            PreferenceItem item = new PreferenceItem();
-
-            // Using reflection to set the fields for PreferenceItem
-            setPreferenceItemField(item, "title", localityOrder.getLocalityName());
-            setPreferenceItemField(item, "quantity", localityOrder.getNumTicketsSelected());
-            setPreferenceItemField(item, "unitPrice", BigDecimal.valueOf(localityOrder.getTotalPaymentAmount()));
-
-            // Add the item to the list
-            items.add(item);
-        }
-
-        // Set items in preference
-        setPreferenceField(preference, "items", items);
-
-        // Set payer information
-        PreferencePayer payer = new PreferencePayer();
-        setPreferencePayerField(payer, client.getEmail());
-        // Optionally set name and surname if available, I may use this.
-        // setPreferencePayerField(payer, "name", client.getFirstName());
-        // setPreferencePayerField(payer, "surname", client.getLastName());
-
-        // Set payer in preference
-        setPreferenceField(preference, "payer", payer);
-
-        // Set additional fields in preference as needed
-        setPreferenceField(preference, "clientId", clientId);
-        // Set other fields like paymentMethods, backUrls, etc. here
-
-        // Save and return the payment preference
-        return preference;
+//        // Obtener la orden guardada en la base de datos y los ítems de la orden
+//        Orden ordenGuardada = obtenerOrden(idOrden);
+//        List<PreferenceItemRequest> itemsPasarela = new ArrayList<>();
+//
+//
+//        // Recorrer los items de la orden y crea los ítems de la pasarela
+//        for(DetalleOrden item : ordenGuardada.getDetalle()){
+//
+//
+//            // Obtener el evento y la localidad del ítem
+//            Evento evento = eventoServicio.obtenerEvento(item.getCodigoEvento().toString());
+//            Localidad localidad = evento.obtenerLocalidad(item.getNombreLocalidad());
+//
+//
+//            // Crear el item de la pasarela
+//            PreferenceItemRequest itemRequest =
+//                    PreferenceItemRequest.builder()
+//                            .id(evento.getCodigo())
+//                            .title(evento.getNombre())
+//                            .pictureUrl(evento.getImagenPortada())
+//                            .categoryId(evento.getTipo().name())
+//                            .quantity(item.getCantidad())
+//                            .currencyId("COP")
+//                            .unitPrice(BigDecimal.valueOf(localidad.getPrecio()))
+//                            .build();
+//
+//
+//            itemsPasarela.add(itemRequest);
+//        }
+//
+//
+//        // Configurar las credenciales de MercadoPago
+//        MercadoPagoConfig.setAccessToken("ACCESS_TOKEN");
+//
+//
+//        // Configurar las urls de retorno de la pasarela (Frontend)
+//        PreferenceBackUrlsRequest backUrls = PreferenceBackUrlsRequest.builder()
+//                .success("URL PAGO EXITOSO")
+//                .failure("URL PAGO FALLIDO")
+//                .pending("URL PAGO PENDIENTE")
+//                .build();
+//
+//
+//        // Construir la preferencia de la pasarela con los ítems, metadatos y urls de retorno
+//        PreferenceRequest preferenceRequest = PreferenceRequest.builder()
+//                .backUrls(backUrls)
+//                .items(itemsPasarela)
+//                .metadata(Map.of("id_orden", ordenGuardada.getCodigo()))
+//                .notificationUrl("URL NOTIFICACION")
+//                .build();
+//
+//
+//        // Crear la preferencia en la pasarela de MercadoPago
+//        PreferenceClient client = new PreferenceClient();
+//        Preference preference = client.create(preferenceRequest);
+//
+//
+//        // Guardar el código de la pasarela en la orden
+//        ordenGuardada.setCodigoPasarela( preference.getId() );
+//        ordenRepo.save(ordenGuardada);
+//
+//
+//        return preference;
+        return null;
     }
-
-    // Helper method to set fields using reflection for PreferencePayer
-    private void setPreferencePayerField(PreferencePayer payer, Object value) {
-        try {
-            Field field = PreferencePayer.class.getDeclaredField("email");
-            field.setAccessible(true);
-            field.set(payer, value);
-        } catch (NoSuchFieldException | IllegalAccessException e) {
-            e.getMessage();
-        }
-    }
-
-    // (Existing) Helper method for PreferenceItem
-    private void setPreferenceItemField(PreferenceItem item, String fieldName, Object value) {
-        try {
-            Field field = PreferenceItem.class.getDeclaredField(fieldName);
-            field.setAccessible(true);
-            field.set(item, value);
-        } catch (NoSuchFieldException | IllegalAccessException e) {
-            e.getMessage();
-        }
-    }
-
-    // (Existing) Helper method for Preference
-    private void setPreferenceField(Preference preference, String fieldName, Object value) {
-        try {
-            Field field = Preference.class.getDeclaredField(fieldName);
-            field.setAccessible(true);
-            field.set(preference, value);
-        } catch (NoSuchFieldException | IllegalAccessException e) {
-            e.getMessage();
-        }
-    }
-
 
     @Override
     public void receiveMercadopagoNotification(Map<String, Object> request) {

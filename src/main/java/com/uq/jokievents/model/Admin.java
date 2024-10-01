@@ -1,7 +1,10 @@
 package com.uq.jokievents.model;
 
 import com.uq.jokievents.model.enums.Role;
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
+import lombok.RequiredArgsConstructor;
 import org.bson.types.ObjectId;
 import java.time.LocalDateTime;
 import org.springframework.data.annotation.Id;
@@ -16,6 +19,8 @@ import java.util.List;
 
 @Data
 @Document(collection = "admins")
+@NoArgsConstructor
+@AllArgsConstructor
 public class Admin implements UserDetails {
 
     @Id
@@ -25,20 +30,8 @@ public class Admin implements UserDetails {
     private String password;
     private String verificationCode;
     private LocalDateTime verificationCodeExpiration;
-    private ArrayList<ObjectId> idClients;
     private boolean active;
-    private Role role = Role.ADMIN;
-
-    // Constructor
-    public Admin() {}
-
-    public Admin(String email,String username, String password, ArrayList<ObjectId> idClients) {
-        this.email = email;
-        this.username = username;
-        this.password = password;
-        this.idClients = idClients;
-        this.active = true;
-    }
+    private final Role role = Role.ADMIN;
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {

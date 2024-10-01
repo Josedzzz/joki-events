@@ -32,12 +32,11 @@ public class Client implements UserDetails {
     private String phoneNumber;
     private String email;
     private String password;
-    private ArrayList<ObjectId> idCoupons; // TODO Implementar la clase CouponID (¿Cómo sé qué no eres uno de ellos?)
     private String idShoppingCart; // This is a "pointer" to the shopping car in tne database.
     private boolean active;
     private String verificationCode;
     private LocalDateTime verificationCodeExpiration;
-    private Role role = Role.CLIENT;
+    private final Role role = Role.CLIENT;
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {

@@ -375,9 +375,9 @@ public class AdminServiceImpl implements AdminService{
             Optional<Admin> admin = adminRepository.findById(adminId);
             if (admin.isPresent()) {
                 String username = admin.get().getUsername();
-                String password = admin.get().getEmail(); // TODO check if this is encrypted
+                String email = admin.get().getEmail(); // TODO check if this is encrypted
 
-                UpdateAdminDTO dto = new UpdateAdminDTO(username, password);
+                UpdateAdminDTO dto = new UpdateAdminDTO(username, email);
                 ApiResponse<UpdateAdminDTO> response = new ApiResponse<>("Success", "Admin info returned", dto);
                 return new ResponseEntity<>(response, HttpStatus.OK);
             } else {

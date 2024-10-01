@@ -17,6 +17,5 @@ import java.time.LocalDateTime;
 public class TicketOrder {
     @Id
     private String id;
-    private ObjectId idTicket;
     private LocalDateTime purchaseDate;
 }
