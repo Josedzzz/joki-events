@@ -1,12 +1,12 @@
 package com.uq.jokievents.dtos;
 
-import javax.validation.constraints.Null;
-import javax.validation.constraints.Pattern;
+import jakarta.validation.constraints.Null;
+import jakarta.validation.constraints.Pattern;
 
 import lombok.Data;
 
 /*
- * ¿Fue o no fue útil?
+ * ¿Fue o no fue útil? Sí fue útil
  */
 public record VerifyClientDTO(
         @Null(message = "Verification code cannot be empty")

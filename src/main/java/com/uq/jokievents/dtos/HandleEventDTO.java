@@ -2,7 +2,7 @@ package com.uq.jokievents.dtos;
 
 import com.uq.jokievents.model.enums.EventType;
 
-import javax.validation.constraints.*;
+import jakarta.validation.constraints.*;
 import java.time.LocalDateTime;
 import java.util.List;
 

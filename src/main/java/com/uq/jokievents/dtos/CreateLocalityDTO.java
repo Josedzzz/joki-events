@@ -1,6 +1,6 @@
 package com.uq.jokievents.dtos;
 
-import javax.validation.constraints.*;
+import jakarta.validation.constraints.*;
 
 public record CreateLocalityDTO(
 

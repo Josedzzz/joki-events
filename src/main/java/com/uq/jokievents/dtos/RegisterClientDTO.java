@@ -4,8 +4,6 @@ import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
-import lombok.Data;
-
 public record RegisterClientDTO(
         @NotBlank(message = "ID card can not be empty.")
         @Size(min = 6, max = 12, message = "ID card must be between 6 and 12 characters.")
