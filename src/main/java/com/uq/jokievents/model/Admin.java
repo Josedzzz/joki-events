@@ -19,8 +19,7 @@ import java.util.List;
 
 @Data
 @Document(collection = "admins")
-@NoArgsConstructor
-@AllArgsConstructor
+@RequiredArgsConstructor
 public class Admin implements UserDetails {
 
     @Id
@@ -31,7 +30,7 @@ public class Admin implements UserDetails {
     private String verificationCode;
     private LocalDateTime verificationCodeExpiration;
     private boolean active;
-    private final Role role = Role.ADMIN;
+    private Role role = Role.ADMIN;
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {

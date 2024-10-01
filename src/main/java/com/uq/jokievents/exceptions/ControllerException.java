@@ -25,7 +25,9 @@ public class ControllerException {
 
         // Create a response with the parsed validation errors
         ApiResponse<Map<String, String>> response = new ApiResponse<>(
-                "Validation Failed", "Invalid input parameters", errors);
+                "Validation Failed", errors.toString(), null);
+        // {username=Username cannot be null}
+        System.out.println(response);
 
         return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
     }

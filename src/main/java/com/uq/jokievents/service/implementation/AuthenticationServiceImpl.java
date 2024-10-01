@@ -45,7 +45,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     private EmailService emailService;
 
     @Override
-    public ResponseEntity<?> loginAdmin(@Valid AuthAdminDTO request) {
+    public ResponseEntity<?> loginAdmin(AuthAdminDTO request) {
         try {
             String username = request.username();
             String password = request.password();
@@ -67,6 +67,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
                 return new ResponseEntity<>(response, HttpStatus.UNAUTHORIZED);
             }
         } catch (Exception e) {
+            System.out.println(e.getMessage());
             ApiResponse<String> response = new ApiResponse<>("Error", "Login failed", null);
             return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
         }
