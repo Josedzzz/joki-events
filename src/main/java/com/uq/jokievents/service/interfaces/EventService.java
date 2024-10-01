@@ -5,7 +5,6 @@ import com.uq.jokievents.model.Event;
 import com.uq.jokievents.model.enums.EventType;
 import org.springframework.http.ResponseEntity;
 
-import java.time.LocalDateTime;
 import java.util.Optional;
 
 public interface EventService {
@@ -23,4 +22,6 @@ public interface EventService {
     ResponseEntity<?> filterEventsByEventType(EventType eventType);
     ResponseEntity<?> filterEventsAfterCertainDate(String date);
     ResponseEntity<?> filterEventsBetweenDates(String startDate, String endDate);
+    Optional<Event> findByEventById(String eventId);
+    Optional<Event> findEventByLocalityName(String localityName);
 }

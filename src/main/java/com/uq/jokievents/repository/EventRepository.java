@@ -7,10 +7,11 @@ import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface EventRepository extends MongoRepository<Event, String> {
     List<Event> findByEventType(EventType eventType);
     List<Event> findByEventDateAfter(LocalDateTime dateTime);
     List<Event> findByEventDateBetween(LocalDateTime start, LocalDateTime end);
-}
+    Optional<Event> findByLocalitiesName(String localityName);}

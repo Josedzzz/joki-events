@@ -18,4 +18,6 @@ public interface ClientService {
     ResponseEntity<?> getAllEventsPaginated(int page, int size);
     ResponseEntity<?> getAccountInformation(String clientId);
     ResponseEntity<?> orderLocality(String clientId, LocalityOrderAsClientDTO dto);
+    ResponseEntity<?> cancelLocalityOrder(String clientId, LocalityOrderAsClientDTO dto);
+    ResponseEntity<?> loadShoppingCart(String clientId);
 }

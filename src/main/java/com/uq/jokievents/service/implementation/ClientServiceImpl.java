@@ -20,6 +20,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import javax.validation.Valid;
 
@@ -122,13 +123,14 @@ public class ClientServiceImpl implements ClientService {
 
         Optional<Client> clientOpt = clientRepository.findById(clientId);
         if (clientOpt.isEmpty()) {
-            throw new RuntimeException("Client not found");
+            ApiResponse<String> response = new ApiResponse<>("Error", "Client not found", null);
+            return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
         }
 
         Client client = clientOpt.get();
         if (client.getVerificationCode() == null || client.getVerificationCodeExpiration() == null) {
-            // TODO: Return a proper ResponseEntity here
-            throw new RuntimeException("Verification code expired");
+            ApiResponse<String> response = new ApiResponse<>("Error", "Verification code expired", null);
+            return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
         }
 
         boolean isVerified = client.getVerificationCode().equals(dto.verificationCode()) &&
@@ -218,9 +220,9 @@ public class ClientServiceImpl implements ClientService {
      * Step 8: Update the total price in the shopping cart
      * Step 9: Save the updated shopping cart
      * Step 10: Success
-     * @param clientId
-     * @param dto
-     * @return
+     * @param clientId String
+     * @param dto LocalityOrderAsClientDTO
+     * @return ResponseEntity<?>
      */
     @Override
     public ResponseEntity<?> orderLocality(String clientId, LocalityOrderAsClientDTO dto) {
@@ -300,6 +302,121 @@ public class ClientServiceImpl implements ClientService {
             return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
+
+    @Override
+    public ResponseEntity<?> cancelLocalityOrder(String clientId, LocalityOrderAsClientDTO dto) {
+        try {
+            // Find the client
+            Optional<Client> clientOptional = clientRepository.findById(clientId);
+            if (clientOptional.isEmpty()) {
+                return new ResponseEntity<>(new ApiResponse<>("Error", "Client not found", null), HttpStatus.NOT_FOUND);
+            }
+
+            Client client = clientOptional.get();
+
+            // Find the client's shopping cart
+            Optional<ShoppingCart> shoppingCartOptional = shoppingCartService.findShoppingCartById(client.getIdShoppingCart());
+            if (shoppingCartOptional.isEmpty()) {
+                return new ResponseEntity<>(new ApiResponse<>("Error", "Shopping cart not found", null), HttpStatus.NOT_FOUND);
+            }
+
+            ShoppingCart shoppingCart = shoppingCartOptional.get();
+
+            // Find the LocalityOrder to be canceled
+            LocalityOrder orderToCancel = shoppingCart.getLocalityOrders().stream()
+                    .filter(order -> order.getLocalityName().equals(dto.localityName())
+                            && order.getNumTicketsSelected() == dto.ticketsSelected()
+                            && order.getTotalPaymentAmount().equals(dto.totalPaymentAmount()))
+                    .findFirst()
+                    .orElse(null);
+
+            if (orderToCancel == null) {
+                return new ResponseEntity<>(new ApiResponse<>("Error", "Locality order not found in shopping cart", null), HttpStatus.NOT_FOUND);
+            }
+
+            // Update the Event (Restore tickets in the locality)
+            Optional<Event> eventOptional = eventService.findByEventById(dto.eventId());
+            if (eventOptional.isEmpty()) {
+                return new ResponseEntity<>(new ApiResponse<>("Error", "Event not found", null), HttpStatus.NOT_FOUND);
+            }
+
+            Event event = eventOptional.get();
+            Locality localityToUpdate = event.getLocalities().stream()
+                    .filter(locality -> locality.getName().equals(dto.localityName()))
+                    .findFirst()
+                    .orElse(null);
+
+            if (localityToUpdate == null) {
+                return new ResponseEntity<>(new ApiResponse<>("Error", "Locality not found in event", null), HttpStatus.NOT_FOUND);
+            }
+
+            // Restore the tickets in the locality
+            localityToUpdate.setMaxCapacity(localityToUpdate.getMaxCapacity() + dto.ticketsSelected());
+
+            // Remove the LocalityOrder from the shopping cart
+            shoppingCart.getLocalityOrders().remove(orderToCancel);
+
+            // Recalculate total price
+            shoppingCart.setTotalPrice(shoppingCart.getLocalityOrders().stream()
+                    .mapToDouble(LocalityOrder::getTotalPaymentAmount).sum());
+
+            // Save the updated shopping cart and event
+            shoppingCartService.saveShoppingCart(shoppingCart);
+            eventService.saveEvent(event);
+
+            // END
+            ApiResponse<String> response = new ApiResponse<>("Success", "Locality order canceled and tickets restored", null);
+            return new ResponseEntity<>(response, HttpStatus.OK);
+
+        } catch (Exception e) {
+            ApiResponse<String> response = new ApiResponse<>("Error", "Failed to cancel locality order", e.getMessage());
+            return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    // This method should be called when a client clicks on the Shopping Cart button on the frontend.
+    // Should only load possible to buy LocalityOrders
+    // If this method does not work it may be due of EventRepository findByLocalitiesName() method.
+    @Override
+    public ResponseEntity<?> loadShoppingCart(String clientId) {
+        try {
+            // Find the client
+            Optional<Client> clientOptional = clientRepository.findById(clientId);
+            if (clientOptional.isEmpty()) {
+                return new ResponseEntity<>(new ApiResponse<>("Error", "Client not found", null), HttpStatus.NOT_FOUND);
+            }
+
+            Client client = clientOptional.get();
+
+            // Find the client's shopping cart
+            Optional<ShoppingCart> shoppingCartOptional = shoppingCartService.findShoppingCartById(client.getIdShoppingCart());
+            if (shoppingCartOptional.isEmpty()) {
+                return new ResponseEntity<>(new ApiResponse<>("Error", "Shopping cart not found", null), HttpStatus.NOT_FOUND);
+            }
+
+            ShoppingCart shoppingCart = shoppingCartOptional.get();
+
+            // Filter only the LocalityOrders that can still be purchased (event.availableForPurchase == true)
+            List<LocalityOrder> validLocalityOrders = shoppingCart.getLocalityOrders().stream()
+                    .filter(localityOrder -> {
+                        Optional<Event> eventOptional = eventService.findEventByLocalityName(localityOrder.getLocalityName());
+                        return eventOptional.isPresent() && eventOptional.get().isAvailableForPurchase();
+                    })
+                    .toList();
+
+            // Update the shopping cart with the valid locality orders
+            shoppingCart.setLocalityOrders(new ArrayList<>(validLocalityOrders));
+
+            ApiResponse<ShoppingCart> response = new ApiResponse<>("Success", "Shopping cart loaded", shoppingCart);
+            return new ResponseEntity<>(response, HttpStatus.OK);
+
+        } catch (Exception e) {
+            ApiResponse<String> response = new ApiResponse<>("Error", "Failed to load shopping cart", e.getMessage());
+            return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+
 
     // Method generated by IntelliJ
     private static ApiResponse<UpdateClientDTO> getUpdateClientDTOApiResponse(Optional<Client> client) {

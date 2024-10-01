@@ -229,5 +229,15 @@ public class EventServiceImpl implements EventService {
             return new ResponseEntity<>(new ApiResponse<>("Error", "An error occurred", e.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
+
+    @Override
+    public Optional<Event> findByEventById(String eventId) {
+        return eventRepository.findById(eventId);
+    }
+
+    @Override
+    public Optional<Event> findEventByLocalityName(String localityName) {
+        return eventRepository.findByLocalitiesName(localityName);
+    }
 }
 
