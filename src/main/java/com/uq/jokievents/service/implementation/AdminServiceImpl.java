@@ -309,6 +309,8 @@ public class AdminServiceImpl implements AdminService{
         return eventService.getAllEventsPaginated(page, size);
     }
 
+
+    // to change
     @Override
     public ResponseEntity<?> updateEvent(String eventId, @Valid HandleEventDTO dto) {
 
@@ -316,7 +318,6 @@ public class AdminServiceImpl implements AdminService{
         if (verificationResponse != null) {
             return verificationResponse;
         }
-
         return eventService.addEvent(dto);
     }
 
