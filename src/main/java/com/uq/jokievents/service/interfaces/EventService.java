@@ -10,12 +10,10 @@ import java.util.Optional;
 
 public interface EventService {
 
-    ResponseEntity<?> findById(String id);
-    ResponseEntity<?> create(Event event);
-    ResponseEntity<?> update(String id, Event event);
-    ResponseEntity<?> deleteById(String id);
+
     ResponseEntity<?> getAllEventsPaginated(int page, int size);
     ResponseEntity<?> addEvent(HandleEventDTO dto);
+    ResponseEntity<?> updateEvent(String eventId, HandleEventDTO dto);
     Optional<Event> getEventById(String eventId);
     void saveEvent(Event event);
     void deleteEventById(String eventId);

@@ -31,80 +31,6 @@ public class EventServiceImpl implements EventService {
     private final EventRepository eventRepository;
     private final ImageService imageService;
 
-    /**
-     * Gets an event by its id
-     *
-     * @param id the identifier of the event
-     * @return an Optional containing the event if found, empty if not
-     */
-    public ResponseEntity<?> findById(String id) {
-        try {
-            Optional<Event> event = eventRepository.findById(id);
-            if (event.isPresent()) {
-                return new ResponseEntity<>(event.get(), HttpStatus.OK);
-            } else {
-                return new ResponseEntity<>("Event not found", HttpStatus.NOT_FOUND);
-            }
-        } catch (Exception e) {
-            return new ResponseEntity<>("Failed event request", HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-    }
-
-    /**
-     * Saves a new event or updates an existing in the db
-     *
-     * @param event the event object to be saver or updated
-     * @return the saved or updated event object
-     */
-    public ResponseEntity<?> create(Event event) {
-        try {
-            Event createdEvent = eventRepository.save(event);
-            return new ResponseEntity<>(createdEvent, HttpStatus.CREATED);
-        } catch (Exception e) {
-            return new ResponseEntity<>("Failed to create event", HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-    }
-
-    /**
-     * Update an existing client by id
-     *
-     * @param id the identifierof the event to be update
-     * @param event the updated event object
-     * @return a ResponseEntity containing the updated event object and an HTTP status
-     */
-    public ResponseEntity<?> update(String id, Event event) {
-        try {
-            Optional<Event> existingEvent = eventRepository.findById(id);
-            if (existingEvent.isPresent()) {
-                event.setId(id);
-                Event updatedEvent = eventRepository.save(event);
-                return new ResponseEntity<>(updatedEvent, HttpStatus.OK);
-            } else {
-                return new ResponseEntity<>("Event not found", HttpStatus.NOT_FOUND);
-            }
-        } catch (Exception e) {
-            return new ResponseEntity<>("Failed to update event", HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-    }
-
-    /**
-     * Deletes a event from the db using its id
-     *
-     * @param id the identifier of the event object
-     */
-    public ResponseEntity<?> deleteById(String id) {
-        try {
-            Optional<Event> existingEvent = eventRepository.findById(id);
-            if (existingEvent.isPresent()) {
-                eventRepository.deleteById(id);
-                return new ResponseEntity<>("Event deleted", HttpStatus.OK);
-            } else {
-                return new ResponseEntity<>("Event not found", HttpStatus.NOT_FOUND);
-            }
-        } catch (Exception e) {
-            return new ResponseEntity<>("Failed to delete event", HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-    }
 
     @Override
     public ResponseEntity<?> getAllEventsPaginated(int page, int size) {
@@ -158,9 +84,48 @@ public class EventServiceImpl implements EventService {
             return new ResponseEntity<>(response, HttpStatus.CREATED);
 
         } catch (Exception e) {
-            ApiResponse<String> response = new ApiResponse<>("Error", "Failed to create event", e.getMessage());
+            ApiResponse<String> response = new ApiResponse<>("Error", "Failed to create or update event event", e.getMessage());
             return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
         }
+    }
+
+    @Override
+    public ResponseEntity<?> updateEvent(String eventId, HandleEventDTO dto) {
+        // Fetch the existing event by ID
+        Optional<Event> existingEventOpt = eventRepository.findById(eventId);
+        if (existingEventOpt.isEmpty()) {
+            ApiResponse<Event> response = new ApiResponse<>("Success", "Event not found", null);
+            return new ResponseEntity<>(response, HttpStatus.CREATED);
+        }
+
+        // Get the existing event object
+        Event existingEvent = existingEventOpt.get();
+
+        // Map the List<CreateLocalityDTO> to List<Locality>
+        List<Locality> updatedLocalities = dto.localities().stream()
+                .map(dtoLocality -> Locality.builder()
+                        .name(dtoLocality.name())
+                        .price(dtoLocality.price())
+                        .maxCapacity(dtoLocality.maxCapacity())
+                        .build())
+                .toList();
+
+        // Update the fields from the DTO
+        existingEvent.setName(dto.name());
+        existingEvent.setCity(dto.city());
+        existingEvent.setAddress(dto.address());
+        existingEvent.setEventDate(dto.date());
+        existingEvent.setTotalAvailablePlaces(dto.totalAvailablePlaces());
+        existingEvent.setLocalities(updatedLocalities);
+        existingEvent.setEventImageUrl(dto.eventImageUrl());
+        existingEvent.setLocalitiesImageUrl(dto.localitiesImageUrl());
+        existingEvent.setEventType(dto.eventType());
+
+        // Save the updated event
+        eventRepository.save(existingEvent);
+
+        ApiResponse<Event> response = new ApiResponse<>("Success", "Event created successfully", existingEvent);
+        return new ResponseEntity<>(response, HttpStatus.CREATED);
     }
 
     @Override

@@ -18,8 +18,11 @@ import java.util.UUID;
 public class ImageServiceImpl implements ImageService {
     @Override
     public String uploadImage(String base64Image) throws IOException {
+
+        assert base64Image != null;
+        base64Image = base64Image.trim();
         // Check if the input is valid
-        if (base64Image == null || !base64Image.startsWith("data:image/")) {
+        if (!base64Image.startsWith("data:image/")) {
             throw new IllegalArgumentException("Invalid Base64 image format.");
         }
 
