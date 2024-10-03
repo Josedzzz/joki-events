@@ -16,6 +16,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
+import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeParseException;
 import java.util.HashMap;
@@ -110,6 +111,28 @@ public class EventServiceImpl implements EventService {
                         .build())
                 .toList();
 
+        // Validate and upload the event image if needed
+        if (dto.eventImageUrl() != null && dto.eventImageUrl().startsWith("data:image/")) {
+            try {
+                String uploadedEventImageUrl = imageService.uploadImage(dto.eventImageUrl());
+                existingEvent.setEventImageUrl(uploadedEventImageUrl);
+            } catch (IOException e) {
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                        .body("Failed to upload event image.");
+            }
+        }
+
+        // Validate and upload the localities image if needed
+        if (dto.localitiesImageUrl() != null && dto.localitiesImageUrl().startsWith("data:image/")) {
+            try {
+                String uploadedLocalitiesImageUrl = imageService.uploadImage(dto.localitiesImageUrl());
+                existingEvent.setLocalitiesImageUrl(uploadedLocalitiesImageUrl);
+            } catch (IOException e) {
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                        .body("Failed to upload localities image.");
+            }
+        }
+
         // Update the fields from the DTO
         existingEvent.setName(dto.name());
         existingEvent.setCity(dto.city());
@@ -117,8 +140,6 @@ public class EventServiceImpl implements EventService {
         existingEvent.setEventDate(dto.date());
         existingEvent.setTotalAvailablePlaces(dto.totalAvailablePlaces());
         existingEvent.setLocalities(updatedLocalities);
-        existingEvent.setEventImageUrl(dto.eventImageUrl());
-        existingEvent.setLocalitiesImageUrl(dto.localitiesImageUrl());
         existingEvent.setEventType(dto.eventType());
 
         // Save the updated event
