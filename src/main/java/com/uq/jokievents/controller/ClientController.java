@@ -30,7 +30,7 @@ public class ClientController {
      *  "phone": "3101112222",
      *  "email": "mail@mail.com",
      *  "localityName": "VeryCoolName",
-     *  "direction": "Very Cool Address"
+     *  "address": "Very Cool Address"
      * }
      * @param id     the identifier of the client to update
      * @param client the updated client object

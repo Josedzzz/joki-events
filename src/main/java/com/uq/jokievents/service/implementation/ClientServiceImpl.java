@@ -20,7 +20,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 
 import java.time.LocalDateTime;
 import java.util.*;
-import java.util.stream.Collectors;
 
 import javax.validation.Valid;
 
@@ -69,7 +68,7 @@ public class ClientServiceImpl implements ClientService {
                 client.setPhoneNumber(dto.phone());
                 client.setEmail(dto.email());
                 client.setName(dto.name());
-                client.setAddress(dto.direction());
+                client.setAddress(dto.address());
 
                 // Actualizo el token también
                 Client updatedClient = clientRepository.save(client);
