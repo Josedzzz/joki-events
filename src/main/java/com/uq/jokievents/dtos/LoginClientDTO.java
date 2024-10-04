@@ -4,8 +4,7 @@ import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Null;
 import jakarta.validation.constraints.Size;
-public record LoginClientDTO(
-        @Null(message = "Email cannot be blank")
+public record LoginClientDTO (
         @Email(message = "Email should be valid")
         String email,
 

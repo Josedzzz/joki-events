@@ -152,7 +152,7 @@ public class AdminController {
     @PostMapping("/delete-event/{id}")
     public ResponseEntity<?> deleteEventById(@Valid @PathVariable String id) {
         return adminService.deleteEvent(id);
-    }
+    }   
 
     // POST until further notice.
     @PostMapping("/delete-all-events")
