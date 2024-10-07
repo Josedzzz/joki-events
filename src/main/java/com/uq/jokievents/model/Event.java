@@ -1,5 +1,6 @@
 package com.uq.jokievents.model;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.uq.jokievents.model.enums.EventType;
 import jakarta.validation.constraints.Future;
 import lombok.*;
@@ -7,6 +8,7 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.time.LocalDateTime;
+import java.time.ZonedDateTime;
 import java.util.List;
 
 @Data
@@ -21,6 +23,7 @@ public class Event {
     private String name;
     private String address;
     private String city;
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'")
     private LocalDateTime eventDate;
     private boolean availableForPurchase;
     private List<Locality> localities;
