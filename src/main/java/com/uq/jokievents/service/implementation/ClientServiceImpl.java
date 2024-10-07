@@ -70,12 +70,12 @@ public class ClientServiceImpl implements ClientService {
                 client.setName(dto.name());
                 client.setAddress(dto.address());
 
-                // Actualizo el token también
                 Client updatedClient = clientRepository.save(client);
+                // Actualizo el token también
                 UserDetails clientDetails = clientRepository.findById(clientId).orElse(null);
                 String newToken = jwtService.getAdminToken(clientDetails);
 
-                ApiTokenResponse<Object> response = new ApiTokenResponse<>("Success","Admin update done", updatedClient, newToken);
+                ApiTokenResponse<Object> response = new ApiTokenResponse<>("Success","Client update done", updatedClient, newToken);
                 return new ResponseEntity<>(response, HttpStatus.OK);
             } else {
                 ApiResponse<String> response = new ApiResponse<>("Error", "Client not found", null);
@@ -239,7 +239,7 @@ public class ClientServiceImpl implements ClientService {
                 return new ResponseEntity<>(new ApiResponse<>("Error", "Event is not available for purchase", null), HttpStatus.BAD_REQUEST);
             }
 
-            // Find the specified locality within the event, kinda obvious but every locality must have a different name
+            // Find the specified locality within the event, every locality must have a different name
             Optional<Locality> localityOpt = event.getLocalities().stream()
                     .filter(locality -> locality.getName().equals(dto.localityName()))
                     .findFirst();
@@ -281,6 +281,7 @@ public class ClientServiceImpl implements ClientService {
 
             // Create the LocalityOrder and add it to the ShoppingCart
             LocalityOrder localityOrder = new LocalityOrder();
+            localityOrder.setEventId(dto.eventId());
             localityOrder.setLocalityName(dto.localityName());
             localityOrder.setNumTicketsSelected(dto.ticketsSelected());
             localityOrder.setTotalPaymentAmount(dto.totalPaymentAmount());

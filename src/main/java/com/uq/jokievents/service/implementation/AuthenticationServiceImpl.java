@@ -50,20 +50,25 @@ public class AuthenticationServiceImpl implements AuthenticationService {
             String username = request.username();
             String password = request.password();
             Optional<Admin> adminDB = adminRepository.findByUsername(username);
-            if (adminDB.isPresent() && adminDB.get().isActive()) {
-                if (passwordEncoder.matches(password, adminDB.get().getPassword())) {
-                    authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(request.username(), request.password()));
-                    UserDetails adminDetails = adminRepository.findByUsername(username).orElse(null);
-                    String token = jwtService.getAdminToken(adminDetails);
-                    ApiTokenResponse<String> response = new ApiTokenResponse<>("Success", "Admin logged in successfully", adminDB.get().getId(), token);
-                    return new ResponseEntity<>(response, HttpStatus.CREATED);
+            if (adminDB.isPresent()) {
+                if (adminDB.get().isActive()) {
+                     if (passwordEncoder.matches(password, adminDB.get().getPassword())) {
+                        authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(request.username(), request.password()));
+                        UserDetails adminDetails = adminRepository.findByUsername(username).orElse(null);
+                        String token = jwtService.getAdminToken(adminDetails);
+                        ApiTokenResponse<String> response = new ApiTokenResponse<>("Success", "Admin logged in successfully", adminDB.get().getId(), token);
+                        return new ResponseEntity<>(response, HttpStatus.CREATED);
+                     } else {
+                         ApiResponse<String> response = new ApiResponse<>("Error", "Invalid username or password", null);
+                         return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+                     }
                 }
                 else{
                     ApiResponse<String> response = new ApiResponse<>("Error", "The admin is not active", null);
-                    return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+                    return new ResponseEntity<>(response, HttpStatus.UNAUTHORIZED);
                 }
             } else {
-                ApiResponse<String> response = new ApiResponse<>("Error", "Invalid username or password", null);
+                ApiResponse<String> response = new ApiResponse<>("Error", "Account not found in database", null);
                 return new ResponseEntity<>(response, HttpStatus.UNAUTHORIZED);
             }
         } catch (Exception e) {
