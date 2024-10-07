@@ -223,15 +223,46 @@ public class EventServiceImpl implements EventService {
         return eventRepository.findByLocalitiesName(localityName);
     }
 
+    /**
+     * If eventName is null. If it is, it will not filter by event name, allowing for all event names to pass.
+     * If city is null, it won’t filter by city.
+     * If startDate is null, it won’t filter out any events based on the start date.
+     * If endDate is null, it won’t filter out any events based on the end date.
+     * Both date checks ensure that the event date is not null before comparing.
+     * If eventType is null, it won’t filter based on event type.
+     * If searching with null parameters, will show all the events
+     * @param eventName String
+     * @param city String
+     * @param startDate LocalDateTime
+     * @param endDate LocalDateTime
+     * @param eventType EventType
+     * @return ResponseEntity
+     */
     @Override
     public ResponseEntity<?> searchEvent(String eventName, String city, LocalDateTime startDate, LocalDateTime endDate, EventType eventType) {
         try {
-            List<Event> eventList =  eventRepository.searchEvents(eventName, city, startDate, endDate, eventType);
+            // Fetch all events from the repository
+            List<Event> allEvents = eventRepository.findAll();
+
+            // Use stream to filter events based on the criteria
+            List<Event> eventList = allEvents.stream()
+                    .filter(event ->
+                            (eventName == null || (event.getName() != null && event.getName().toLowerCase().contains(eventName.toLowerCase()))) // Check event name
+                                    && (city == null || (event.getCity() != null && event.getCity().equalsIgnoreCase(city))) // Match city
+                                    && (startDate == null || (event.getEventDate() != null && !event.getEventDate().isBefore(startDate))) // Check start date
+                                    && (endDate == null || (event.getEventDate() != null && !event.getEventDate().isAfter(endDate))) // Check end date
+                                    && (eventType == null || event.getEventType() == eventType) // Match event type
+                    )
+                    .toList(); // Collect results into a list
+
+            // Return response
             return new ResponseEntity<>(new ApiResponse<>("Success", "Events found", eventList), HttpStatus.OK);
         } catch (Exception e) {
             return new ResponseEntity<>(new ApiResponse<>("Error", "An error occurred", e.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
+
+
 
     @Override
     public ResponseEntity<?> generateEventsReport(LocalDateTime startDate, LocalDateTime endDate) {
