@@ -1,7 +1,6 @@
 package com.uq.jokievents.controller;
 
 import com.uq.jokievents.dtos.LocalityOrderAsClientDTO;
-import com.uq.jokievents.service.interfaces.AuthenticationService;
 import com.uq.jokievents.service.interfaces.ClientService;
 import lombok.RequiredArgsConstructor;
 
@@ -121,12 +120,12 @@ public class ClientController {
      * @return ResponseEntity
      */
     @PostMapping("/cancel-locality-order/{clientId}")
-    public ResponseEntity<?> cancelLocalityOrder(@PathVariable String clientId, @RequestBody LocalityOrderAsClientDTO dto) {
+    public ResponseEntity<?> loadShoppingCart(@PathVariable String clientId, @RequestBody LocalityOrderAsClientDTO dto) {
         return clientService.cancelLocalityOrder(clientId, dto);
     }
 
     @PostMapping("/load-shopping-cart/{clientId}")
-    public ResponseEntity<?> cancelLocalityOrder(@PathVariable String clientId) {
+    public ResponseEntity<?> loadShoppingCart(@PathVariable String clientId) {
         return clientService.loadShoppingCart(clientId);
     }
 }
