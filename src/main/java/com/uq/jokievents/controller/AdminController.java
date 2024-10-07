@@ -6,11 +6,13 @@ import com.uq.jokievents.service.interfaces.AdminService;
 import com.uq.jokievents.service.interfaces.AuthenticationService;
 import lombok.RequiredArgsConstructor;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/admin")
@@ -23,15 +25,16 @@ public class AdminController {
     // TODO Refresh Tokens
     // TODO Admin actions logger, can be one of the two additional functionalities
     private final AdminService adminService;
-    private final AuthenticationService authenticationService;
+
     /**
      * Example JSON:
      * {
-     *  "username": "XD",
-     *  "email": "mail@mail.com"
+     * "username": "XD",
+     * "email": "mail@mail.com"
      * }
+     *
      * @param adminId String
-     * @param dto UpdateAdminDTO
+     * @param dto     UpdateAdminDTO
      * @return ResponseEntity
      */
     @PostMapping("/{adminId}/update/")
@@ -52,10 +55,11 @@ public class AdminController {
     /**
      * Example JSON:
      * {
-     *  "email": "mail@mail.com", // Usa este para encontrar al cliente.
-     *  "verificationCode": "123456",
-     *  "newPassword": "new-non-encrypted-password"
+     * "email": "mail@mail.com", // Usa este para encontrar al cliente.
+     * "verificationCode": "123456",
+     * "newPassword": "new-non-encrypted-password"
      * }
+     *
      * @param dto RecoverPassAdminDTO
      * @return ResponseEntity
      */
@@ -67,25 +71,26 @@ public class AdminController {
     /**
      * Example input JSON:
      * {
-     *     "localityName": "Summer Sale",
-     *     "discount": 15.0,
-     *     "expirationDate": "2024-12-31T23:59:59",
-     *     "minPurchaseAmount": 100.0
+     * "localityName": "Summer Sale",
+     * "discount": 15.0,
+     * "expirationDate": "2024-12-31T23:59:59",
+     * "minPurchaseAmount": 100.0
      * }
      * Example output JSON:
      * {
-     *     "status": "Success",
-     *     "message": "Created coupon done",
-     *     "data": {
-     *         "id": "66e116c1f6751275233b24ff",
-     *         "localityName": "Summer Sale",
-     *         "discountPercent": 15.0,
-     *         "expirationDate": "2024-12-31T23:59:59",
-     *         "minPurchaseQuantity": 100.0,
-     *         "used": false
-     *     }
+     * "status": "Success",
+     * "message": "Created coupon done",
+     * "data": {
+     * "id": "66e116c1f6751275233b24ff",
+     * "localityName": "Summer Sale",
+     * "discountPercent": 15.0,
+     * "expirationDate": "2024-12-31T23:59:59",
+     * "minPurchaseQuantity": 100.0,
+     * "used": false
+     * }
      * }
      * Either this or error messages and data would be always empty.
+     *
      * @param dto CreateCouponDTO
      * @return ResponseEntity
      */
@@ -97,34 +102,35 @@ public class AdminController {
     /**
      * Input JSON:
      * {
-     *     "discount": 20.0,
-     *     "expirationDate": "2024-12-31T23:59:59",
-     *     "minPurchaseAmount": 110.0
+     * "discount": 20.0,
+     * "expirationDate": "2024-12-31T23:59:59",
+     * "minPurchaseAmount": 110.0
      * }
      * Output JSON:
      * {
-     *     "status": "Success",
-     *     "message": "Coupon updated",
-     *     "data": {
-     *         "id": "66e116c1f6751275233b24ff",
-     *         "localityName": "Summer Sale",
-     *         "discountPercent": 20.0,
-     *         "expirationDate": "2024-12-31T23:59:59",
-     *         "minPurchaseAmount": 110.0,
-     *         "used": false
-     *     }
+     * "status": "Success",
+     * "message": "Coupon updated",
+     * "data": {
+     * "id": "66e116c1f6751275233b24ff",
+     * "localityName": "Summer Sale",
+     * "discountPercent": 20.0,
+     * "expirationDate": "2024-12-31T23:59:59",
+     * "minPurchaseAmount": 110.0,
+     * "used": false
      * }
+     * }
+     *
      * @param dto UpdateCouponDTO
      * @return ResponseEntity
      */
     @PostMapping("/update-coupon/{couponId}")
-    public ResponseEntity<?> updateCoupon( @PathVariable String couponId, @Valid @RequestBody UpdateCouponDTO dto) {
-        return  adminService.updateCoupon(couponId, dto);
+    public ResponseEntity<?> updateCoupon(@PathVariable String couponId, @Valid @RequestBody UpdateCouponDTO dto) {
+        return adminService.updateCoupon(couponId, dto);
     }
 
     // TODO Ask Jose if the path (delete-coupon) is necessary for this method to be used. Logic is tickling. Same question for deleteAllCoupons() below.
     @PostMapping("/delete-coupon/{couponId}")
-    public ResponseEntity<?> deleteCouponById( @PathVariable String couponId) {
+    public ResponseEntity<?> deleteCouponById(@PathVariable String couponId) {
         return adminService.deleteCoupon(couponId);
     }
 
@@ -152,21 +158,26 @@ public class AdminController {
     @PostMapping("/delete-event/{id}")
     public ResponseEntity<?> deleteEventById(@Valid @PathVariable String id) {
         return adminService.deleteEvent(id);
-    }   
+    }
 
     // POST until further notice.
     @PostMapping("/delete-all-events")
-    public ResponseEntity<?> deleteAllEvents(){
+    public ResponseEntity<?> deleteAllEvents() {
         return adminService.deleteAllEvents();
     }
 
     @GetMapping("/get-paginated-coupons")
     public ResponseEntity<?> getAllCouponsPaginated(@RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "8") int size) {
-        return adminService.getAllCouponsPaginated(page,size);
+        return adminService.getAllCouponsPaginated(page, size);
     }
 
     @GetMapping("/get-admin-account-info/{adminId}")
     public ResponseEntity<?> getLoginInformation(@PathVariable String adminId) {
         return adminService.getAccountInformation(adminId);
+    }
+
+    @GetMapping("/event-report")
+    public ResponseEntity<?> getEventsReport(@RequestParam String startDate, @RequestParam String endDate) {
+        return adminService.generateEventsReport(startDate, endDate);
     }
 }

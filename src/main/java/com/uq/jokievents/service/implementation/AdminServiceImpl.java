@@ -9,12 +9,15 @@ import com.uq.jokievents.repository.EventRepository;
 import com.uq.jokievents.repository.LocalityRepository;
 import com.uq.jokievents.service.interfaces.*;
 import com.uq.jokievents.utils.*;
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.http.HttpStatus;
 import com.uq.jokievents.model.Admin;
 import com.uq.jokievents.model.Coupon;
 import com.uq.jokievents.repository.AdminRepository;
 import com.uq.jokievents.repository.CouponRepository;
 
+import java.io.IOException;
+import java.io.PrintWriter;
 import java.time.LocalDateTime;
 
 import org.springframework.http.ResponseEntity;
@@ -387,5 +390,12 @@ public class AdminServiceImpl implements AdminService{
             ApiResponse<String> response = new ApiResponse<>("Error", "Failed to retrieve admin info", null);
             return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
         }
+    }
+
+    @Override
+    public ResponseEntity<?> generateEventsReport(String startDate, String endDate) {
+        LocalDateTime ldtStartDate = LocalDateTime.parse(startDate);
+        LocalDateTime ldtEndDate = LocalDateTime.parse(endDate);
+        return eventService.generateEventsReport(ldtStartDate, ldtEndDate);
     }
 }

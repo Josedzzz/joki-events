@@ -1,6 +1,7 @@
 package com.uq.jokievents.service.implementation;
 
 import com.uq.jokievents.dtos.HandleEventDTO;
+import com.uq.jokievents.dtos.ReportEventDTO;
 import com.uq.jokievents.model.Event;
 import com.uq.jokievents.model.Locality;
 import com.uq.jokievents.model.enums.EventType;
@@ -19,10 +20,7 @@ import org.springframework.stereotype.Service;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeParseException;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -47,7 +45,6 @@ public class EventServiceImpl implements EventService {
 
             ApiResponse<Map<String, Object>> response = new ApiResponse<>("Success", "Events retrieved successfully", responseData);
             return new ResponseEntity<>(response, HttpStatus.OK);
-
         } catch (Exception e) {
             ApiResponse<String> errorResponse = new ApiResponse<>("Error", "Failed to retrieve events", null);
             return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
@@ -234,6 +231,44 @@ public class EventServiceImpl implements EventService {
         } catch (Exception e) {
             return new ResponseEntity<>(new ApiResponse<>("Error", "An error occurred", e.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
         }
+    }
+
+    @Override
+    public ResponseEntity<?> generateEventsReport(LocalDateTime startDate, LocalDateTime endDate) {
+        // Fetch events within the date range or all if no range is provided
+        List<Event> events = (startDate != null && endDate != null)
+                ? eventRepository.findByEventDateBetween(startDate, endDate)
+                : eventRepository.findAll();
+        List<ReportEventDTO> reportEvents = events.stream()
+                .map(event -> new ReportEventDTO(
+                        event.getId(),
+                        event.getName(),
+                        event.getCity(),
+                        event.getEventDate(),
+                        event.getTotalAvailablePlaces(),
+                        event.getTotalAvailablePlaces() - calculateOccupancy(event.getLocalities()),
+                        calculateOccupancy(event.getLocalities()),
+                        event.getEventType(),
+                        calculatePercentageSold(event)
+                ))
+                .toList();
+        // Map each Event to ReportEventDTO with additional stats
+        return new ResponseEntity<>(new ApiResponse<>("Success", "Report generated", reportEvents), HttpStatus.OK);
+    }
+
+
+    // Method to calculate current occupancy across all localities
+    private int calculateOccupancy(List<Locality> localities) {
+        return localities.stream()
+                .mapToInt(Locality::getCurrentOccupancy)
+                .sum();
+    }
+
+    // Method to calculate the percentage of sold tickets
+    private double calculatePercentageSold(Event event) {
+        int totalCapacity = event.getTotalAvailablePlaces();
+        int occupancy = calculateOccupancy(event.getLocalities());
+        return (totalCapacity > 0) ? (double) occupancy / totalCapacity * 100 : 0;
     }
 }
 

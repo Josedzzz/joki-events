@@ -1,7 +1,10 @@
 package com.uq.jokievents.service.interfaces;
 
 import com.uq.jokievents.dtos.*;
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.http.ResponseEntity;
+
+import java.util.List;
 
 public interface AdminService {
     
@@ -20,6 +23,7 @@ public interface AdminService {
     ResponseEntity<?> deleteAllEvents(); // Weird use case, but, everything is covered bbyboi!
     ResponseEntity<?> getAllCouponsPaginated(int page, int size);
     ResponseEntity<?> getAccountInformation(String adminId);
+    ResponseEntity<?> generateEventsReport(String startDate, String endDate);
 }
 
 
