@@ -99,8 +99,10 @@ public class ClientServiceImpl implements ClientService {
         try {
             Optional<Client> existingClient = clientRepository.findById(clientId);
             if (existingClient.isPresent()) {
-                clientRepository.deleteById(clientId);
-                ApiResponse<String> response = new ApiResponse<>("Success", "Client extermination complete", null);
+                Client client = existingClient.get();
+                client.setActive(false);
+                clientRepository.save(client);
+                ApiResponse<String> response = new ApiResponse<>("Success", "Client account deleted", null);
                 return new ResponseEntity<>(response, HttpStatus.OK);
             } else {
                 ApiResponse<String> response = new ApiResponse<>("Error", "Client not found", null);

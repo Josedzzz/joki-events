@@ -46,7 +46,7 @@ public class ClientController {
      * @param id the identifier of the client to delete
      * @return a ResponseEntity object with and HTTP status
      */
-    @DeleteMapping("/{id}/delete")
+    @PostMapping("/{id}/delete")
     public ResponseEntity<?> deleteAccount(@PathVariable String id) {
         return clientService.deleteAccount(id);
     }

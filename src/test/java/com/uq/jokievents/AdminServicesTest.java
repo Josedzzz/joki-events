@@ -11,9 +11,11 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.ResultMatcher;
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
 
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 
@@ -52,5 +54,32 @@ public class AdminServicesTest {
                         .content(objectMapper.writeValueAsString(updateAdminDTO)))
                 .andDo(print())
                 .andExpect(status().isOk())
-                .andExpect(MockMvcResultMatchers.jsonPath("$.status").value("Success"));    }
+                .andExpect(MockMvcResultMatchers.jsonPath("$.status").value("Success"));
+    }
+
+    @Test
+    public void testUpdateAdmin_EmptyFields() throws Exception {
+        // The valid adminId for the request
+        String adminId = "66f3aeb160c236c93c22b808"; // This ID exists in the dataset
+
+        // Create the request body with empty fields
+        UpdateAdminDTO updateAdminDTO = new UpdateAdminDTO(null, null);
+
+        // Simulate a valid JWT token
+        UserDetails adminDetails = adminRepository.findById(adminId).orElse(null);
+        String currentToken = jwtService.getAdminToken(adminDetails);
+
+        // Perform the PUT request using MockMvc
+        mockMvc.perform(post("/api/admin/" + adminId + "/update/")
+                        .header("Authorization", "Bearer " + currentToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(updateAdminDTO)))
+                .andDo(print())
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.status").value("Validation Failed")) // Assuming validation error is handled this way
+                .andExpect(jsonPath("$.message").exists()); // Expecting a validation error message
+    }
+
 }
+
+

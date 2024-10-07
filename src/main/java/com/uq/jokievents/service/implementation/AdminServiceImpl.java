@@ -50,37 +50,23 @@ public class AdminServiceImpl implements AdminService{
         if (verificationResponse != null) {
             return verificationResponse;
         }
-
+        Admin admin = new Admin(); // je réserve la mémoire
         try {
+            // This optional will always bring the Admin object, as the admin is the one updating itself.
             Optional<Admin> existingAdmin = adminRepository.findById(adminId);
             if (existingAdmin.isPresent()) {
-                Admin admin = existingAdmin.get();
-
-                // Si @Valid funcionara esto se quitaría
-                if (dto.username() == null) {
-                    ApiResponse<String> response = new ApiResponse<>("Error", "Username field is empty", null);
-                    return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
-                }
-                if (dto.email() == null) {
-                    ApiResponse<String> response = new ApiResponse<>("Error", "Email field is empty", null);
-                    return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
-                }
-
-                admin.setUsername(dto.username());
-                admin.setEmail(dto.email());
-
-                Admin updatedAdmin = adminRepository.save(admin);
-                // Generar nuevo token con los datos actualizados
-                UserDetails adminDetails = adminRepository.findById(adminId).orElse(null);
-                String newToken = jwtService.getAdminToken(adminDetails);
-                // Devolver la respuesta con Admin en 'data' y el token en 'token'
-                ApiTokenResponse<Object> response = new ApiTokenResponse<>("Success","Admin update done", updatedAdmin, newToken);
-                return new ResponseEntity<>(response, HttpStatus.OK);
-
-            } else {
-                ApiResponse<String> response = new ApiResponse<>("Error", "Admin not found", null);
-                return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
+                admin = existingAdmin.get(); // This conditional will never fail, just protocol
             }
+            admin.setUsername(dto.username());
+            admin.setEmail(dto.email());
+
+            Admin updatedAdmin = adminRepository.save(admin);
+            // Generar nuevo token con los datos actualizados
+            UserDetails adminDetails = adminRepository.findById(adminId).orElse(null);
+            String newToken = jwtService.getAdminToken(adminDetails);
+            // Devolver la respuesta con Admin en 'data' y el token en 'token'
+            ApiTokenResponse<Object> response = new ApiTokenResponse<>("Success","Admin update done", updatedAdmin, newToken);
+            return new ResponseEntity<>(response, HttpStatus.OK);
         } catch (Exception e) {
             ApiResponse<String> response = new ApiResponse<>("Error", "Failed to update admin", null);
             return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
@@ -98,7 +84,9 @@ public class AdminServiceImpl implements AdminService{
         try {
             Optional<Admin> existingAdmin = adminRepository.findById(adminId);
             if (existingAdmin.isPresent()) {
-                adminRepository.deleteById(adminId);
+                Admin admin = existingAdmin.get();
+                admin.setActive(false);
+                adminRepository.save(admin);
                 ApiResponse<String> response = new ApiResponse<>("Success", "Admin exterminated", null);
                 return new ResponseEntity<>(response, HttpStatus.OK);
             } else {
