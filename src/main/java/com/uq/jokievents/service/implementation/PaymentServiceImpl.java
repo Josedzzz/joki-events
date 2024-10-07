@@ -1,24 +1,31 @@
 package com.uq.jokievents.service.implementation;
 
+import com.mercadopago.MercadoPagoConfig;
+import com.mercadopago.client.payment.PaymentClient;
+import com.mercadopago.client.preference.PreferenceBackUrlsRequest;
+import com.mercadopago.client.preference.PreferenceClient;
 import com.mercadopago.client.preference.PreferenceItemRequest;
+import com.mercadopago.client.preference.PreferenceRequest;
+import com.mercadopago.exceptions.MPApiException;
+import com.mercadopago.exceptions.MPException;
+import com.mercadopago.resources.payment.Payment;
 import com.mercadopago.resources.preference.Preference;
-import com.mercadopago.resources.preference.PreferenceItem;
-import com.mercadopago.resources.preference.PreferencePayer;
-import com.uq.jokievents.model.Client;
-import com.uq.jokievents.model.LocalityOrder;
-import com.uq.jokievents.model.ShoppingCart;
-import com.uq.jokievents.service.interfaces.ClientService;
+import com.uq.jokievents.model.*;
+import com.uq.jokievents.service.interfaces.EventService;
 import com.uq.jokievents.service.interfaces.PaymentService;
 import com.uq.jokievents.service.interfaces.ShoppingCartService;
+import com.uq.jokievents.utils.ApiResponse;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.lang.reflect.Field;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 @Service
 @Transactional
@@ -27,83 +34,125 @@ import java.util.Map;
 public class PaymentServiceImpl implements PaymentService {
 
     private final ShoppingCartService shoppingCartService;
-    private final ClientService clientService;
-
+    private final EventService eventService;
 
     @Override
-    public Preference doPayment(String orderId, String clientId) throws Exception {
+    public ResponseEntity<?> doPayment(String shoppingCartID) throws Exception {
 
-        // Creo que es mejor añadir un eventId a LocalityOrder. No se manejan órdenes en sí, se podría implementar con algo que combine el ShoppingCart y TicketOrder (localidades + hora)
-        // Creo que es mejor hacer los pagos con PayU y es válido según el proyecto.
+        // Obtener la orden guardada en la base de datos y los ítems de la orden
+        Optional<ShoppingCart> shoppingCartOptional = obtenerOrden(shoppingCartID);
+        if (shoppingCartOptional.isEmpty()) return null;
+        ShoppingCart shoppingCart = shoppingCartOptional.get();
 
-//        // Obtener la orden guardada en la base de datos y los ítems de la orden
-//        Orden ordenGuardada = obtenerOrden(idOrden);
-//        List<PreferenceItemRequest> itemsPasarela = new ArrayList<>();
-//
-//
-//        // Recorrer los items de la orden y crea los ítems de la pasarela
-//        for(DetalleOrden item : ordenGuardada.getDetalle()){
-//
-//
-//            // Obtener el evento y la localidad del ítem
-//            Evento evento = eventoServicio.obtenerEvento(item.getCodigoEvento().toString());
-//            Localidad localidad = evento.obtenerLocalidad(item.getNombreLocalidad());
-//
-//
-//            // Crear el item de la pasarela
-//            PreferenceItemRequest itemRequest =
-//                    PreferenceItemRequest.builder()
-//                            .id(evento.getCodigo())
-//                            .title(evento.getNombre())
-//                            .pictureUrl(evento.getImagenPortada())
-//                            .categoryId(evento.getTipo().name())
-//                            .quantity(item.getCantidad())
-//                            .currencyId("COP")
-//                            .unitPrice(BigDecimal.valueOf(localidad.getPrecio()))
-//                            .build();
-//
-//
-//            itemsPasarela.add(itemRequest);
-//        }
-//
-//
-//        // Configurar las credenciales de MercadoPago
-//        MercadoPagoConfig.setAccessToken("ACCESS_TOKEN");
-//
-//
-//        // Configurar las urls de retorno de la pasarela (Frontend)
-//        PreferenceBackUrlsRequest backUrls = PreferenceBackUrlsRequest.builder()
-//                .success("URL PAGO EXITOSO")
-//                .failure("URL PAGO FALLIDO")
-//                .pending("URL PAGO PENDIENTE")
-//                .build();
-//
-//
-//        // Construir la preferencia de la pasarela con los ítems, metadatos y urls de retorno
-//        PreferenceRequest preferenceRequest = PreferenceRequest.builder()
-//                .backUrls(backUrls)
-//                .items(itemsPasarela)
-//                .metadata(Map.of("id_orden", ordenGuardada.getCodigo()))
-//                .notificationUrl("URL NOTIFICACION")
-//                .build();
-//
-//
-//        // Crear la preferencia en la pasarela de MercadoPago
-//        PreferenceClient client = new PreferenceClient();
-//        Preference preference = client.create(preferenceRequest);
-//
-//
-//        // Guardar el código de la pasarela en la orden
-//        ordenGuardada.setCodigoPasarela( preference.getId() );
-//        ordenRepo.save(ordenGuardada);
-//
-//
-//        return preference;
-        return null;
+        List<PreferenceItemRequest> itemsPasarela = new ArrayList<>();
+
+
+        // Recorrer los items de la orden y crea los ítems de la pasarela
+        for(LocalityOrder localityOrder : shoppingCart.getLocalityOrders()){
+
+            // Obtener el evento y la localidad del ítem
+            Optional<Event> eventOptional = eventService.getEventById(localityOrder.getEventId());
+            if(eventOptional.isEmpty()) continue;
+
+            Event event = eventOptional.get();
+            Locality locality = event.getLocalities(localityOrder.getLocalityName());
+            assert locality != null;
+
+            // Crear el item de la pasarela
+            PreferenceItemRequest itemRequest =
+                    PreferenceItemRequest.builder()
+                            .id(event.getId())
+                            .title(event.getName())
+                            .pictureUrl(event.getEventImageUrl())
+                            .categoryId(event.getEventType().name())
+                            .quantity(localityOrder.getNumTicketsSelected())
+                            .currencyId("COP")
+                            .unitPrice(BigDecimal.valueOf(locality.getPrice()))
+                            .build();
+
+
+            itemsPasarela.add(itemRequest);
+        }
+
+        // Configurar las credenciales de MercadoPago
+        MercadoPagoConfig.setAccessToken("ACCESS_TOKEN"); // Later will do
+
+        // Configurar las urls de retorno de la pasarela (Frontend)
+        PreferenceBackUrlsRequest backUrls = PreferenceBackUrlsRequest.builder()
+                .success("URL PAGO EXITOSO")
+                .failure("URL PAGO FALLIDO")
+                .pending("URL PAGO PENDIENTE")
+                .build();
+
+
+        // Construir la preferencia de la pasarela con los ítems, metadatos y urls de retorno
+        PreferenceRequest preferenceRequest = PreferenceRequest.builder()
+                .backUrls(backUrls)
+                .items(itemsPasarela)
+                .metadata(Map.of("id_orden", shoppingCart.getId()))
+                .notificationUrl("URL NOTIFICATION")
+                .build();
+
+
+        // Crear la preferencia en la pasarela de MercadoPago
+        PreferenceClient client = new PreferenceClient();
+        Preference preference = client.create(preferenceRequest);
+
+        // Guardar el código de la pasarela en la orden
+        shoppingCart.setPaymentGatewayId(preference.getId());
+        shoppingCartService.saveShoppingCart(shoppingCart);
+
+        ApiResponse<?> response = new ApiResponse<>("Success", "Payment done", preference);
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
+
+    private Optional<ShoppingCart> obtenerOrden(String shoppingCartID) {
+        return shoppingCartService.findShoppingCartById(shoppingCartID);
     }
 
     @Override
     public void receiveMercadopagoNotification(Map<String, Object> request) {
+        try {
+            Object type = request.get("type");
 
+            if ("payment".equals(type)) {
+
+                // "Capture" the json of the request
+                String inputJson = request.get("data").toString();
+                String paymentId = inputJson.replaceAll("\\D+", "");
+
+                // Get mercadopagos' client and its payment
+                PaymentClient client = new PaymentClient();
+                Payment payment = client.get( Long.parseLong(paymentId) );
+
+                // Get orderId from metadata
+                String orderId = payment.getMetadata().get("id_orden").toString();
+
+
+                // Se obtiene la orden guardada en la base de datos y se le asigna el pago
+
+                Optional<ShoppingCart> orderOpt = obtenerOrden(orderId);
+                if (orderOpt.isEmpty()) return;
+                ShoppingCart order = orderOpt.get();
+                OrderPayment pago = createPayment(payment);
+                order.setOrderPayment(pago);
+                shoppingCartService.saveShoppingCart(order);
+            }
+        } catch (MPException | MPApiException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private OrderPayment createPayment(Payment payment) {
+        OrderPayment orderPayment = new OrderPayment();
+        orderPayment.setId(payment.getId().toString());
+        orderPayment.setPaymentDate( payment.getDateCreated().toLocalDateTime());
+        orderPayment.setPaymentStatus(payment.getStatus());
+        orderPayment.setPaymentStatus(payment.getStatusDetail());
+        orderPayment.setPaymentType(payment.getPaymentTypeId());
+        orderPayment.setPaymentCurrency(payment.getCurrencyId());
+        orderPayment.setAuthorizationCode(payment.getAuthorizationCode());
+        orderPayment.setPaymentValue(payment.getTransactionAmount().floatValue());
+        return orderPayment;
     }
 }

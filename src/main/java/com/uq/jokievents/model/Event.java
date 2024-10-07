@@ -25,7 +25,16 @@ public class Event {
     private boolean availableForPurchase;
     private List<Locality> localities;
     private int totalAvailablePlaces;
-    private String eventImageUrl; // For the URL after upload
+    private String eventImageUrl;
     private String localitiesImageUrl;
     private EventType eventType;
+
+    public Locality getLocalities(String localityName) {
+        for (Locality locality : localities) {
+            if (locality.getName().equals(localityName)) {
+                return locality;
+            }
+        }
+        return null;
+    }
 }

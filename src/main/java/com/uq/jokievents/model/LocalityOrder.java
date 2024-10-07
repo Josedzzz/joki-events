@@ -17,6 +17,8 @@ public class LocalityOrder {
     @Id @JsonIgnore
     private String id;
 
+    private String eventId;
+    private String payingOrderId;
     private int numTicketsSelected;
     private String localityName;
     private Double totalPaymentAmount;

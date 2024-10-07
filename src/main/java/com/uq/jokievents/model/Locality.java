@@ -21,5 +21,5 @@ public class Locality {
     private String name;
     private double price;
     private int maxCapacity;
-    private int currentOccupancy = 0;
+    @Builder.Default private int currentOccupancy = 0;
 }

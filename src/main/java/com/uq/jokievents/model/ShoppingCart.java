@@ -17,7 +17,10 @@ public class ShoppingCart {
 
     @Id
     private String id;
+
+    private String paymentGatewayId;
     private String idClient;
     private ArrayList<LocalityOrder> localityOrders;
     private Double totalPrice; // Price of all the localities a client may have
+    private OrderPayment orderPayment; // Will be assigned when payment time comes!
 }

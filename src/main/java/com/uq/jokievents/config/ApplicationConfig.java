@@ -1,5 +1,6 @@
 package com.uq.jokievents.config;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.uq.jokievents.model.Admin;
 import com.uq.jokievents.model.Client;
 import com.uq.jokievents.repository.AdminRepository;
@@ -80,5 +81,9 @@ public class ApplicationConfig {
         };
     }
 
+    @Bean
+    public ObjectMapper objectMapper() {
+        return new ObjectMapper();
+    }
 
 }
