@@ -39,13 +39,15 @@ public class EventController {
     }
 
     @GetMapping("/search-event")
-    public ResponseEntity<?> searchEvent(@RequestBody SearchEventDTO dto) {
+    public ResponseEntity<?> searchEvent(@RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "8") int size, @RequestBody SearchEventDTO dto) {
         return eventService.searchEvent(
                 dto.eventName(),
                 dto.city(),
                 dto.startDate(),
                 dto.endDate(),
-                dto.eventType()
+                dto.eventType(),
+                page,
+                size
         );
     }
 }

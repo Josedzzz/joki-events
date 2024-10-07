@@ -24,6 +24,6 @@ public interface EventService {
     ResponseEntity<?> filterEventsBetweenDates(String startDate, String endDate); // 3
     Optional<Event> findByEventById(String eventId);
     Optional<Event> findEventByLocalityName(String localityName);
-    ResponseEntity<?> searchEvent(String eventName, String city, LocalDateTime startDate, LocalDateTime endDate, EventType eventType);
+    ResponseEntity<?> searchEvent(String eventName, String city, LocalDateTime startDate, LocalDateTime endDate, EventType eventType, int page, int size);
     ResponseEntity<?> generateEventsReport(LocalDateTime startDate, LocalDateTime endDate);
 }

@@ -239,7 +239,7 @@ public class EventServiceImpl implements EventService {
      * @return ResponseEntity
      */
     @Override
-    public ResponseEntity<?> searchEvent(String eventName, String city, LocalDateTime startDate, LocalDateTime endDate, EventType eventType) {
+    public ResponseEntity<?> searchEvent(String eventName, String city, LocalDateTime startDate, LocalDateTime endDate, EventType eventType, int page, int size) {
         try {
             // Fetch all events from the repository
             List<Event> allEvents = eventRepository.findAll();
@@ -254,6 +254,20 @@ public class EventServiceImpl implements EventService {
                                     && (eventType == null || event.getEventType() == eventType) // Match event type
                     )
                     .toList(); // Collect results into a list
+
+
+            // Implement pagination
+            int totalElements = eventList.size();
+            int start = page * size;
+            int end = Math.min(start + size, totalElements);
+
+            // If the start index is out of bounds, return an empty list
+            if (start >= totalElements) {
+                return new ResponseEntity<>(new ApiResponse<>("Success", "No events found for the specified page", List.of()), HttpStatus.OK);
+            }
+
+            // Get the sublist for the page
+            List<Event> paginatedEvents = eventList.subList(start, end);
 
             // Return response
             return new ResponseEntity<>(new ApiResponse<>("Success", "Events found", eventList), HttpStatus.OK);
