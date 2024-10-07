@@ -1,47 +1,51 @@
 db = connect('mongodb://localhost:27017/jokievents');
 
+// This has to be updated
+
 db.admins.insertMany([
     {
-        name: "John Doe",
-        email: "john.doe@example.com",
-        role: "Super Admin"
+        "_id": {
+            "$oid": "66f3aeb160c236c93c22b808"
+        },
+        "email": "balinius@gmail.com",
+        "username": "balineroo",
+        "password": "$2a$10$Y13QZWu/m5OiK5zCy3lux.DdEUDN7ciLb3MUXWlgpzPKhz4nDmkdq", //1234
+        "active": true,
+        "role": "ADMIN",
+        "_class": "com.uq.jokievents.model.Admin"
     },
     {
-        name: "Jane Smith",
-        email: "jane.smith@example.com",
-        role: "Admin"
-    },
-    {
-        name: "Michael Johnson",
-        email: "michael.johnson@example.com",
-        role: "Admin"
-    },
-    {
-        name: "Emily Davis",
-        email: "emily.davis@example.com",
-        role: "Super Admin"
-    },
-    {
-        name: "Chris Wilson",
-        email: "chris.wilson@example.com",
-        role: "Admin"
+        "_id": {
+            "$oid": "66f3aeb160c236c93c22b807"
+        },
+        "email": "balinius11@gmail.com",
+        "username": "balin",
+        "password": "$2a$10$Y13QZWu/m5OiK5zCy3lux.DdEUDN7ciLb3MUXWlgpzPKhz4nDmkdq", //1234
+        "active": true,
+        "role": "ADMIN",
+        "_class": "com.uq.jokievents.model.Admin"
     }
 ]);
 
 // Insertar 5 clientes en la colección 'clients'
 db.clients.insertMany([
     {
-        idCard: "12345678A",
-        name: "Alice Wonderland",
-        address: "123 Fantasy Ave, Dreamland",
-        phoneNumber: "555-1234",
-        email: "alice@example.com",
-        password: "securepassword1",
-        idShoppingCart: "shopping_cart_1",
-        active: true,
-        verificationCode: "ABC123",
-        verificationCodeExpiration: new Date("2024-12-31T23:59:59"),
-        role: "CLIENT"
+        "_id": {
+            "$oid": "66f3b71c95dcb9591580d078"
+        },
+        "idCard": "1097032971",
+        "name": "joki",
+        "phoneNumber": "1231231234",
+        "email": "balinius11@gmail.com",
+        "password": "$2a$10$GZODpgapTfxgrDS167XnrOJRFXGBQ4m8q6ZFdOhc36wWxAIgpirTq",
+        "idCoupons": [],
+        "idShoppingCart": {
+            "$oid": "66f3b71795dcb9591580d077"
+        },
+        "active": true,
+        "role": "CLIENT",
+        "_class": "com.uq.jokievents.model.Client",
+        "address": "quimbaya"
     },
     {
         idCard: "87654321B",
