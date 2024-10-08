@@ -33,7 +33,7 @@ public class EventController {
         return eventService.filterEventsBetweenDates(startDate, endDate, page, size);
     }
 
-    @GetMapping("/search-event")
+    @PostMapping("/search-event")
     public ResponseEntity<?> searchEvent(@RequestBody SearchEventDTO dto, @RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "16") int size) {
 
         return eventService.searchEvent(
