@@ -7,6 +7,7 @@ import com.uq.jokievents.model.Client;
 import com.uq.jokievents.repository.AdminRepository;
 import com.uq.jokievents.repository.ClientRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -89,4 +90,11 @@ public class ApplicationConfig {
         return mapper;
     }
 
+
+    @Value("${base64.image}")
+    private String base64Image;
+
+    public String getBase64Image() {
+        return base64Image;
+    }
 }

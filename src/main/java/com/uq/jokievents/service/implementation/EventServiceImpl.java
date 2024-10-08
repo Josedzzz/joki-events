@@ -142,8 +142,8 @@ public class EventServiceImpl implements EventService {
         // Save the updated event
         eventRepository.save(existingEvent);
 
-        ApiResponse<Event> response = new ApiResponse<>("Success", "Event created successfully", existingEvent);
-        return new ResponseEntity<>(response, HttpStatus.CREATED);
+        ApiResponse<Event> response = new ApiResponse<>("Success", "Event updated", existingEvent);
+        return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
     @Override

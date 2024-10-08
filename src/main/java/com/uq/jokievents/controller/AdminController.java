@@ -129,7 +129,7 @@ public class AdminController {
     }
 
     // TODO Ask Jose if the path (delete-coupon) is necessary for this method to be used. Logic is tickling. Same question for deleteAllCoupons() below.
-    @PostMapping("/delete-coupon/{couponId}")
+    @DeleteMapping("/delete-coupon/{couponId}")
     public ResponseEntity<?> deleteCouponById(@PathVariable String couponId) {
         return adminService.deleteCoupon(couponId);
     }

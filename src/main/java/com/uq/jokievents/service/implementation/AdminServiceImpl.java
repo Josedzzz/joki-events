@@ -216,24 +216,23 @@ public class AdminServiceImpl implements AdminService{
             return verificationResponse;
         }
 
+        Coupon coupon = new Coupon();
+
         try {
             Optional<Coupon> optionalCoupon = couponService.findCouponInstanceById(couponId);
             if (optionalCoupon.isPresent()) {
-                Coupon coupon = optionalCoupon.get();
-
-                // Update the fields
-                coupon.setDiscountPercent(dto.discount());
-                coupon.setExpirationDate(dto.expirationDate());
-                coupon.setMinPurchaseAmount(dto.minPurchaseAmount());
-
-                // Save the updated coupon
-                Coupon updatedCoupon = couponService.saveCoupon(coupon);
-                ApiResponse<Coupon> response = new ApiResponse<>("Success", "Coupon updated", updatedCoupon);
-                return new ResponseEntity<>(response, HttpStatus.OK);
-            } else {
-                ApiResponse<String> response = new ApiResponse<>("Error", "Coupon not found", null);
-                return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
+                coupon = optionalCoupon.get();
             }
+            // Update the fields
+            coupon.setDiscountPercent(dto.discount());
+            coupon.setExpirationDate(dto.expirationDate());
+            coupon.setMinPurchaseAmount(dto.minPurchaseAmount());
+
+            // Save the updated coupon
+            Coupon updatedCoupon = couponService.saveCoupon(coupon);
+            ApiResponse<Coupon> response = new ApiResponse<>("Success", "Coupon updated", updatedCoupon);
+            return new ResponseEntity<>(response, HttpStatus.OK);
+
         } catch (Exception e) {
             ApiResponse<String> response = new ApiResponse<>("Error", "Failed to update coupon", null);
             return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
@@ -248,13 +247,13 @@ public class AdminServiceImpl implements AdminService{
         }
 
         try {
-            Optional<Coupon> existingCoupon = couponService.findCouponInstanceById(couponId);
+            Optional<Coupon> existingCoupon = couponService.findCouponInstanceById(couponId); // This is basically "couponRepository.findById(couponId);"
             if (existingCoupon.isPresent()) {
                 couponService.deleteCouponById(couponId);
                 ApiResponse<String> response = new ApiResponse<>("Success", "Coupon deleted", null);
                 return new ResponseEntity<>(response, HttpStatus.OK);
             } else {
-                // Could this ever happen?
+                // Could this ever happen? No, don't mind checking this in a test future Daniel.
                 ApiResponse<String> response = new ApiResponse<>("Error", "Coupon not found", null);
                 return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
             }
@@ -290,7 +289,7 @@ public class AdminServiceImpl implements AdminService{
             return verificationResponse;
         }
 
-        // Delegating the  event creation to EventService as god intended
+        // Delegating the  event creation to EventService as god intended or maybe not, makes sense for it to be here as it is a sole admin function. No client can create an event.
         return eventService.addEvent(dto);
     }
 
