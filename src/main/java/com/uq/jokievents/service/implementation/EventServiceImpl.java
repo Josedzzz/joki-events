@@ -295,13 +295,13 @@ public class EventServiceImpl implements EventService {
             // Use stream to filter events based on the criteria
             List<Event> filteredEvents = allEvents.stream()
                     .filter(event ->
-                            (eventName == null || (event.getName() != null && event.getName().toLowerCase().contains(eventName.toLowerCase()))) // Check event name
-                                    && (city == null || (event.getCity() != null && event.getCity().equalsIgnoreCase(city))) // Match city
-                                    && (startDate == null || (event.getEventDate() != null && !event.getEventDate().isBefore(startDate))) // Check start date
-                                    && (endDate == null || (event.getEventDate() != null && !event.getEventDate().isAfter(endDate))) // Check end date
-                                    && (eventType == null || event.getEventType() == eventType) // Match event type
+                            (eventName == null || eventName.isEmpty() || (event.getName() != null && event.getName().toLowerCase().contains(eventName.toLowerCase()))) // Flexible event name match
+                                    && (city == null || city.isEmpty() || (event.getCity() != null && event.getCity().toLowerCase().contains(city.toLowerCase()))) // Flexible city match
+                                    && (startDate == null || (event.getEventDate() != null && !event.getEventDate().isBefore(startDate))) // Correct start date filter
+                                    && (endDate == null || (event.getEventDate() != null && !event.getEventDate().isAfter(endDate))) // Correct end date filter
+                                    && (eventType == null || eventType.equals(event.getEventType())) // Strict event type match
                     )
-                    .toList(); // Collect results into a list
+                    .toList(); // Collect the filtered events into a list
 
             // Calculate pagination
             int totalElements = filteredEvents.size();  // Total number of filtered events

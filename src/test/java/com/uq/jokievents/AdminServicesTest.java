@@ -14,6 +14,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultMatcher;
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
 
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -34,6 +35,8 @@ public class AdminServicesTest {
 
     @Autowired
     private JwtServiceImpl jwtService;
+
+    // UPDATING ADMIN METHOD TESTING
 
     @Test
     public void testUpdateAdmin_Success() throws Exception {
@@ -79,6 +82,27 @@ public class AdminServicesTest {
                 .andExpect(jsonPath("$.status").value("Validation Failed")) // Assuming validation error is handled this way
                 .andExpect(jsonPath("$.message").exists()); // Expecting a validation error message
     }
+
+    // DELETED (ACCOUNT DEACTIVATED) ADMIN METHOD TESTING
+
+    @Test
+    public void testDeleteAdminAccount_Success() throws Exception {
+        // The valid adminId for the request
+        String adminId = "66f3aeb160c236c93c22b808"; // Assuming this admin exists in the dataset
+
+        // Simulate a valid JWT token for authorization
+        UserDetails adminDetails = adminRepository.findById(adminId).orElse(null);
+        String currentToken = jwtService.getAdminToken(adminDetails);
+
+        // Perform the DELETE request using MockMvc
+        mockMvc.perform(delete("/api/admin/" + adminId + "/delete")
+                        .header("Authorization", "Bearer " + currentToken))
+                .andDo(print())
+                .andExpect(status().isOk()) // Expecting 200 OK
+                .andExpect(jsonPath("$.status").value("Success")) // Expecting success message
+                .andExpect(jsonPath("$.message").value("Admin account deactivated"));
+    }
+
 
 }
 

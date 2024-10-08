@@ -80,20 +80,16 @@ public class AdminServiceImpl implements AdminService{
         if (verificationResponse != null) {
             return verificationResponse;
         }
-
+        Admin admin = new Admin(); // je réserve la mémoire
         try {
             Optional<Admin> existingAdmin = adminRepository.findById(adminId);
-            if (existingAdmin.isPresent()) {
-                Admin admin = existingAdmin.get();
-                admin.setActive(false);
-                adminRepository.save(admin);
-                ApiResponse<String> response = new ApiResponse<>("Success", "Admin exterminated", null);
-                return new ResponseEntity<>(response, HttpStatus.OK);
-            } else {
-                ApiResponse<String> response = new ApiResponse<>("Error", "Admin not found", null);
-                return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
-            }
+            if (existingAdmin.isPresent()) admin = existingAdmin.get();
+            admin.setActive(false);
+            adminRepository.save(admin);
+            ApiResponse<String> response = new ApiResponse<>("Success", "Admin account deactivated", null);
+            return new ResponseEntity<>(response, HttpStatus.OK);
         } catch (Exception e) {
+            // Would only output if the database fails
             ApiResponse<String> response = new ApiResponse<>("Error", "Failed to delete admin", null);
             return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
         }
