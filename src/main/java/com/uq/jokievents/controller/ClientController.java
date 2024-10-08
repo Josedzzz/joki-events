@@ -120,7 +120,7 @@ public class ClientController {
      * @return ResponseEntity
      */
     @PostMapping("/cancel-locality-order/{clientId}")
-    public ResponseEntity<?> loadShoppingCart(@PathVariable String clientId, @RequestBody LocalityOrderAsClientDTO dto) {
+    public ResponseEntity<?> cancelLocalityOrder(@PathVariable String clientId, @RequestBody LocalityOrderAsClientDTO dto) {
         return clientService.cancelLocalityOrder(clientId, dto);
     }
 
