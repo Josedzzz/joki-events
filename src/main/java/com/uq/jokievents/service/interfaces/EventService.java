@@ -19,11 +19,10 @@ public interface EventService {
     void saveEvent(Event event);
     void deleteEventById(String eventId);
     void deleteAllEvents();
-    ResponseEntity<?> filterEventsByEventType(EventType eventType); // 1
-    ResponseEntity<?> filterEventsAfterCertainDate(String date); // 2
-    ResponseEntity<?> filterEventsBetweenDates(String startDate, String endDate); // 3
+    ResponseEntity<?> filterEventsAfterCertainDate(String date, int page, int size); // 2
+    ResponseEntity<?> filterEventsBetweenDates(String startDate, String endDate, int page, int size); // 3
     Optional<Event> findByEventById(String eventId);
     Optional<Event> findEventByLocalityName(String localityName);
-    ResponseEntity<?> searchEvent(String eventName, String city, LocalDateTime startDate, LocalDateTime endDate, EventType eventType);
+    ResponseEntity<?> searchEvent(String eventName, String city, LocalDateTime startDate, LocalDateTime endDate, EventType eventType, int page, int size);
     ResponseEntity<?> generateEventsReport(LocalDateTime startDate, LocalDateTime endDate);
 }

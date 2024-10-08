@@ -16,14 +16,9 @@ public class EventController {
 
     private final EventService eventService;
 
-    @GetMapping("/filter-by-type")
-    public ResponseEntity<?> filterEventsByType(@RequestParam EventType eventType) {
-        return eventService.filterEventsByEventType(eventType);
-    }
-
     @GetMapping("/filter-after-date")
-    public ResponseEntity<?> filterEventsAfterCertainDate(@RequestParam String date) {
-        return eventService.filterEventsAfterCertainDate(date);
+    public ResponseEntity<?> filterEventsAfterCertainDate(@RequestParam String date, @RequestParam String endDate, @RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "16") int size) {
+        return eventService.filterEventsAfterCertainDate(date, page, size);
     }
 
     /**
@@ -34,18 +29,21 @@ public class EventController {
      * @return ResponseEntity
      */
     @GetMapping("/filter-between-dates")
-    public ResponseEntity<?> filterEventsBetweenDates(@RequestParam String startDate, @RequestParam String endDate) {
-        return eventService.filterEventsBetweenDates(startDate, endDate);
+    public ResponseEntity<?> filterEventsBetweenDates(@RequestParam String startDate, @RequestParam String endDate, @RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "16") int size) {
+        return eventService.filterEventsBetweenDates(startDate, endDate, page, size);
     }
 
     @GetMapping("/search-event")
-    public ResponseEntity<?> searchEvent(@RequestBody SearchEventDTO dto) {
+    public ResponseEntity<?> searchEvent(@RequestBody SearchEventDTO dto, @RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "16") int size) {
+
         return eventService.searchEvent(
                 dto.eventName(),
                 dto.city(),
                 dto.startDate(),
                 dto.endDate(),
-                dto.eventType()
+                dto.eventType(),
+                page,
+                size
         );
     }
 }

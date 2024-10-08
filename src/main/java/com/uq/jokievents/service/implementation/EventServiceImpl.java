@@ -167,26 +167,52 @@ public class EventServiceImpl implements EventService {
     }
 
     @Override
-    public ResponseEntity<?> filterEventsByEventType(EventType eventType) {
-        List<Event> events = eventRepository.findByEventType(eventType);
-        if (events.isEmpty()) {
-            return new ResponseEntity<>(new ApiResponse<>("No Events", "No events found for this type", null), HttpStatus.OK);
+    public ResponseEntity<?> filterEventsAfterCertainDate(String date, int page, int size) {
+        try {
+            // Parse the date
+            LocalDateTime dateFilter = LocalDateTime.parse(date);
+
+            // Fetch events after the specified date
+            List<Event> events = eventRepository.findByEventDateAfter(dateFilter);
+
+            if (events.isEmpty()) {
+                return new ResponseEntity<>(new ApiResponse<>("No Events", "No events found after this date", null), HttpStatus.OK);
+            }
+
+            // Paginate the result
+            int totalElements = events.size();  // Total number of events found
+            int totalPages = (int) Math.ceil((double) totalElements / size);  // Calculate total number of pages
+            int startIndex = page * size;  // Calculate the start index for the page
+            int endIndex = Math.min(startIndex + size, totalElements);  // Calculate the end index for the page
+
+            if (startIndex >= totalElements) {
+                return new ResponseEntity<>(new ApiResponse<>("Success", "No events found for the specified page", List.of()), HttpStatus.OK);
+            }
+
+            // Get the paginated sublist
+            List<Event> paginatedEvents = events.subList(startIndex, endIndex);
+
+            // Prepare pagination metadata
+            Map<String, Object> paginationData = new HashMap<>();
+            paginationData.put("totalPages", totalPages);
+            paginationData.put("currentPage", page);
+            paginationData.put("totalElements", totalElements);
+            paginationData.put("content", paginatedEvents);  // The paginated events for the current page
+
+            // Return the paginated response
+            return new ResponseEntity<>(new ApiResponse<>("Success", "Events found", paginationData), HttpStatus.OK);
+
+        } catch (DateTimeParseException e) {
+            // Handle invalid date format
+            return new ResponseEntity<>(new ApiResponse<>("Error", "Invalid date format. Expected format: yyyy-MM-ddTHH:mm:ss", null), HttpStatus.BAD_REQUEST);
+        } catch (Exception e) {
+            return new ResponseEntity<>(new ApiResponse<>("Error", "An error occurred", e.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
         }
-        return new ResponseEntity<>(new ApiResponse<>("Success", "Events found", events), HttpStatus.OK);
     }
 
-    @Override
-    public ResponseEntity<?> filterEventsAfterCertainDate(String date) {
-        LocalDateTime dateFilter = LocalDateTime.parse(date);
-        List<Event> events = eventRepository.findByEventDateAfter(dateFilter);
-        if (events.isEmpty()) {
-            return new ResponseEntity<>(new ApiResponse<>("No Events", "No events found after this date", null), HttpStatus.OK);
-        }
-        return new ResponseEntity<>(new ApiResponse<>("Success", "Events found", events), HttpStatus.OK);
-    }
 
     @Override
-    public ResponseEntity<?> filterEventsBetweenDates(String startDate, String endDate) {
+    public ResponseEntity<?> filterEventsBetweenDates(String startDate, String endDate, int page, int size) {
         try {
             // Parse the dates
             LocalDateTime start = LocalDateTime.parse(startDate);
@@ -203,7 +229,28 @@ public class EventServiceImpl implements EventService {
                 return new ResponseEntity<>(new ApiResponse<>("No Events", "No events found between these dates", null), HttpStatus.OK);
             }
 
-            return new ResponseEntity<>(new ApiResponse<>("Success", "Events found", events), HttpStatus.OK);
+            // Paginate the result
+            int totalElements = events.size();  // Total number of events found
+            int totalPages = (int) Math.ceil((double) totalElements / size);  // Calculate total number of pages
+            int startIndex = page * size;  // Calculate the start index for the page
+            int endIndex = Math.min(startIndex + size, totalElements);  // Calculate the end index for the page
+
+            if (startIndex >= totalElements) {
+                return new ResponseEntity<>(new ApiResponse<>("Success", "No events found for the specified page", List.of()), HttpStatus.OK);
+            }
+
+            // Get the paginated sublist
+            List<Event> paginatedEvents = events.subList(startIndex, endIndex);
+
+            // Prepare pagination metadata
+            Map<String, Object> paginationData = new HashMap<>();
+            paginationData.put("totalPages", totalPages);
+            paginationData.put("currentPage", page);
+            paginationData.put("totalElements", totalElements);
+            paginationData.put("content", paginatedEvents);  // The paginated events for the current page
+
+            // Return the paginated response
+            return new ResponseEntity<>(new ApiResponse<>("Success", "Events found", paginationData), HttpStatus.OK);
 
         } catch (DateTimeParseException e) {
             // Handle invalid date format
@@ -212,6 +259,7 @@ public class EventServiceImpl implements EventService {
             return new ResponseEntity<>(new ApiResponse<>("Error", "An error occurred", e.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
+
 
     @Override
     public Optional<Event> findByEventById(String eventId) {
@@ -239,13 +287,13 @@ public class EventServiceImpl implements EventService {
      * @return ResponseEntity
      */
     @Override
-    public ResponseEntity<?> searchEvent(String eventName, String city, LocalDateTime startDate, LocalDateTime endDate, EventType eventType) {
+    public ResponseEntity<?> searchEvent(String eventName, String city, LocalDateTime startDate, LocalDateTime endDate, EventType eventType, int page, int size) {
         try {
             // Fetch all events from the repository
             List<Event> allEvents = eventRepository.findAll();
 
             // Use stream to filter events based on the criteria
-            List<Event> eventList = allEvents.stream()
+            List<Event> filteredEvents = allEvents.stream()
                     .filter(event ->
                             (eventName == null || (event.getName() != null && event.getName().toLowerCase().contains(eventName.toLowerCase()))) // Check event name
                                     && (city == null || (event.getCity() != null && event.getCity().equalsIgnoreCase(city))) // Match city
@@ -255,8 +303,29 @@ public class EventServiceImpl implements EventService {
                     )
                     .toList(); // Collect results into a list
 
+            // Calculate pagination
+            int totalElements = filteredEvents.size();  // Total number of filtered events
+            int totalPages = (int) Math.ceil((double) totalElements / size);  // Total number of pages
+            int start = page * size;  // Start index
+            int end = Math.min(start + size, totalElements);  // End index
+
+            // Ensure the requested page is within bounds
+            if (start >= totalElements) {
+                return new ResponseEntity<>(new ApiResponse<>("Success", "No events found for the specified page", List.of()), HttpStatus.OK);
+            }
+
+            // Get the sublist for the current page
+            List<Event> paginatedEvents = filteredEvents.subList(start, end);
+
+            // Prepare pagination metadata
+            Map<String, Object> paginationData = new HashMap<>();
+            paginationData.put("totalPages", totalPages);
+            paginationData.put("currentPage", page);
+            paginationData.put("totalElements", totalElements);
+            paginationData.put("content", paginatedEvents);  // The paginated events for the current page
+
             // Return response
-            return new ResponseEntity<>(new ApiResponse<>("Success", "Events found", eventList), HttpStatus.OK);
+            return new ResponseEntity<>(new ApiResponse<>("Success", "Events found", paginationData), HttpStatus.OK);
         } catch (Exception e) {
             return new ResponseEntity<>(new ApiResponse<>("Error", "An error occurred", e.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
         }
