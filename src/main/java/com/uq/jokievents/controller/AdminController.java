@@ -63,7 +63,7 @@ public class AdminController {
      * @param dto RecoverPassAdminDTO
      * @return ResponseEntity
      */
-    @PostMapping("/recover-password/")
+    @PostMapping("/recover-password")
     public ResponseEntity<?> recoverPassword(@Valid @RequestBody RecoverPassAdminDTO dto) {
         return adminService.recoverPassword(dto);
     }

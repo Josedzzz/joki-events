@@ -148,6 +148,9 @@ public class AdminServiceImpl implements AdminService{
             String verificationCode =  dto.verificationCode();
             String newPassword = passwordEncoder.encode(dto.newPassword());
             Optional<Admin> adminOptional = adminRepository.findByEmail(email);
+
+            System.out.println("404 ALLEGATION" + adminOptional.get().toString());
+
             if (adminOptional.isEmpty()) {
                 ApiResponse<String> response = new ApiResponse<>("Error", "Admin not found", null);
                 return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
@@ -190,7 +193,7 @@ public class AdminServiceImpl implements AdminService{
         Optional<Coupon> existingCoupon = couponService.findCouponByName(dto.name());
 
         if (existingCoupon.isPresent()) {
-            ApiResponse<String> response = new ApiResponse<>("Error", "Coupon with the same localityName already exists", null);
+            ApiResponse<String> response = new ApiResponse<>("Error", "Coupon with the same name already exists", null);
             return new ResponseEntity<>(response, HttpStatus.CONFLICT);
         }
 
@@ -361,7 +364,7 @@ public class AdminServiceImpl implements AdminService{
             Optional<Admin> admin = adminRepository.findById(adminId);
             if (admin.isPresent()) {
                 String username = admin.get().getUsername();
-                String email = admin.get().getEmail(); // TODO check if this is encrypted
+                String email = admin.get().getEmail();
 
                 UpdateAdminDTO dto = new UpdateAdminDTO(username, email);
                 ApiResponse<UpdateAdminDTO> response = new ApiResponse<>("Success", "Admin info returned", dto);
