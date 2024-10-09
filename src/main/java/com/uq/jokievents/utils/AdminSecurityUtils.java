@@ -23,7 +23,7 @@ public class AdminSecurityUtils {
     public static ResponseEntity<?> verifyAdminAccessWithRole() {
         // Check if the user has the "ADMIN" role
         if (!SecurityContextHolder.getContext().getAuthentication().getAuthorities().contains(new SimpleGrantedAuthority("ADMIN"))) {
-            ApiResponse<String> response = new ApiResponse<>("Error", "You are not authorized to create coupons", null);
+            ApiResponse<String> response = new ApiResponse<>("Error", "You are not authorized to access", null);
             return new ResponseEntity<>(response, HttpStatus.FORBIDDEN);
         }
         return null;

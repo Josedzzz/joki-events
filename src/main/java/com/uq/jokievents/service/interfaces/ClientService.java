@@ -12,13 +12,12 @@ import java.util.Optional;
 public interface ClientService {
     ResponseEntity<?> updateClient(String clientId, UpdateClientDTO dto);
     ResponseEntity<?> deleteAccount(String id);
+    ResponseEntity<?> sendRecoverPasswordCode(String email);
     ResponseEntity<?> verifyCode(String clientId, VerifyClientDTO dto);
-    ResponseEntity<?> existsByEmail(String email);
-    ResponseEntity<?> existsByIdCard(String idCard);
     ResponseEntity<?> getAllEventsPaginated(int page, int size);
     ResponseEntity<?> getAccountInformation(String clientId);
     ResponseEntity<?> orderLocality(String clientId, LocalityOrderAsClientDTO dto);
     ResponseEntity<?> cancelLocalityOrder(String clientId, LocalityOrderAsClientDTO dto);
     ResponseEntity<?> loadShoppingCart(String clientId);
-    Optional<Client> findClientById(String clientId);
+    ResponseEntity<?> applyCoupon(String clientId, String coupon);
 }

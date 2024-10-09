@@ -20,8 +20,7 @@ import java.util.List;
 @Validated
 public class AdminController {
 
-    // TODO Authentication with Firebase.
-    // TODO 0auth
+    // TODO 0auth login with Google Account
     // TODO Refresh Tokens
     // TODO Admin actions logger, can be one of the two additional functionalities
     private final AdminService adminService;
@@ -29,15 +28,15 @@ public class AdminController {
     /**
      * Example JSON:
      * {
-     * "username": "XD",
-     * "email": "mail@mail.com"
+     *  "username": "XD",
+     *  "email": "mail@mail.com"
      * }
      *
      * @param adminId String
      * @param dto     UpdateAdminDTO
      * @return ResponseEntity
      */
-    @PostMapping("/{adminId}/update/")
+    @PostMapping("/{adminId}/update")
     public ResponseEntity<?> updateAdmin(@PathVariable String adminId, @Valid @RequestBody UpdateAdminDTO dto) {
         return adminService.updateAdmin(adminId, dto);
     }
@@ -112,7 +111,7 @@ public class AdminController {
      * "message": "Coupon updated",
      * "data": {
      * "id": "66e116c1f6751275233b24ff",
-     * "localityName": "Summer Sale",
+     * "couponName": "Summer Sale",
      * "discountPercent": 20.0,
      * "expirationDate": "2024-12-31T23:59:59",
      * "minPurchaseAmount": 110.0,
@@ -128,7 +127,6 @@ public class AdminController {
         return adminService.updateCoupon(couponId, dto);
     }
 
-    // TODO Ask Jose if the path (delete-coupon) is necessary for this method to be used. Logic is tickling. Same question for deleteAllCoupons() below.
     @DeleteMapping("/delete-coupon/{couponId}")
     public ResponseEntity<?> deleteCouponById(@PathVariable String couponId) {
         return adminService.deleteCoupon(couponId);

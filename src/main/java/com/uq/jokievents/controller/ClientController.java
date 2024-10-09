@@ -51,6 +51,11 @@ public class ClientController {
         return clientService.deleteAccount(id);
     }
 
+    @PostMapping("/send-recovery-code/{clientId}")
+    public ResponseEntity<?> sendRecoveryCode(@PathVariable String clientId, String email) {
+        return clientService.sendRecoverPasswordCode(email);
+    }
+
     /**
      * Verify a clients code
      * Jose auth this!
@@ -64,27 +69,6 @@ public class ClientController {
     @PostMapping("/{id}/verify")
     public ResponseEntity<?> verifyClient(@PathVariable String id, @RequestBody VerifyClientDTO dto) {
         return clientService.verifyCode(id, dto);
-    }
-
-    /**
-     * Check if an email is already in use
-     *     * @param email the email to check
-     * @return a ResponseEntity with the result of the check
-     */
-    @GetMapping("/existsByEmail")
-    public ResponseEntity<?> existsByEmail(@RequestParam String email) {
-        return clientService.existsByEmail(email);
-    }
-
-    /**
-     * Check if an idCard is already in use
-     *
-     * @param idCard the email to check
-     * @return a ResponseEntity with the result of the check
-     */
-    @GetMapping("/existsByIdCard")
-    public ResponseEntity<?> existsIdCard(@RequestParam String idCard) {
-        return clientService.existsByIdCard(idCard);
     }
 
     @GetMapping("/get-paginated-events")
@@ -124,7 +108,7 @@ public class ClientController {
         return clientService.cancelLocalityOrder(clientId, dto);
     }
 
-    @PostMapping("/load-shopping-cart/{clientId}")
+    @GetMapping("/load-shopping-cart/{clientId}")
     public ResponseEntity<?> loadShoppingCart(@PathVariable String clientId) {
         return clientService.loadShoppingCart(clientId);
     }

@@ -10,7 +10,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import javax.validation.Valid;
 
-// TODO This should be like an interface or directly go in the Controller classes.
 @RestController
 @RequestMapping("/auth")
 @RequiredArgsConstructor

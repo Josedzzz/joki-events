@@ -6,9 +6,6 @@ import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 
 public record UpdateClientDTO(
-        @NotBlank(message = "ID card cannot be blank")
-        @Size(min = 6, max = 12, message = "ID card must be between 6 and 12 characters")
-        String idCard,
 
         @NotBlank(message = "Phone cannot be blank")
         @Pattern(regexp = "^\\+?[0-9. ()-]{7,25}$", message = "Phone number is invalid")

@@ -24,7 +24,7 @@ public class CSVExportServiceImpl implements CSVExportService {
                     event.id(),
                     event.name(),
                     event.city(),
-                    event.eventDate().toString(),
+                    event.eventDate(),
                     event.totalAvailablePlaces(),
                     event.remainingPlaces(),
                     event.currentOccupancy(),

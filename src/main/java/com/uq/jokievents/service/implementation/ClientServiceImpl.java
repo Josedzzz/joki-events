@@ -5,6 +5,8 @@ import com.uq.jokievents.dtos.UpdateClientDTO;
 import com.uq.jokievents.dtos.VerifyClientDTO;
 import com.uq.jokievents.model.*;
 import com.uq.jokievents.repository.ClientRepository;
+import com.uq.jokievents.repository.CouponRepository;
+import com.uq.jokievents.repository.ShoppingCartRepository;
 import com.uq.jokievents.service.interfaces.ClientService;
 import com.uq.jokievents.service.interfaces.EventService;
 import com.uq.jokievents.service.interfaces.JwtService;
@@ -33,9 +35,13 @@ public class ClientServiceImpl implements ClientService {
     private final JwtService jwtService;
     private final EventService eventService;
     private final ShoppingCartService shoppingCartService;
+    private final CouponRepository couponRepository;
+    private final EmailService emailService;
+    private final ShoppingCartRepository shoppingCartRepository;
 
     /**
      * Updates a client from a dto.
+     * TODO Ms
      * @param clientId String
      * @param dto UpdateClientDTO
      * @return ResponseEntity
@@ -43,7 +49,7 @@ public class ClientServiceImpl implements ClientService {
     @Override
     public ResponseEntity<?> updateClient(String clientId, @RequestBody UpdateClientDTO dto) {
 
-        ResponseEntity<?> verificationResponse = ClientSecurityUtils.verifyClientAccessWithId(clientId);
+        ResponseEntity<?> verificationResponse = ClientSecurityUtils.verifyClientAccessWithRole();
         if (verificationResponse != null) {
             return verificationResponse;
         }
@@ -52,30 +58,33 @@ public class ClientServiceImpl implements ClientService {
             Optional<Client> existingClient = clientRepository.findById(clientId);
             if (existingClient.isPresent()) {
                 Client client = existingClient.get();
+                System.out.println(client);
 
-                // Verifications for Client update
-                if (!client.getIdCard().equals(dto.idCard()) && utils.existsByIdCard(dto.idCard())) {
-                    ApiResponse<String> response = new ApiResponse<>("Error", "The identification card is in use", null);
-                    return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
-                }
-                if (!client.getEmail().equals(dto.email()) && utils.existsEmailClient(dto.email())) {
+                // Could this throw a NullPointerException?
+                if (dto.email() != null && utils.existsEmailClient(dto.email())) {
                     ApiResponse<String> response = new ApiResponse<>("Error", "The email is in use", null);
                     return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
                 }
 
-                // Update client details
-                client.setIdCard(dto.idCard());
-                client.setPhoneNumber(dto.phone());
-                client.setEmail(dto.email());
-                client.setName(dto.name());
-                client.setAddress(dto.address());
+                if (dto.phone() != null) {
+                    client.setPhoneNumber(dto.phone());
+                }
+                if (dto.email() != null) {
+                    client.setEmail(dto.email());
+                }
+                if (dto.name() != null) {
+                    client.setName(dto.name());
+                }
+                if (dto.address() != null) {
+                    client.setAddress(dto.address());
+                }
 
-                Client updatedClient = clientRepository.save(client);
-                // Actualizo el token también
+                clientRepository.save(client);
+                // Update the token as they payload would change as well.
                 UserDetails clientDetails = clientRepository.findById(clientId).orElse(null);
-                String newToken = jwtService.getAdminToken(clientDetails);
+                String newToken = jwtService.getClientToken(clientDetails);
 
-                ApiTokenResponse<Object> response = new ApiTokenResponse<>("Success","Client update done", updatedClient, newToken);
+                ApiTokenResponse<Object> response = new ApiTokenResponse<>("Success","Client update done", client, newToken);
                 return new ResponseEntity<>(response, HttpStatus.OK);
             } else {
                 ApiResponse<String> response = new ApiResponse<>("Error", "Client not found", null);
@@ -115,6 +124,45 @@ public class ClientServiceImpl implements ClientService {
     }
 
     @Override
+    public ResponseEntity<?> sendRecoverPasswordCode(String email) {
+
+        ResponseEntity<?> verificationResponse = ClientSecurityUtils.verifyClientAccessWithRole();
+        if (verificationResponse != null) {
+            return verificationResponse;
+        }
+
+        try {
+            // Validate if the client exists by email
+            Optional<Client> clientOptional = clientRepository.findByEmail(email);
+            if (clientOptional.isEmpty()) {
+                ApiResponse<String> response = new ApiResponse<>("Error", "Admin not found.", null);
+                return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
+            }
+
+            Client client = clientOptional.get();
+
+            // Generate a new verification code
+            String verificationCode = Generators.generateRndVerificationCode();
+
+            // Set the expiration time to 20 minutes from now
+            client.setVerificationCode(verificationCode);
+            client.setVerificationCodeExpiration(LocalDateTime.now().plusMinutes(20));
+
+            // Save the updated admin with the verification code and expiration time
+            clientRepository.save(client);
+
+            // Send the recovery email
+            emailService.sendRecuperationEmail(client.getEmail(), verificationCode);
+
+            ApiResponse<String> response = new ApiResponse<>("Success", "Recovery code sent", null);
+            return new ResponseEntity<>(response, HttpStatus.OK);
+        } catch (Exception e) {
+            ApiResponse<String> response = new ApiResponse<>("Error", "Failed to send recovery code", null);
+            return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @Override
     public ResponseEntity<?> verifyCode(String clientId, @Valid VerifyClientDTO dto) {
 
         ResponseEntity<?> verificationResponse = ClientSecurityUtils.verifyClientAccessWithRole();
@@ -149,41 +197,6 @@ public class ClientServiceImpl implements ClientService {
         return ResponseEntity.badRequest().body(new ApiResponse<>("Error", "Invalid code or time expired", null));
     }
 
-
-    @Override
-    public ResponseEntity<?> existsByEmail(String email) {
-        try {
-            boolean exists = clientRepository.existsByEmail(email);
-            if (exists) {
-                ApiResponse<String> response = new ApiResponse<>("Error", "The email is in use", null);
-                return new ResponseEntity<>(response, HttpStatus.CONFLICT);
-            } else {
-                ApiResponse<String> response = new ApiResponse<>("Success", "The email is available", null);
-                return new ResponseEntity<>(response, HttpStatus.OK);
-            }
-        } catch (Exception e) {
-            ApiResponse<String> response = new ApiResponse<>("Error", "Failed to check existence of email", null);
-            return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-    }
-
-    @Override
-    public ResponseEntity<?> existsByIdCard(String idCard) {
-        try {
-            boolean exists = clientRepository.existsByIdCard(idCard);
-            if (exists) {
-                ApiResponse<String> response = new ApiResponse<>("Error", "Identification card is already in use", null);
-                return new ResponseEntity<>(response, HttpStatus.CONFLICT);
-            } else {
-                ApiResponse<String> response = new ApiResponse<>("Success", "Identification card is available", null);
-                return new ResponseEntity<>(response, HttpStatus.OK);
-            }
-        } catch (Exception e) {
-            ApiResponse<String> response = new ApiResponse<>("Error", "Failed to check identification card", null);
-            return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-    }
-
     @Override
     public ResponseEntity<?> getAllEventsPaginated(int page, int size) {
         return eventService.getAllEventsPaginated(page, size);
@@ -191,7 +204,8 @@ public class ClientServiceImpl implements ClientService {
 
     @Override
     public ResponseEntity<?> getAccountInformation(String clientId) {
-        ResponseEntity<?> verificationResponse = ClientSecurityUtils.verifyClientAccessWithId(clientId);
+
+        ResponseEntity<?> verificationResponse = ClientSecurityUtils.verifyClientAccessWithRole();
         if (verificationResponse != null) {
             return verificationResponse;
         }
@@ -227,6 +241,11 @@ public class ClientServiceImpl implements ClientService {
      */
     @Override
     public ResponseEntity<?> orderLocality(String clientId, LocalityOrderAsClientDTO dto) {
+        ResponseEntity<?> verificationResponse = ClientSecurityUtils.verifyClientAccessWithRole();
+        if (verificationResponse != null) {
+            return verificationResponse;
+        }
+
         try {
             Optional<Event> eventOptional = eventService.getEventById(dto.eventId());
 
@@ -307,6 +326,11 @@ public class ClientServiceImpl implements ClientService {
 
     @Override
     public ResponseEntity<?> cancelLocalityOrder(String clientId, LocalityOrderAsClientDTO dto) {
+        ResponseEntity<?> verificationResponse = ClientSecurityUtils.verifyClientAccessWithRole();
+        if (verificationResponse != null) {
+            return verificationResponse;
+        }
+
         try {
             // Find the client
             Optional<Client> clientOptional = clientRepository.findById(clientId);
@@ -377,11 +401,16 @@ public class ClientServiceImpl implements ClientService {
     }
 
     // This method should be called when a client clicks on the Shopping Cart button on the frontend.
-    // Should only load possible to buy LocalityOrders
+    // Should only load possible to buy LocalityOrders and its done but waiting to implement it when cleansing the database.
     // If this method does not work it may be due of EventRepository findByLocalitiesName() method.
     // FUCK SRP
     @Override
     public ResponseEntity<?> loadShoppingCart(String clientId) {
+        ResponseEntity<?> verificationResponse = ClientSecurityUtils.verifyClientAccessWithRole();
+        if (verificationResponse != null) {
+            return verificationResponse;
+        }
+
         try {
 
             // Find the client
@@ -400,18 +429,18 @@ public class ClientServiceImpl implements ClientService {
 
             ShoppingCart shoppingCart = shoppingCartOptional.get();
 
-            // Filter only the LocalityOrders that can still be purchased (event.availableForPurchase == true)
-            List<LocalityOrder> validLocalityOrders = shoppingCart.getLocalityOrders().stream()
-                    .filter(localityOrder -> {
-                        Optional<Event> eventOptional = eventService.findEventByLocalityName(localityOrder.getLocalityName());
-                        return eventOptional.isPresent() && eventOptional.get().isAvailableForPurchase();
-                    })
-                    .toList();
+//            // Filter only the LocalityOrders that can still be purchased (event.availableForPurchase == true)
+//            List<LocalityOrder> validLocalityOrders = shoppingCart.getLocalityOrders().stream()
+//                    .filter(localityOrder -> {
+//                        Optional<Event> eventOptional = eventService.findEventByLocalityName(localityOrder.getLocalityName());
+//                        return eventOptional.isPresent() && eventOptional.get().isAvailableForPurchase();
+//                    })
+//                    .toList();
+//
+//            // Update the shopping cart with the valid locality orders
+//            shoppingCart.setLocalityOrders(new ArrayList<>(validLocalityOrders));
 
-            // Update the shopping cart with the valid locality orders
-            shoppingCart.setLocalityOrders(new ArrayList<>(validLocalityOrders));
-
-            ApiResponse<ShoppingCart> response = new ApiResponse<>("Success", "Shopping cart loaded", shoppingCart);
+            ApiResponse<List<LocalityOrder>> response = new ApiResponse<>("Success", "Shopping cart loaded", shoppingCart.getLocalityOrders());
             return new ResponseEntity<>(response, HttpStatus.OK);
         } catch (Exception e) {
             ApiResponse<String> response = new ApiResponse<>("Error", "Failed to load shopping cart", e.getMessage());
@@ -420,19 +449,72 @@ public class ClientServiceImpl implements ClientService {
     }
 
     @Override
-    public Optional<Client> findClientById(String clientId) {
-        return clientRepository.findById(clientId);
+    public ResponseEntity<?> applyCoupon(String clientId, String couponName) {
+        ResponseEntity<?> verificationResponse = ClientSecurityUtils.verifyClientAccessWithRole();
+        if (verificationResponse != null) {
+            return verificationResponse;
+        }
+
+        // Obtain the client to get the ShoppingCart
+        Optional<Client> clientOptional = clientRepository.findById(clientId);
+        if (clientOptional.isEmpty()) {
+            return new ResponseEntity<>(new ApiResponse<>("Error", "Client not found", null), HttpStatus.NOT_FOUND);
+        }
+        Client client = clientOptional.get();
+
+        // Obtain the ShoppingCart
+        Optional<ShoppingCart> shoppingCartOptional = shoppingCartService.findShoppingCartById(client.getIdShoppingCart());
+        if (shoppingCartOptional.isEmpty()) {
+            return new ResponseEntity<>(new ApiResponse<>("Grave error", "Shopping cart not found", null), HttpStatus.NOT_FOUND);
+        }
+        ShoppingCart clientShoppingCart = shoppingCartOptional.get();
+
+        //
+        if (clientShoppingCart.isCouponClaimed()){
+            return new ResponseEntity<>(new ApiResponse<>("Error", "Only one coupon per ", null), HttpStatus.NOT_FOUND);
+        }
+
+        // Obtain the Coupon from the database, if the coupon does not exist return error
+        Optional<Coupon> couponOptional = couponRepository.findByName(couponName);
+        if (couponOptional.isEmpty()) {
+            return new ResponseEntity<>(new ApiResponse<>("Error", "No coupon with this name found", null), HttpStatus.NOT_FOUND);
+        }
+        Coupon coupon = couponOptional.get();
+
+        // If there are no localities in the ShoppingCart check if the coupon can be applied, else return error.
+        if(!clientShoppingCart.getLocalityOrders().isEmpty()) {
+            Double totalPriceOfLocalityOrders = clientShoppingCart.getTotalPrice();
+            if (totalPriceOfLocalityOrders < coupon.getMinPurchaseAmount()) {
+                return new ResponseEntity<>(new ApiResponse<>("Error", "Minimum pay amount to use this coupon is " + coupon.getMinPurchaseAmount(), null), HttpStatus.NOT_FOUND);
+            }
+            // After all that checks, a Coupon can be used. The discount percent is generally a natural number from 1 to 99.
+            // Updating the price with discount. Hope that the operation never fails, I don't want to try catch that.
+
+            Double totalPriceOfLocalityOrderWithDiscount = totalPriceOfLocalityOrders * (1 - ( coupon.getDiscountPercent()/100 ));
+            clientShoppingCart.setTotalPriceWithDiscount(totalPriceOfLocalityOrderWithDiscount);
+            clientShoppingCart.setCouponClaimed(true);
+            clientShoppingCart.setAppliedDiscountPercent((1 - ( coupon.getDiscountPercent()/100 )));
+            client.getListOfUsedCoupons().add(couponName);
+
+            // Saving all those changes to the database.
+            clientRepository.save(client);
+            shoppingCartRepository.save(clientShoppingCart);
+
+            return new ResponseEntity<>(new ApiResponse<>("Error", "Minimum pay amount to use this coupon is " + coupon.getMinPurchaseAmount(), null), HttpStatus.NOT_FOUND);
+        } else {
+            return new ResponseEntity<>(new ApiResponse<>("Error", "No ordered localities to apply a coupon", null), HttpStatus.NOT_FOUND);
+        }
+
     }
 
     // Method generated by IntelliJ
     private static ApiResponse<UpdateClientDTO> getUpdateClientDTOApiResponse(Optional<Client> client) {
-        String idCard = client.get().getIdCard();
         String phone = client.get().getPhoneNumber();
         String email = client.get().getEmail();
         String name = client.get().getName();
         String address = client.get().getAddress();
 
-        UpdateClientDTO dto = new UpdateClientDTO(idCard, phone, email, name, address);
+        UpdateClientDTO dto = new UpdateClientDTO(phone, email, name, address);
         return new ApiResponse<>("Success", "Client info returned", dto);
     }
 }

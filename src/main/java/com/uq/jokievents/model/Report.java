@@ -8,6 +8,7 @@ import java.util.Map;
 
 @Data
 @Document(collection = "reports")
+// Useless
 public class Report {
 
     @Id

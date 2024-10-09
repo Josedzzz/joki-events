@@ -1,5 +1,6 @@
 package com.uq.jokievents.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.uq.jokievents.model.enums.Role;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -24,6 +25,7 @@ public class Admin implements UserDetails {
 
     @Id
     private String id;
+
     private String email;
     private String username;
     private String password;

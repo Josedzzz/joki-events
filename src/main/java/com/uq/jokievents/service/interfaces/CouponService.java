@@ -7,9 +7,7 @@ import javax.validation.constraints.NotBlank;
 import java.util.Optional;
 
 public interface CouponService {
-    
-    ResponseEntity<?> findAllCoupons();
-    ResponseEntity<?> findCouponById(String id);
+
     ResponseEntity<?> getAllCouponsPaginated(int page, int size);
     Optional<Coupon> findCouponByName(String name);
     Optional<Coupon> findCouponInstanceById(String couponId);

@@ -97,4 +97,10 @@ public class ApplicationConfig {
     public String getBase64Image() {
         return base64Image;
     }
+
+    @Value("${mercadopago.accesstoken}")
+    private String accessToken;
+    public String getAccessToken() {
+        return accessToken;
+    }
 }

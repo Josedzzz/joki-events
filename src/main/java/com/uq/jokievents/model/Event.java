@@ -16,6 +16,7 @@ import java.util.List;
 @RequiredArgsConstructor
 @AllArgsConstructor
 @Document(collection = "events")
+// TODO Add an int of totalUsedDiscount. Should be easy.
 public class Event {
 
     @Id

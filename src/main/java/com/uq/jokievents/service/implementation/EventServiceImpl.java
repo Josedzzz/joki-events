@@ -332,7 +332,7 @@ public class EventServiceImpl implements EventService {
     }
 
 
-
+    // TODO Add eventId to generate reports of a single event
     @Override
     public ResponseEntity<?> generateEventsReport(LocalDateTime startDate, LocalDateTime endDate) {
         // Fetch events within the date range or all if no range is provided
@@ -344,7 +344,7 @@ public class EventServiceImpl implements EventService {
                         event.getId(),
                         event.getName(),
                         event.getCity(),
-                        event.getEventDate(),
+                        event.getEventDate().toString(),
                         event.getTotalAvailablePlaces(),
                         event.getTotalAvailablePlaces() - calculateOccupancy(event.getLocalities()),
                         calculateOccupancy(event.getLocalities()),

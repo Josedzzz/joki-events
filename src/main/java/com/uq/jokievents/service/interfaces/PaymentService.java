@@ -7,6 +7,6 @@ import java.util.Map;
 
 public interface PaymentService {
 
-    ResponseEntity<?> doPayment(String shoppingCartID) throws Exception;
+    ResponseEntity<?> doPayment(String shoppingCartID);
     void receiveMercadopagoNotification(Map<String, Object> request);
 }

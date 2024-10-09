@@ -18,6 +18,7 @@ import com.uq.jokievents.repository.CouponRepository;
 
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 import org.springframework.http.ResponseEntity;
@@ -26,6 +27,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.RequestBody;
+
+import java.time.LocalTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -149,8 +152,6 @@ public class AdminServiceImpl implements AdminService{
             String newPassword = passwordEncoder.encode(dto.newPassword());
             Optional<Admin> adminOptional = adminRepository.findByEmail(email);
 
-            System.out.println("404 ALLEGATION" + adminOptional.get().toString());
-
             if (adminOptional.isEmpty()) {
                 ApiResponse<String> response = new ApiResponse<>("Error", "Admin not found", null);
                 return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
@@ -263,7 +264,6 @@ public class AdminServiceImpl implements AdminService{
         }
     }
 
-    // TODO Tell Jose this exists, haven't told him yet
     public ResponseEntity<?> deleteAllCoupons() {
 
         ResponseEntity<?> verificationResponse = AdminSecurityUtils.verifyAdminAccessWithRole();
@@ -380,8 +380,14 @@ public class AdminServiceImpl implements AdminService{
 
     @Override
     public ResponseEntity<?> generateEventsReport(String startDate, String endDate) {
-        LocalDateTime ldtStartDate = LocalDateTime.parse(startDate);
-        LocalDateTime ldtEndDate = LocalDateTime.parse(endDate);
+
+        ResponseEntity<?> verificationResponse = AdminSecurityUtils.verifyAdminAccessWithRole();
+        if (verificationResponse != null) {
+            return verificationResponse;
+        }
+
+        LocalDateTime ldtStartDate = LocalDate.parse(startDate).atStartOfDay();
+        LocalDateTime ldtEndDate = LocalDate.parse(endDate).atTime(LocalTime.MAX);
         return eventService.generateEventsReport(ldtStartDate, ldtEndDate);
     }
 }

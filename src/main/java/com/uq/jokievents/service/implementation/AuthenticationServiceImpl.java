@@ -5,15 +5,15 @@ import com.uq.jokievents.dtos.LoginClientDTO;
 import com.uq.jokievents.dtos.RegisterClientDTO;
 import com.uq.jokievents.model.Admin;
 import com.uq.jokievents.model.Client;
-import com.uq.jokievents.model.enums.Role;
+import com.uq.jokievents.model.ShoppingCart;
 import com.uq.jokievents.repository.AdminRepository;
 import com.uq.jokievents.repository.ClientRepository;
+import com.uq.jokievents.repository.ShoppingCartRepository;
 import com.uq.jokievents.service.interfaces.AuthenticationService;
 import com.uq.jokievents.utils.*;
 import com.uq.jokievents.service.interfaces.JwtService;
 import lombok.RequiredArgsConstructor;
 import org.bson.types.ObjectId;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -38,11 +38,9 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     private final PasswordEncoder passwordEncoder;
     private final AuthenticationManager authenticationManager;
     private final AdminRepository adminRepository;
-
-    @Autowired
-    private Utils utils;
-    @Autowired
-    private EmailService emailService;
+    private final ShoppingCartRepository shoppingCartRepository;
+    private final Utils utils;
+    private final EmailService emailService;
 
     @Override
     public ResponseEntity<?> loginAdmin(AuthAdminDTO request) {
@@ -135,14 +133,30 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         // Assigning other attributes
         client.setVerificationCode(verificationCode);
         client.setVerificationCodeExpiration(expiration);
+        client.setListOfUsedCoupons(new ArrayList<>());
+        // Creating the ShoppingCart instance unique to the client
         client.setIdShoppingCart(String.valueOf(new ObjectId()));
+        ShoppingCart clientShoppingCart = ShoppingCart.builder()
+                .id(client.getIdShoppingCart())
+                .paymentGatewayId("")
+                .idClient(client.getId())
+                .localityOrders(new ArrayList<>())
+                .totalPrice(0.0)
+                .totalPriceWithDiscount(0.0)
+                .orderPayment(null)
+                .paymentCoupon("")
+                .appliedDiscountPercent(1.0)
+                .couponClaimed(false)
+                .build();
+
         client.setActive(false);
 
         // Sending the verification email
         emailService.sendVerificationMail(client.getEmail(), verificationCode);
 
-        // Stores the client in the database
+        // Stores the client and its shopping cart in the database
         clientRepository.save(client);
+        shoppingCartRepository.save(clientShoppingCart);
 
         // Returns a response entity
         ApiTokenResponse<Object> response = new ApiTokenResponse<>("Success", "Client registered successfully", client.getId(), jwtService.getClientToken(client));

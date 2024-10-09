@@ -8,7 +8,7 @@ public record ReportEventDTO(
         String id,
         String name,
         String city,
-        LocalDateTime eventDate,
+        String eventDate,
         int totalAvailablePlaces,
         int remainingPlaces,
         int currentOccupancy,

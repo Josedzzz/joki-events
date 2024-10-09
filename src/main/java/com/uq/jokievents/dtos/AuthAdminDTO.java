@@ -6,7 +6,7 @@ import jakarta.validation.constraints.Size;
 
 public record AuthAdminDTO (
 
-    //@Null(message = "Username cannot be null")
+    @NotBlank(message = "Username cannot be null")
     @Size(min = 2, max = 50, message = "Name must be between 2 and 50 characters")
     String username,
     

@@ -17,13 +17,13 @@ public class EventController {
     private final EventService eventService;
 
     @GetMapping("/filter-after-date")
-    public ResponseEntity<?> filterEventsAfterCertainDate(@RequestParam String date, @RequestParam String endDate, @RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "16") int size) {
+    public ResponseEntity<?> filterEventsAfterCertainDate(@RequestParam String date, @RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "16") int size) {
         return eventService.filterEventsAfterCertainDate(date, page, size);
     }
 
     /**
      * This would use something like this: GET htp://localhost:8080/api/events/filter-between-dates?startDate=2025-02-10T00:00:00&endDate=2025-03-01T00:00:00
-     * In the frontend.
+     * In Postman.
      * @param startDate String
      * @param endDate String
      * @return ResponseEntity

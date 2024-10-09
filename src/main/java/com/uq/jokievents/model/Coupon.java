@@ -16,7 +16,7 @@ public class Coupon {
     private double discountPercent;
     private LocalDateTime expirationDate;
     private double minPurchaseAmount;
-    private boolean isUsed = false;
+    private boolean isUsed = false; // Change to amount of times used or active
 
     // Constructors
     public Coupon() {

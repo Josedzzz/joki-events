@@ -28,31 +28,6 @@ public class CouponServiceImpl implements CouponService {
 
     private final CouponRepository couponRepository;
 
-    // TODO DEPRECATED
-    @Override
-    public ResponseEntity<?> findAllCoupons() {
-        try {
-            List<Coupon> coupons = couponRepository.findAll();
-            return new ResponseEntity<>(coupons, HttpStatus.OK);
-        } catch (Exception e) {
-            return new ResponseEntity<>("Failed coupons request", HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-    }
-
-    @Override
-    public ResponseEntity<?> findCouponById(String id) {
-        try {
-            Optional<Coupon> coupon = couponRepository.findById(id);
-            if (coupon.isPresent()) {
-                return new ResponseEntity<>(coupon.get(), HttpStatus.OK);
-            } else {
-                return new ResponseEntity<>("Coupon not found", HttpStatus.NOT_FOUND);
-            }
-        } catch (Exception e) {
-            return new ResponseEntity<>("Failed coupon request", HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-    }
-
     @Override
     public ResponseEntity<?> getAllCouponsPaginated(int page, int size) {
         try {
