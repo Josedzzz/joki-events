@@ -54,23 +54,27 @@ public class ClientServiceImpl implements ClientService {
             return verificationResponse;
         }
 
+        StringBuilder optionalMessages = new StringBuilder();
+
         try {
             Optional<Client> existingClient = clientRepository.findById(clientId);
             if (existingClient.isPresent()) {
                 Client client = existingClient.get();
                 System.out.println(client);
 
-                // Could this throw a NullPointerException?
+                // Si existe déjelo igual
                 if (dto.email() != null && utils.existsEmailClient(dto.email())) {
-                    ApiResponse<String> response = new ApiResponse<>("Error", "The email is in use", null);
-                    return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+                    client.setEmail(dto.email());
+                } else {
+                    optionalMessages.append("Email changed, please confirm new email in the email we sent\n Account deactivated until then");
+                    client.setEmail(dto.email());
+                    client.setActive(false);
+                    client.setVerificationCodeExpiration(LocalDateTime.now().plusMinutes(15));
+                    emailService.sendVerificationMail(dto.email(), Generators.generateRndVerificationCode());
                 }
 
                 if (dto.phone() != null) {
                     client.setPhoneNumber(dto.phone());
-                }
-                if (dto.email() != null) {
-                    client.setEmail(dto.email());
                 }
                 if (dto.name() != null) {
                     client.setName(dto.name());
