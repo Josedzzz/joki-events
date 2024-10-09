@@ -112,4 +112,9 @@ public class ClientController {
     public ResponseEntity<?> loadShoppingCart(@PathVariable String clientId) {
         return clientService.loadShoppingCart(clientId);
     }
+
+    @PostMapping("/apply-coupon/{clientId}")
+    public ResponseEntity<?> applyCoupon(@PathVariable String clientId, String couponName) {
+        return clientService.applyCoupon(clientId, couponName);
+    }
 }
