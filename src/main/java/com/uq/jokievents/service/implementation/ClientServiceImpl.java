@@ -2,7 +2,6 @@ package com.uq.jokievents.service.implementation;
 
 import com.uq.jokievents.dtos.LocalityOrderAsClientDTO;
 import com.uq.jokievents.dtos.UpdateClientDTO;
-import com.uq.jokievents.dtos.VerifyClientDTO;
 import com.uq.jokievents.model.*;
 import com.uq.jokievents.repository.ClientRepository;
 import com.uq.jokievents.repository.CouponRepository;
@@ -22,8 +21,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 
 import java.time.LocalDateTime;
 import java.util.*;
-
-import javax.validation.Valid;
 
 @Service
 @Transactional
@@ -125,80 +122,6 @@ public class ClientServiceImpl implements ClientService {
             ApiResponse<String> response = new ApiResponse<>("Error", "Failed to delete client", null);
             return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
         }
-    }
-
-    @Override
-    public ResponseEntity<?> sendRecoverPasswordCode(String email) {
-
-        ResponseEntity<?> verificationResponse = ClientSecurityUtils.verifyClientAccessWithRole();
-        if (verificationResponse != null) {
-            return verificationResponse;
-        }
-
-        try {
-            // Validate if the client exists by email
-            Optional<Client> clientOptional = clientRepository.findByEmail(email);
-            if (clientOptional.isEmpty()) {
-                ApiResponse<String> response = new ApiResponse<>("Error", "Admin not found.", null);
-                return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
-            }
-
-            Client client = clientOptional.get();
-
-            // Generate a new verification code
-            String verificationCode = Generators.generateRndVerificationCode();
-
-            // Set the expiration time to 20 minutes from now
-            client.setVerificationCode(verificationCode);
-            client.setVerificationCodeExpiration(LocalDateTime.now().plusMinutes(20));
-
-            // Save the updated admin with the verification code and expiration time
-            clientRepository.save(client);
-
-            // Send the recovery email
-            emailService.sendRecuperationEmail(client.getEmail(), verificationCode);
-
-            ApiResponse<String> response = new ApiResponse<>("Success", "Recovery code sent", null);
-            return new ResponseEntity<>(response, HttpStatus.OK);
-        } catch (Exception e) {
-            ApiResponse<String> response = new ApiResponse<>("Error", "Failed to send recovery code", null);
-            return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-    }
-
-    @Override
-    public ResponseEntity<?> verifyCode(String clientId, @Valid VerifyClientDTO dto) {
-
-        ResponseEntity<?> verificationResponse = ClientSecurityUtils.verifyClientAccessWithRole();
-        if (verificationResponse != null) {
-            return verificationResponse;
-        }
-
-        Optional<Client> clientOpt = clientRepository.findById(clientId);
-        if (clientOpt.isEmpty()) {
-            ApiResponse<String> response = new ApiResponse<>("Error", "Client not found", null);
-            return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
-        }
-
-        Client client = clientOpt.get();
-        if (client.getVerificationCode() == null || client.getVerificationCodeExpiration() == null) {
-            ApiResponse<String> response = new ApiResponse<>("Error", "Verification code expired", null);
-            return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
-        }
-
-        boolean isVerified = client.getVerificationCode().equals(dto.verificationCode()) &&
-                LocalDateTime.now().isBefore(client.getVerificationCodeExpiration());
-
-        if (isVerified) {
-            client.setVerificationCode(null);
-            client.setVerificationCodeExpiration(null);
-            client.setActive(true);
-            clientRepository.save(client);
-
-            return ResponseEntity.ok(new ApiResponse<>("Success", "Client verification done", null));
-        }
-
-        return ResponseEntity.badRequest().body(new ApiResponse<>("Error", "Invalid code or time expired", null));
     }
 
     @Override

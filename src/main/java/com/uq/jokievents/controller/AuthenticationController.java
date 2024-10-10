@@ -1,9 +1,8 @@
 package com.uq.jokievents.controller;
 
-import com.uq.jokievents.dtos.AuthAdminDTO;
-import com.uq.jokievents.dtos.LoginClientDTO;
-import com.uq.jokievents.dtos.RegisterClientDTO;
+import com.uq.jokievents.dtos.*;
 import com.uq.jokievents.service.interfaces.AuthenticationService;
+import jakarta.validation.constraints.Email;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.http.ResponseEntity;
@@ -30,6 +29,16 @@ public class AuthenticationController {
     @PostMapping("/register-client")
     public ResponseEntity<?> registerClient(@RequestBody @Valid RegisterClientDTO registerClientRequest) {
         return authenticationService.registerClient(registerClientRequest);
+    }
+
+    @PostMapping("/send-recover-password-code")
+    public ResponseEntity<?> sendRecoverPasswordCode(@RequestBody EmailDTO email) {
+        return authenticationService.sendRecoverPasswordCode(email);
+    }
+
+    @PostMapping("/recover-password")
+    public ResponseEntity<?> recoverPassword(@RequestBody @Valid RecoverPassDTO recoverPassDTO) {
+        return authenticationService.recoverPassword(recoverPassDTO);
     }
 }
 

@@ -1,7 +1,6 @@
 package com.uq.jokievents.dtos;
 
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Null;
 import jakarta.validation.constraints.Size;
 
 public record AuthAdminDTO (

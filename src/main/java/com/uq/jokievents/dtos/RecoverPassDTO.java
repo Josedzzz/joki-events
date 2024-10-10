@@ -2,9 +2,8 @@ package com.uq.jokievents.dtos;
 
 import jakarta.validation.constraints.*;
 
-public record RecoverPassAdminDTO(
-        @NotBlank(message = "Email cannot be blank")
-        @Email(message = "Email should be valid")
+public record RecoverPassDTO(
+        @NotBlank(message = "Email/Username cannot be blank")
         String email,
 
         @NotBlank(message = "Verification code cannot be blank")

@@ -1,8 +1,6 @@
 package com.uq.jokievents.service.implementation;
 
-import com.uq.jokievents.dtos.AuthAdminDTO;
-import com.uq.jokievents.dtos.LoginClientDTO;
-import com.uq.jokievents.dtos.RegisterClientDTO;
+import com.uq.jokievents.dtos.*;
 import com.uq.jokievents.model.Admin;
 import com.uq.jokievents.model.Client;
 import com.uq.jokievents.model.ShoppingCart;
@@ -23,6 +21,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.swing.text.html.Option;
 import javax.validation.Valid;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -100,6 +99,117 @@ public class AuthenticationServiceImpl implements AuthenticationService {
             }
         } catch (Exception e) {
             ApiResponse<String> response = new ApiResponse<>("Error", "Failed to find client", null);
+            return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @Override
+    public ResponseEntity<?> sendRecoverPasswordCode(EmailDTO dto) {
+        try {
+            String email = dto.email(); // Je me sens tellement dérangé
+
+            if (adminRepository.findByEmail(email).isPresent()) {
+                Admin admin = adminRepository.findByEmail(email).get();
+                // Generate a new verification code
+                String verificationCode = Generators.generateRndVerificationCode();
+
+                // Set the expiration time to 20 minutes from now
+                admin.setVerificationCode(verificationCode);
+                admin.setVerificationCodeExpiration(LocalDateTime.now().plusMinutes(20));
+
+                // Save the updated admin with the verification code and expiration time
+                adminRepository.save(admin);
+
+                // Send the recovery email
+                emailService.sendRecuperationEmail(admin.getEmail(), verificationCode);
+                ApiResponse<String> response = new ApiResponse<>("Success", "Recovery code sent", null);
+                return new ResponseEntity<>(response, HttpStatus.OK);
+            }
+            else if(clientRepository.findByEmail(email).isPresent()) {
+                Client client = clientRepository.findByEmail(email).get();
+
+                // Generate a new verification code
+                String verificationCode = Generators.generateRndVerificationCode();
+
+                // Set the expiration time to 20 minutes from now
+                client.setVerificationCode(verificationCode);
+                client.setVerificationCodeExpiration(LocalDateTime.now().plusMinutes(20));
+
+                // Save the updated admin with the verification code and expiration time
+                clientRepository.save(client);
+
+                // Send the recovery email
+                emailService.sendRecuperationEmail(client.getEmail(), verificationCode);
+                ApiResponse<String> response = new ApiResponse<>("Success", "Recovery code sent", null);
+                return new ResponseEntity<>(response, HttpStatus.OK);
+            } else {
+                ApiResponse<String> response = new ApiResponse<>("Error", "No one is registered with that email", null);
+                return new ResponseEntity<>(response, HttpStatus.OK);
+            }
+        } catch (Exception e) {
+            ApiResponse<String> response = new ApiResponse<>("Error", "Password code sending failed", e.getMessage());
+            return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @Override
+    public ResponseEntity<?> recoverPassword(RecoverPassDTO dto) {
+        //est-ce informatiquement inefficace ? Cette méthode sera-t-elle vraiment là ? Devons-nous gérer un lien ?
+        String email = dto.email();
+        String verificationCode =  dto.verificationCode();
+        String newPassword = passwordEncoder.encode(dto.newPassword());
+
+        try {
+            if (adminRepository.findByEmail(email).isPresent()) {
+                Admin admin = adminRepository.findByEmail(email).orElse(null);
+                assert admin != null;
+
+                if (admin.getVerificationCodeExpiration().isBefore(LocalDateTime.now())) {
+                    ApiResponse<String> response = new ApiResponse<>("Error", "Verification code has expired", null);
+                    return new ResponseEntity<>(response, HttpStatus.UNAUTHORIZED);
+                }
+
+                // Verify if the code matches (assuming the admin entity has a verification code field) (Jose will make sure of it)
+                if (!admin.getVerificationCode().equals(verificationCode)) {
+                    ApiResponse<String> response = new ApiResponse<>("Error", "Invalid verification code", null);
+                    return new ResponseEntity<>(response, HttpStatus.UNAUTHORIZED);
+                }
+
+                // Update the password
+                admin.setPassword(newPassword);
+                admin.setVerificationCode("");
+                adminRepository.save(admin);
+
+                ApiResponse<String> response = new ApiResponse<>("Success", "Password recovery done", null);
+                return new ResponseEntity<>(response, HttpStatus.OK);
+            } else if (clientRepository.findByEmail(email).isPresent()){
+                Client client = clientRepository.findByEmail(email).orElse(null);
+                assert client != null;
+
+                if (client.getVerificationCodeExpiration().isBefore(LocalDateTime.now())) {
+                    ApiResponse<String> response = new ApiResponse<>("Error", "Verification code has expired", null);
+                    return new ResponseEntity<>(response, HttpStatus.UNAUTHORIZED);
+                }
+
+                // Verify if the code matches (assuming the admin entity has a verification code field) (Jose will make sure of it)
+                if (!client.getVerificationCode().equals(verificationCode)) {
+                    ApiResponse<String> response = new ApiResponse<>("Error", "Invalid verification code", null);
+                    return new ResponseEntity<>(response, HttpStatus.UNAUTHORIZED);
+                }
+
+                // Update the password
+                client.setPassword(newPassword);
+                client.setVerificationCode("");
+                clientRepository.save(client);
+
+                ApiResponse<String> response = new ApiResponse<>("Success", "Password recovery done", null);
+                return new ResponseEntity<>(response, HttpStatus.OK);
+            } else {
+                ApiResponse<String> response = new ApiResponse<>("Error", "No one is registered with that email", null);
+                return new ResponseEntity<>(response, HttpStatus.OK);
+            }
+        } catch (Exception e) {
+            ApiResponse<String> response = new ApiResponse<>("Error", "Password recovery failed", null);
             return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }

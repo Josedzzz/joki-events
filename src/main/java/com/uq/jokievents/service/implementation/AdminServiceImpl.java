@@ -3,21 +3,14 @@ package com.uq.jokievents.service.implementation;
 import javax.validation.Valid;
 
 import com.uq.jokievents.dtos.*;
-import com.uq.jokievents.model.Locality;
 import com.uq.jokievents.model.Event;
-import com.uq.jokievents.repository.EventRepository;
-import com.uq.jokievents.repository.LocalityRepository;
 import com.uq.jokievents.service.interfaces.*;
 import com.uq.jokievents.utils.*;
-import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.http.HttpStatus;
 import com.uq.jokievents.model.Admin;
 import com.uq.jokievents.model.Coupon;
 import com.uq.jokievents.repository.AdminRepository;
-import com.uq.jokievents.repository.CouponRepository;
 
-import java.io.IOException;
-import java.io.PrintWriter;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
@@ -30,7 +23,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 
 import java.time.LocalTime;
 import java.util.*;
-import java.util.stream.Collectors;
 
 import lombok.RequiredArgsConstructor;
 
@@ -94,90 +86,6 @@ public class AdminServiceImpl implements AdminService{
         } catch (Exception e) {
             // Would only output if the database fails
             ApiResponse<String> response = new ApiResponse<>("Error", "Failed to delete admin", null);
-            return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-    }
-
-    @Override
-    public ResponseEntity<?> sendRecoverPasswordCode(String email) {
-
-        ResponseEntity<?> verificationResponse = AdminSecurityUtils.verifyAdminAccessWithRole();
-        if (verificationResponse != null) {
-            return verificationResponse;
-        }
-
-        try {
-            // Validate if the admin exists by email
-            Optional<Admin> adminOptional = adminRepository.findByEmail(email);
-            if (adminOptional.isEmpty()) {
-                ApiResponse<String> response = new ApiResponse<>("Error", "Admin not found.", null);
-                return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
-            }
-
-            Admin admin = adminOptional.get();
-
-            // Generate a new verification code
-            String verificationCode = Generators.generateRndVerificationCode();
-
-            // Set the expiration time to 20 minutes from now
-            admin.setVerificationCode(verificationCode);
-            admin.setVerificationCodeExpiration(LocalDateTime.now().plusMinutes(20));
-
-            // Save the updated admin with the verification code and expiration time
-            adminRepository.save(admin);
-
-            // Send the recovery email
-            emailService.sendRecuperationEmail(admin.getEmail(), verificationCode);
-
-            ApiResponse<String> response = new ApiResponse<>("Success", "Recovery code sent", null);
-            return new ResponseEntity<>(response, HttpStatus.OK);
-        } catch (Exception e) {
-            ApiResponse<String> response = new ApiResponse<>("Error", "Failed to send recovery code", null);
-            return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-    }
-
-    @Override
-    public ResponseEntity<?> recoverPassword(@Valid RecoverPassAdminDTO dto) {
-
-        ResponseEntity<?> verificationResponse = AdminSecurityUtils.verifyAdminAccessWithRole();
-        if (verificationResponse != null) {
-            return verificationResponse;
-        }
-
-        try {
-            // Validate if the user exists
-            String email = dto.email();
-            String verificationCode =  dto.verificationCode();
-            String newPassword = passwordEncoder.encode(dto.newPassword());
-            Optional<Admin> adminOptional = adminRepository.findByEmail(email);
-
-            if (adminOptional.isEmpty()) {
-                ApiResponse<String> response = new ApiResponse<>("Error", "Admin not found", null);
-                return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
-            }
-
-            Admin admin = adminOptional.get();
-            // Check if the verification code is expired
-            if (admin.getVerificationCodeExpiration().isBefore(LocalDateTime.now())) {
-                ApiResponse<String> response = new ApiResponse<>("Error", "Verification code has expired", null);
-                return new ResponseEntity<>(response, HttpStatus.UNAUTHORIZED);
-            }
-            // Verify if the code matches (assuming the admin entity has a verification code field) (Jose will make sure of it)
-            if (!admin.getVerificationCode().equals(verificationCode)) {
-                ApiResponse<String> response = new ApiResponse<>("Error", "Invalid verification code", null);
-                return new ResponseEntity<>(response, HttpStatus.UNAUTHORIZED);
-            }
-
-            // Update the password
-            admin.setPassword(newPassword);
-            admin.setVerificationCode("");
-            adminRepository.save(admin);
-
-            ApiResponse<String> response = new ApiResponse<>("Success", "Password recovery done", null);
-            return new ResponseEntity<>(response, HttpStatus.OK);
-        } catch (Exception e) {
-            ApiResponse<String> response = new ApiResponse<>("Error", "Password recovery failed", null);
             return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }

@@ -51,26 +51,6 @@ public class ClientController {
         return clientService.deleteAccount(id);
     }
 
-    @PostMapping("/send-recovery-code/{clientId}")
-    public ResponseEntity<?> sendRecoveryCode(@PathVariable String clientId, String email) {
-        return clientService.sendRecoverPasswordCode(email);
-    }
-
-    /**
-     * Verify a clients code
-     * Jose auth this!
-     * Example JSON:
-     * {
-     *  "verificationCode": "123456"
-     * }
-     * @param dto the dto that bring the front
-     * @return an entity response
-     */
-    @PostMapping("/{id}/verify")
-    public ResponseEntity<?> verifyClient(@PathVariable String id, @RequestBody VerifyClientDTO dto) {
-        return clientService.verifyCode(id, dto);
-    }
-
     @GetMapping("/get-paginated-events")
     public ResponseEntity<?> getAllEventsPaginated(@RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "16") int size) {
         return clientService.getAllEventsPaginated(page, size);

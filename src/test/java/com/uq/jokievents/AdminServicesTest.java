@@ -186,6 +186,7 @@ public class AdminServicesTest {
         Optional<Admin> adminOptional = adminRepository.findByEmail(validEmail);
         if (adminOptional.isPresent()) {
             adminAux = adminOptional.get();
+            System.out.println(adminAux);
         }
 
         // Mock the security context to simulate an "ADMIN" user

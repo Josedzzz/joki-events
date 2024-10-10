@@ -12,8 +12,7 @@ import java.util.Optional;
 public interface ClientService {
     ResponseEntity<?> updateClient(String clientId, UpdateClientDTO dto);
     ResponseEntity<?> deleteAccount(String id);
-    ResponseEntity<?> sendRecoverPasswordCode(String email);
-    ResponseEntity<?> verifyCode(String clientId, VerifyClientDTO dto);
+
     ResponseEntity<?> getAllEventsPaginated(int page, int size);
     ResponseEntity<?> getAccountInformation(String clientId);
     ResponseEntity<?> orderLocality(String clientId, LocalityOrderAsClientDTO dto);

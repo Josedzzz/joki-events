@@ -3,16 +3,13 @@ package com.uq.jokievents.controller;
 import com.uq.jokievents.dtos.*;
 import com.uq.jokievents.service.interfaces.AdminService;
 
-import com.uq.jokievents.service.interfaces.AuthenticationService;
 import lombok.RequiredArgsConstructor;
 
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
-import java.util.List;
 
 @RestController
 @RequestMapping("/api/admin")
@@ -44,27 +41,6 @@ public class AdminController {
     @DeleteMapping("/{adminId}/delete")
     public ResponseEntity<?> deleteAdminById(@PathVariable String adminId) {
         return adminService.deleteAdminAccount(adminId);
-    }
-
-    @PostMapping("/send-recover-code")
-    public ResponseEntity<?> sendRecoverCode(@RequestParam String email) {
-        return adminService.sendRecoverPasswordCode(email);
-    }
-
-    /**
-     * Example JSON:
-     * {
-     * "email": "mail@mail.com", // Usa este para encontrar al cliente.
-     * "verificationCode": "123456",
-     * "newPassword": "new-non-encrypted-password"
-     * }
-     *
-     * @param dto RecoverPassAdminDTO
-     * @return ResponseEntity
-     */
-    @PostMapping("/recover-password")
-    public ResponseEntity<?> recoverPassword(@Valid @RequestBody RecoverPassAdminDTO dto) {
-        return adminService.recoverPassword(dto);
     }
 
     /**
