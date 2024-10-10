@@ -19,4 +19,6 @@ public interface ClientService {
     ResponseEntity<?> cancelLocalityOrder(String clientId, LocalityOrderAsClientDTO dto);
     ResponseEntity<?> loadShoppingCart(String clientId);
     ResponseEntity<?> applyCoupon(String clientId, String coupon);
+
+    ResponseEntity<?> verifyClient(String clientId, String verificationCode);
 }
