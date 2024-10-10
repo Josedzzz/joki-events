@@ -133,4 +133,6 @@ public class AuthenticationControllerTest {
                 .andExpect(jsonPath("$.message").exists());
 
     }
+
+    // I would like to test the mailing service, but I am afraid someone would make me block my gmail account. It works, trust us!
 }
