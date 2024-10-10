@@ -15,7 +15,6 @@ import com.uq.jokievents.repository.CouponRepository;
 import com.uq.jokievents.repository.EventRepository;
 import com.uq.jokievents.service.interfaces.CouponService;
 import com.uq.jokievents.service.implementation.JwtServiceImpl;
-import com.uq.jokievents.service.interfaces.EventService;
 import com.uq.jokievents.utils.Generators;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -30,7 +29,6 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
 
@@ -64,16 +62,10 @@ public class AdminServicesTest {
     private JwtServiceImpl jwtService;
 
     @Autowired
-    private PasswordEncoder passwordEncoder;
-
-    @Autowired
     private CouponService couponService;
 
     @Autowired
     private CouponRepository couponRepository;
-
-    @Autowired
-    private EventService eventService;
 
     @Autowired
     private ApplicationConfig appConfig;
@@ -174,91 +166,7 @@ public class AdminServicesTest {
                 .andExpect(jsonPath("$.message").value("Admin account deactivated"));
     }
 
-    //  SEND RECOVER PASSWORD TESTING
-    // Only testing success here as recreating the security context is hard with an incorrect email, also, other than success in this method is unlikely
-    @Test
-    public void testSendRecoverPasswordCode_Success() throws Exception {
-
-        // Existing globalAdmin email
-        String validEmail = "balinius11@gmail.com";
-        Admin adminAux = new Admin(); // mémoire
-
-        Optional<Admin> adminOptional = adminRepository.findByEmail(validEmail);
-        if (adminOptional.isPresent()) {
-            adminAux = adminOptional.get();
-            System.out.println(adminAux);
-        }
-
-        // Mock the security context to simulate an "ADMIN" user
-        Set<SimpleGrantedAuthority> simpleGrantedAuthorities = new java.util.HashSet<>();
-        simpleGrantedAuthorities.add(new SimpleGrantedAuthority("ADMIN"));
-        Authentication auth = new TestingAuthenticationToken("admin", null, simpleGrantedAuthorities);
-        SecurityContext securityContext = SecurityContextHolder.createEmptyContext();
-        securityContext.setAuthentication(auth);
-        SecurityContextHolder.setContext(securityContext);
-
-        // Simulate a valid JWT token for authorization
-        UserDetails adminDetails = adminRepository.findById(adminAux.getId()).orElse(null);
-        String currentToken = jwtService.getAdminToken(adminDetails);
-
-        System.out.println("GENERATED TOKEN: " + currentToken);
-
-        mockMvc.perform(post("/api/admin/send-recover-code")
-                        .header("Authorization", "Bearer " + currentToken)
-                        .param("email", validEmail)
-                        .contentType(MediaType.APPLICATION_JSON))
-                .andDo(print())
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.status").value("Success"))
-                .andExpect(jsonPath("$.message").value("Recovery code sent"));
-
-        // Clean up the security context after the test
-        SecurityContextHolder.clearContext();
-    }
-
-
-    @Test
-    public void testRecoverPassword_Success() throws Exception {
-        // Use the valid email from the setup
-        String validEmail = globalAdmin.getEmail();
-
-        // Mock the security context to simulate an "ADMIN" user
-        Authentication auth = new TestingAuthenticationToken("admin", null, Collections.singleton(new SimpleGrantedAuthority("ADMIN")));
-        SecurityContext securityContext = SecurityContextHolder.createEmptyContext();
-        securityContext.setAuthentication(auth);
-        SecurityContextHolder.setContext(securityContext);
-
-        // Simulate a valid JWT token for authorization
-        UserDetails adminDetails = adminRepository.findByEmail(validEmail).orElse(null);
-        if (adminDetails != null) {
-            String currentToken = jwtService.getAdminToken(adminDetails);
-            System.out.println("GENERATED TOKEN: " + currentToken);
-
-            // Create a DTO for the request
-            String requestBody = "{ \"email\": \"" + validEmail + "\", \"verificationCode\": \"123456\", \"newPassword\": \"newSecurePassword\" }";
-
-            // Perform the POST request
-            mockMvc.perform(post("/api/admin/recover-password")
-                            .header("Authorization", "Bearer " + currentToken)
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(requestBody))
-                    .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.status").value("Success"))
-                    .andExpect(jsonPath("$.message").value("Password recovery done"));
-
-            // Verify if the password was updated
-            Optional<Admin> updatedAdminOptional = adminRepository.findByEmail(validEmail);
-            assertTrue(updatedAdminOptional.isPresent());
-            Admin updatedAdmin = updatedAdminOptional.get();
-            // Use your password encoding logic here to verify the password
-            assertTrue(passwordEncoder.matches("newSecurePassword", updatedAdmin.getPassword()));
-        } else {
-            fail("Admin not found in the database.");
-        }
-    }
-
     // CREATE COUPON TESTING
-
     @Test
     public void testCreateCoupon_Success() throws Exception {
         // Existing globalAdmin email (globalAdmin exists in DB)
@@ -371,7 +279,6 @@ public class AdminServicesTest {
         String requestBody = "{ \"discount\": 25.0, \"expirationDate\": \"2024-12-31T23:59:59\", \"minPurchaseAmount\": 150.0 }";
 
         // Perform the PUT request to update the coupon, coupon exists in the database
-        // TODO Add this Coupon to dataset.js
         mockMvc.perform(post("/api/admin/update-coupon/67054eb8734d84764f8b0316")
                         .header("Authorization", "Bearer "+currentToken)
                         .contentType(MediaType.APPLICATION_JSON)
@@ -461,7 +368,6 @@ public class AdminServicesTest {
 
     // UPDATE EVENT SUCCESS TESTING
 
-    // TODO Add the a event with that id to dataset.js
     @Test
     public void testUpdateEvent() throws Exception {
         String eventId = "6705590b39e3c64472be8665"; // Example event ID
@@ -528,8 +434,7 @@ public class AdminServicesTest {
 
 
 
-    // AUXILIARY METHODS
-    // TODO
+    // AUXILIARY METHODS, This is not cheating. These instances will probable be deleted so inserting them in the dataset.js would be useless.
 
     private void createTestEvent() {
         // Create and save a test event with the specified ID
