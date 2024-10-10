@@ -22,7 +22,7 @@ public class EventController {
     }
 
     /**
-     * This would use something like this: GET htp://localhost:8080/api/events/filter-between-dates?startDate=2025-02-10T00:00:00&endDate=2025-03-01T00:00:00
+     * This would use something like this: GET http://localhost:8080/api/events/filter-between-dates?startDate=2025-02-10T00:00:00&endDate=2025-03-01T00:00:00
      * In Postman.
      * @param startDate String
      * @param endDate String
