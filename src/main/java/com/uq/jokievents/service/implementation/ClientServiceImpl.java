@@ -203,6 +203,7 @@ public class ClientServiceImpl implements ClientService {
                 return new ResponseEntity<>(new ApiResponse<>("Error", "Not enough tickets available", null), HttpStatus.BAD_REQUEST);
             }
             locality.setMaxCapacity(locality.getMaxCapacity() - dto.ticketsSelected());
+            event.setTotalAvailablePlaces(event.getTotalAvailablePlaces() - dto.ticketsSelected());
 
             // Validate payment amount, if this ever outputs I will be very confused
             double expectedPayment = dto.ticketsSelected() * locality.getPrice();
@@ -278,8 +279,8 @@ public class ClientServiceImpl implements ClientService {
             // Find the LocalityOrder to be canceled
             LocalityOrder orderToCancel = shoppingCart.getLocalityOrders().stream()
                     .filter(order -> order.getLocalityName().equals(dto.localityName())
-                            && order.getNumTicketsSelected() == dto.ticketsSelected()
-                            && order.getTotalPaymentAmount().equals(dto.totalPaymentAmount()))
+                            && order.getNumTicketsSelected() >= dto.ticketsSelected()
+                            && order.getTotalPaymentAmount() >=  (dto.totalPaymentAmount()))
                     .findFirst()
                     .orElse(null);
 
@@ -305,6 +306,7 @@ public class ClientServiceImpl implements ClientService {
 
             // Restore the tickets in the locality
             localityToUpdate.setMaxCapacity(localityToUpdate.getMaxCapacity() + dto.ticketsSelected());
+            event.setTotalAvailablePlaces(event.getTotalAvailablePlaces() + dto.ticketsSelected());
 
             // Remove the LocalityOrder from the shopping cart
             shoppingCart.getLocalityOrders().remove(orderToCancel);

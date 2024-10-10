@@ -31,9 +31,9 @@ public class ClientController {
      *  "localityName": "VeryCoolName",
      *  "address": "Very Cool Address"
      * }
-     * @param id     the identifier of the client to update
-     * @param client the updated client object
-     * @return a ResponseEntity containing the update client
+     * @param id String
+     * @param client Client
+     * @return ResponseEntity
      */
     @PostMapping("/{id}/update")
     public ResponseEntity<?> updateClient(@PathVariable String id, @RequestBody UpdateClientDTO client) {
@@ -43,12 +43,12 @@ public class ClientController {
     /**
      * Delete client by id
      *
-     * @param id the identifier of the client to delete
+     * @param clientId the identifier of the client to delete
      * @return a ResponseEntity object with and HTTP status
      */
-    @PostMapping("/{id}/delete")
-    public ResponseEntity<?> deleteAccount(@PathVariable String id) {
-        return clientService.deleteAccount(id);
+    @PostMapping("/{clientId}/delete")
+    public ResponseEntity<?> deleteAccount(@PathVariable String clientId) {
+        return clientService.deleteAccount(clientId);
     }
 
     @GetMapping("/get-paginated-events")
@@ -93,6 +93,12 @@ public class ClientController {
         return clientService.loadShoppingCart(clientId);
     }
 
+    /**
+     * Check if that String couponName must be changed to a dto.
+     * @param clientId String
+     * @param couponName String
+     * @return ResponseEntity
+     */
     @PostMapping("/apply-coupon/{clientId}")
     public ResponseEntity<?> applyCoupon(@PathVariable String clientId, String couponName) {
         return clientService.applyCoupon(clientId, couponName);
