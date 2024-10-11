@@ -12,6 +12,7 @@ public record LoadLocalityOrdersForClient(
         String localityName,
         Double totalPaymentAmount,
 
+        String eventId,
         String eventName,
         String address,
         String city,
