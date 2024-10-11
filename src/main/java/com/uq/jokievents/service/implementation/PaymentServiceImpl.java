@@ -51,7 +51,7 @@ public class PaymentServiceImpl implements PaymentService {
             Optional<ShoppingCart> shoppingCartOptional = obtenerOrden(shoppingCartID);
             if (shoppingCartOptional.isEmpty()) return null;
             ShoppingCart shoppingCart = shoppingCartOptional.get();
-            // Will be 1 or a percentage given by a Coupon
+            // Will be 1 or a percentage given by a Coupon (shakira)
             // had to sort to this solution as mercadopago does not allow to show a total price
             Double discountPercentage = shoppingCart.getAppliedDiscountPercent();
 
@@ -144,19 +144,42 @@ public class PaymentServiceImpl implements PaymentService {
 
                 // Get mercadopago client and its payment
                 PaymentClient client = new PaymentClient();
-                Payment payment = client.get( Long.parseLong(paymentId) );
+                Payment payment = client.get(Long.parseLong(paymentId));
 
                 // Get orderId from metadata
                 String orderId = payment.getMetadata().get("id_orden").toString();
 
 
-                // Se obtiene la orden guardada en la base de datos y se le asigna el pago
+                // Fetch the order from the database
                 Optional<ShoppingCart> orderOpt = obtenerOrden(orderId);
                 if (orderOpt.isEmpty()) return;
                 ShoppingCart order = orderOpt.get();
-                OrderPayment pago = createPayment(payment);
-                order.setOrderPayment(pago);
-                shoppingCartService.saveShoppingCart(order);
+
+                // Only proceed if the payment was successful
+                // TODO The "approved" shall be implemented by us, somehow. Ask Rojo!
+                if ("approved".equals(payment.getStatus())) {
+                    // For each locality ordered, update the corresponding event and locality capacity
+                    for (LocalityOrder localityOrder : order.getLocalityOrders()) {
+                        Optional<Event> eventOpt = eventService.getEventById(localityOrder.getEventId());
+                        if (eventOpt.isEmpty()) continue;
+
+                        Event event = eventOpt.get();
+                        Locality locality = event.getLocalities(localityOrder.getLocalityName());
+                        if (locality == null) continue;
+
+                        // Update the available seats
+                        locality.setMaxCapacity(locality.getMaxCapacity() - localityOrder.getNumTicketsSelected());
+                        event.setTotalAvailablePlaces(event.getTotalAvailablePlaces() - localityOrder.getNumTicketsSelected());
+
+                        // Save the event with updated capacities
+                        eventService.saveEvent(event);
+                    }
+
+                    // Save payment details to the order and update order status
+                    OrderPayment orderPayment = createPayment(payment);
+                    order.setOrderPayment(orderPayment);
+                    shoppingCartService.saveShoppingCart(order);
+                }
             }
         } catch (MPException | MPApiException e) {
             throw new RuntimeException(e);

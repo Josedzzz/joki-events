@@ -17,6 +17,6 @@ public interface ClientService {
     ResponseEntity<?> getAccountInformation(String clientId);
     ResponseEntity<?> orderLocality(String clientId, LocalityOrderAsClientDTO dto);
     ResponseEntity<?> cancelLocalityOrder(String clientId, LocalityOrderAsClientDTO dto);
-    ResponseEntity<?> loadShoppingCart(String clientId);
+    ResponseEntity<?> loadShoppingCart(String clientId, int page, int size);
     ResponseEntity<?> applyCoupon(String clientId, String coupon);
 }

@@ -21,17 +21,17 @@ public class Event {
 
     @Id
     private String id;
-    private String name;
-    private String address;
-    private String city;
+    private String name; // LO
+    private String address; // LO
+    private String city; // LO
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'")
-    private LocalDateTime eventDate;
+    private LocalDateTime eventDate; // LO
     private boolean availableForPurchase;
     private List<Locality> localities;
     private int totalAvailablePlaces;
-    private String eventImageUrl;
+    private String eventImageUrl; // LO
     private String localitiesImageUrl;
-    private EventType eventType;
+    private EventType eventType; // LO
 
     public Locality getLocalities(String localityName) {
         for (Locality locality : localities) {

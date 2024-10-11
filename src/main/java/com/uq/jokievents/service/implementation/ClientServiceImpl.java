@@ -1,5 +1,6 @@
 package com.uq.jokievents.service.implementation;
 
+import com.uq.jokievents.dtos.LoadLocalityOrdersForClient;
 import com.uq.jokievents.dtos.LocalityOrderAsClientDTO;
 import com.uq.jokievents.dtos.UpdateClientDTO;
 import com.uq.jokievents.model.*;
@@ -12,6 +13,7 @@ import com.uq.jokievents.service.interfaces.JwtService;
 import com.uq.jokievents.service.interfaces.ShoppingCartService;
 import com.uq.jokievents.utils.*;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -35,6 +37,9 @@ public class ClientServiceImpl implements ClientService {
     private final CouponRepository couponRepository;
     private final EmailService emailService;
     private final ShoppingCartRepository shoppingCartRepository;
+
+    @Value("${jwt.image.not.found}")
+    private String notFoundString;
 
     /**
      * Updates a client from a dto.
@@ -198,14 +203,7 @@ public class ClientServiceImpl implements ClientService {
 
             Locality locality = localityOpt.get();
 
-            // Validate ticket availability and reduce available tickets of locality
-            if (dto.ticketsSelected() > locality.getMaxCapacity()) {
-                return new ResponseEntity<>(new ApiResponse<>("Error", "Not enough tickets available", null), HttpStatus.BAD_REQUEST);
-            }
-            locality.setMaxCapacity(locality.getMaxCapacity() - dto.ticketsSelected());
-            event.setTotalAvailablePlaces(event.getTotalAvailablePlaces() - dto.ticketsSelected());
-
-            // Validate payment amount, if this ever outputs I will be very confused
+            // Validate payment amount, if this ever outputs I will be very confused. As of 10/10/2024 I've seen this output several times (pain in the ass)
             double expectedPayment = dto.ticketsSelected() * locality.getPrice();
             if (dto.totalPaymentAmount() < expectedPayment) {
                 return new ResponseEntity<>(new ApiResponse<>("Error", "Incorrect payment amount", null), HttpStatus.BAD_REQUEST);
@@ -334,7 +332,7 @@ public class ClientServiceImpl implements ClientService {
     // If this method does not work it may be due of EventRepository findByLocalitiesName() method.
     // FUCK SRP
     @Override
-    public ResponseEntity<?> loadShoppingCart(String clientId) {
+    public ResponseEntity<?> loadShoppingCart(String clientId, int page, int size) {
         ResponseEntity<?> verificationResponse = ClientSecurityUtils.verifyClientAccessWithRole();
         if (verificationResponse != null) {
             return verificationResponse;
@@ -358,23 +356,77 @@ public class ClientServiceImpl implements ClientService {
 
             ShoppingCart shoppingCart = shoppingCartOptional.get();
 
-//            // Filter only the LocalityOrders that can still be purchased (event.availableForPurchase == true)
-//            List<LocalityOrder> validLocalityOrders = shoppingCart.getLocalityOrders().stream()
-//                    .filter(localityOrder -> {
-//                        Optional<Event> eventOptional = eventService.findEventByLocalityName(localityOrder.getLocalityName());
-//                        return eventOptional.isPresent() && eventOptional.get().isAvailableForPurchase();
-//                    })
-//                    .toList();
-//
-//            // Update the shopping cart with the valid locality orders
-//            shoppingCart.setLocalityOrders(new ArrayList<>(validLocalityOrders));
+            ArrayList<LocalityOrder> localityOrders = shoppingCart.getLocalityOrders();
+            List<LoadLocalityOrdersForClient> loadLocalityOrdersForClientsArray = new ArrayList<>();
 
-            ApiResponse<List<LocalityOrder>> response = new ApiResponse<>("Success", "Shopping cart loaded", shoppingCart.getLocalityOrders());
+            for (LocalityOrder localityOrder : localityOrders) {
+
+                Optional<Event> eventOptional = eventService.findByEventById(localityOrder.getEventId());
+                if (eventOptional.isEmpty()) {
+                    LoadLocalityOrdersForClient loadLocalityOrdersForClient =
+                            new LoadLocalityOrdersForClient(
+                                    localityOrder.getPayingOrderId(),
+                                    localityOrder.getNumTicketsSelected(),
+                                    localityOrder.getLocalityName(),
+                                    localityOrder.getTotalPaymentAmount(),
+                                    "Event not found, it may have been cancelled",
+                                    "",
+                                    "",
+                                    null,
+                                    notFoundString,
+                                    null);
+                    loadLocalityOrdersForClientsArray.add(loadLocalityOrdersForClient);
+                } else if (!LocalDateTime.now().plusDays(2).isBefore(eventOptional.get().getEventDate())) {
+                    // If the reserving date is at least two days from the event occurring. Do not show it.
+                    // TODO Cancel this order, delete this shopping cart from the database
+                    continue;
+                } else {
+                    LoadLocalityOrdersForClient loadLocalityOrdersForClient = getLoadLocalityOrdersForClient(localityOrder, eventOptional);
+                    loadLocalityOrdersForClientsArray.add(loadLocalityOrdersForClient);
+                }
+            }
+
+            // Paginate the result
+            int totalElements = loadLocalityOrdersForClientsArray.size();  // Total number of events found
+            int totalPages = (int) Math.ceil((double) totalElements / size);  // Calculate total number of pages
+            int startIndex = page * size;  // Calculate the start index for the page
+            int endIndex = Math.min(startIndex + size, totalElements);  // Calculate the end index for the page
+
+            if (startIndex >= totalElements) {
+                return new ResponseEntity<>(new ApiResponse<>("Success", "No locality orders", List.of()), HttpStatus.OK);
+            }
+
+            // Get the paginated sublist
+            List<LoadLocalityOrdersForClient> paginatedEvents = loadLocalityOrdersForClientsArray.subList(startIndex, endIndex);
+
+            // Prepare pagination metadata
+            Map<String, Object> paginationData = new HashMap<>();
+            paginationData.put("totalPages", totalPages);
+            paginationData.put("currentPage", page);
+            paginationData.put("totalElements", totalElements);
+            paginationData.put("content", paginatedEvents);  // The paginated events for the current page
+
+            ApiResponse<Map<String, Object>> response = new ApiResponse<>("Success", "Shopping cart loaded", paginationData);
             return new ResponseEntity<>(response, HttpStatus.OK);
         } catch (Exception e) {
             ApiResponse<String> response = new ApiResponse<>("Error", "Failed to load shopping cart", e.getMessage());
             return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
         }
+    }
+
+    private static LoadLocalityOrdersForClient getLoadLocalityOrdersForClient(LocalityOrder localityOrder, Optional<Event> eventOptional) {
+        Event event = eventOptional.get();
+        return new LoadLocalityOrdersForClient(
+                localityOrder.getPayingOrderId(),
+                localityOrder.getNumTicketsSelected(),
+                localityOrder.getLocalityName(),
+                localityOrder.getTotalPaymentAmount(),
+                event.getName(),
+                event.getAddress(),
+                event.getCity(),
+                event.getEventDate(),
+                event.getEventImageUrl(),
+                event.getEventType());
     }
 
     @Override

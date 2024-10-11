@@ -88,9 +88,10 @@ public class ClientController {
         return clientService.cancelLocalityOrder(clientId, dto);
     }
 
+    // TODO Send this paginated
     @GetMapping("/load-shopping-cart/{clientId}")
-    public ResponseEntity<?> loadShoppingCart(@PathVariable String clientId) {
-        return clientService.loadShoppingCart(clientId);
+    public ResponseEntity<?> loadShoppingCart(@PathVariable String clientId, @RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "16") int size) {
+        return clientService.loadShoppingCart(clientId, page, size);
     }
 
     /**
