@@ -51,6 +51,11 @@ public class ClientController {
         return clientService.deleteAccount(clientId);
     }
 
+    @PostMapping("/{clientId}/verify")
+    public ResponseEntity<?> verifyClient(@PathVariable String clientId, String verificationCode) {
+        return clientService.verifyClient(clientId, verificationCode);
+    }
+
     @GetMapping("/get-paginated-events")
     public ResponseEntity<?> getAllEventsPaginated(@RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "16") int size) {
         return clientService.getAllEventsPaginated(page, size);
