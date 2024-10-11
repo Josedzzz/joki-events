@@ -38,7 +38,7 @@ public class ClientServiceImpl implements ClientService {
     private final EmailService emailService;
     private final ShoppingCartRepository shoppingCartRepository;
 
-    @Value("${jwt.image.not.found}")
+    @Value("${image.not.found}")
     private String notFoundString;
 
     /**
@@ -378,7 +378,7 @@ public class ClientServiceImpl implements ClientService {
                     loadLocalityOrdersForClientsArray.add(loadLocalityOrdersForClient);
                 } else if (!LocalDateTime.now().plusDays(2).isBefore(eventOptional.get().getEventDate())) {
                     // If the reserving date is at least two days from the event occurring. Do not show it.
-                    // TODO Cancel this order, delete this shopping cart from the database
+                    // TODO Cancel this order, delete this shopping cart from the database. Will wait until the database won't be touched that frequently
                     continue;
                 } else {
                     LoadLocalityOrdersForClient loadLocalityOrdersForClient = getLoadLocalityOrdersForClient(localityOrder, eventOptional);
@@ -522,10 +522,6 @@ public class ClientServiceImpl implements ClientService {
             }
 
             clientRepository.save(client);
-
-            // Send an email confirmation
-            // TODO Implement this
-            // emailService.sendVerificationSuccessEmail(client.getEmail());
 
             ApiResponse<String> response = new ApiResponse<>("Success", "Client has been verified and activated", null);
             return new ResponseEntity<>(response, HttpStatus.OK);
