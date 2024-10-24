@@ -15,7 +15,7 @@ public class PaymentController {
     private final PaymentService paymentService;
 
 
-    @PostMapping("/pay-shoppingcart/{shoppingCartId}")
+    @PostMapping("/pay-shoppingcart/{clientId}")
     public ResponseEntity<?> payShoppingCart(@PathVariable String clientId) throws Exception {
         return paymentService.doPayment(clientId);
     }

@@ -53,81 +53,67 @@ public class PaymentServiceImpl implements PaymentService {
             Optional<ShoppingCart> shoppingCartOptional = obtenerOrden(clientId);
             if (shoppingCartOptional.isEmpty()) return null;
             ShoppingCart shoppingCart = shoppingCartOptional.get();
-            // Will be 1 or a percentage given by a Coupon (shakira)
-            // had to sort to this solution as mercadopago does not allow to show a total price
-            Double discountPercentage = shoppingCart.getAppliedDiscountPercent();
 
+            Double discountPercentage = shoppingCart.getAppliedDiscountPercent();
             List<PreferenceItemRequest> itemsPasarela = new ArrayList<>();
 
-
-            // Recorrer los items de la orden y crea los ítems de la pasarela
-            for(LocalityOrder localityOrder : shoppingCart.getLocalityOrders()){
-
-                // Obtener el evento y la localidad del ítem
+            for (LocalityOrder localityOrder : shoppingCart.getLocalityOrders()) {
                 Optional<Event> eventOptional = eventService.getEventById(localityOrder.getEventId());
-                if(eventOptional.isEmpty()) continue;
+                if (eventOptional.isEmpty()) continue;
 
                 Event event = eventOptional.get();
                 Locality locality = event.getLocalities(localityOrder.getLocalityName());
                 assert locality != null;
 
-                // Crear el item de la pasarela
-
-                PreferenceItemRequest itemRequest =
-                        PreferenceItemRequest.builder()
-                                .id(event.getId())
-                                .title(event.getName())
-                                .pictureUrl(event.getEventImageUrl())
-                                .categoryId(event.getEventType().name())
-                                .quantity(localityOrder.getNumTicketsSelected())
-                                .currencyId("COP")
-                                .unitPrice(BigDecimal.valueOf(locality.getPrice() * discountPercentage))
-                                .build();
+                PreferenceItemRequest itemRequest = PreferenceItemRequest.builder()
+                        .id(event.getId())
+                        .title(event.getName())
+                        .pictureUrl(event.getEventImageUrl())
+                        .categoryId(event.getEventType().name())
+                        .quantity(localityOrder.getNumTicketsSelected())
+                        .currencyId("COP")
+                        .unitPrice(BigDecimal.valueOf(locality.getPrice() * discountPercentage))
+                        .build();
 
                 itemsPasarela.add(itemRequest);
             }
 
-            // Configurar las credenciales de MercadoPago
-            MercadoPagoConfig.setAccessToken(applicationConfig.getAccessToken()); // Later will do
+            MercadoPagoConfig.setAccessToken(applicationConfig.getAccessToken());
 
-            // Configurar las urls de retorno de la pasarela (Frontend)
             PreferenceBackUrlsRequest backUrls = PreferenceBackUrlsRequest.builder()
                     .success("URL PAGO EXITOSO")
                     .failure("URL PAGO FALLIDO")
                     .pending("URL PAGO PENDIENTE")
                     .build();
 
-
-            // Construir la preferencia de la pasarela con los ítems, metadatos y urls de retorno
             PreferenceRequest preferenceRequest = PreferenceRequest.builder()
                     .backUrls(backUrls)
                     .items(itemsPasarela)
                     .metadata(Map.of("id_orden", shoppingCart.getId()))
-                    .notificationUrl("http://localhost:8080/api/payment/receive-payment-confirmation") // What should this have?
+                    .notificationUrl("http://localhost:8080/api/payment/receive-payment-confirmation")
                     .build();
 
-
-            // Crear la preferencia en la pasarela de MercadoPago
             PreferenceClient client = new PreferenceClient();
             Preference preference = client.create(preferenceRequest);
 
-            // Guardar el código de la pasarela en la orden
             shoppingCart.setPaymentGatewayId(preference.getId());
             shoppingCartService.saveShoppingCart(shoppingCart);
 
-            ApiResponse<?> response = new ApiResponse<>("Success", "Payment done", preference);
+            // Only return the initPoint field
+            String initPoint = preference.getInitPoint();
+            ApiResponse<String> response = new ApiResponse<>("Success", "Payment done", initPoint);
             return new ResponseEntity<>(response, HttpStatus.OK);
 
         } catch (MPApiException e) {
             System.out.println("MercadoPago API error response: " + e.getApiResponse().getContent());
             ApiResponse<?> response = new ApiResponse<>("Error", "Payment not done, API RELATED", e.getApiResponse().getContent());
             return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             ApiResponse<?> response = new ApiResponse<>("Error", "Payment not done", e.toString());
             return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
+
 
     private Optional<ShoppingCart> obtenerOrden(String clientId) {
         Optional<Client> optionalClient = clientRepository.findById(clientId);
