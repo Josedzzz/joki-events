@@ -12,6 +12,7 @@ import com.mercadopago.resources.payment.Payment;
 import com.mercadopago.resources.preference.Preference;
 import com.uq.jokievents.config.ApplicationConfig;
 import com.uq.jokievents.model.*;
+import com.uq.jokievents.repository.ClientRepository;
 import com.uq.jokievents.service.interfaces.EventService;
 import com.uq.jokievents.service.interfaces.PaymentService;
 import com.uq.jokievents.service.interfaces.ShoppingCartService;
@@ -36,11 +37,12 @@ import java.util.Optional;
 public class PaymentServiceImpl implements PaymentService {
 
     private final ShoppingCartService shoppingCartService;
+    private final ClientRepository clientRepository;
     private final EventService eventService;
     private final ApplicationConfig applicationConfig;
 
     @Override
-    public ResponseEntity<?> doPayment(String shoppingCartID) {
+    public ResponseEntity<?> doPayment(String clientId) {
         try {
             ResponseEntity<?> verificationResponse = ClientSecurityUtils.verifyClientAccessWithRole();
             if (verificationResponse != null) {
@@ -48,7 +50,7 @@ public class PaymentServiceImpl implements PaymentService {
             }
 
             // Get the order from the database
-            Optional<ShoppingCart> shoppingCartOptional = obtenerOrden(shoppingCartID);
+            Optional<ShoppingCart> shoppingCartOptional = obtenerOrden(clientId);
             if (shoppingCartOptional.isEmpty()) return null;
             ShoppingCart shoppingCart = shoppingCartOptional.get();
             // Will be 1 or a percentage given by a Coupon (shakira)
@@ -127,8 +129,14 @@ public class PaymentServiceImpl implements PaymentService {
         }
     }
 
-    private Optional<ShoppingCart> obtenerOrden(String shoppingCartID) {
-        return shoppingCartService.findShoppingCartById(shoppingCartID);
+    private Optional<ShoppingCart> obtenerOrden(String clientId) {
+        Optional<Client> optionalClient = clientRepository.findById(clientId);
+        if (optionalClient.isEmpty()) {
+            return Optional.empty();
+        }
+        Client client = optionalClient.get();
+        String shoppingCartClientId = client.getIdShoppingCart();
+        return shoppingCartService.findShoppingCartById(shoppingCartClientId);
     }
 
     @Override
