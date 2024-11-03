@@ -390,9 +390,10 @@ public class ClientServiceImpl implements ClientService {
             // Paginate the result
             int totalElements = loadLocalityOrdersForClientsArray.size();  // Total number of events found
             int totalPages = (int) Math.ceil((double) totalElements / size);  // Calculate total number of pages
-            int startIndex = page * size;  // Calculate the start index for the page
+            int startIndex = page * size;  // Calculate the start index for the page, this will be usually just be zero.
             int endIndex = Math.min(startIndex + size, totalElements);  // Calculate the end index for the page
 
+            // This is just comparing if there are enough elements to show on a certain page. Usually 0 >= loadLocalityOrdersForClientsArray.size() will be evaluated.
             if (startIndex >= totalElements) {
                 return new ResponseEntity<>(new ApiResponse<>("Success", "No locality orders", List.of()), HttpStatus.OK);
             }

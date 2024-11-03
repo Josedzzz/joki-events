@@ -81,20 +81,25 @@ public class AuthenticationServiceImpl implements AuthenticationService {
             String email = request.email();
             String rawPassword = request.password();
             Optional<Client> clientDB = clientRepository.findByEmail(email);
-            if (clientDB.isPresent() && clientDB.get().isActive()) {
-                if(passwordEncoder.matches(rawPassword, clientDB.get().getPassword())) {
-                    authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(request.email(), request.password()));
-                    UserDetails clientDetails = clientRepository.findByEmail(email).orElse(null);
-                    String token = jwtService.getClientToken(clientDetails);
-                    ApiTokenResponse<String> response = new ApiTokenResponse<>("Success", "Client logged in successfully", clientDB.get().getId(), token);
-                    return new ResponseEntity<>(response, HttpStatus.CREATED);
-                }
-                else{
-                    ApiResponse<String> response = new ApiResponse<>("Error", "The client is not active", null);
-                    return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+            if (clientDB.isPresent()) {
+                Client client = clientDB.get();
+                if (client.isActive()) {
+                    if (passwordEncoder.matches(rawPassword, clientDB.get().getPassword())) {
+                        authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(request.email(), request.password()));
+                        UserDetails clientDetails = clientRepository.findByEmail(email).orElse(null);
+                        String token = jwtService.getClientToken(clientDetails);
+                        ApiTokenResponse<String> response = new ApiTokenResponse<>("Success", "Client logged in successfully", clientDB.get().getId(), token);
+                        return new ResponseEntity<>(response, HttpStatus.CREATED);
+                    } else {
+                        ApiResponse<String> response = new ApiResponse<>("Error", "Invalid password", null);
+                        return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+                    }
+                } else {
+                    ApiResponse<String> response = new ApiResponse<>("Error", "Client is not active", null);
+                    return new ResponseEntity<>(response, HttpStatus.UNAUTHORIZED);
                 }
             } else {
-                ApiResponse<String> response = new ApiResponse<>("Error", "Invalid email or password", null);
+                ApiResponse<String> response = new ApiResponse<>("Error", "Are you registered?", null);
                 return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
             }
         } catch (Exception e) {

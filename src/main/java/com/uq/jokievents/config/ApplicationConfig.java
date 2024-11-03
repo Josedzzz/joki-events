@@ -6,6 +6,7 @@ import com.uq.jokievents.model.Admin;
 import com.uq.jokievents.model.Client;
 import com.uq.jokievents.repository.AdminRepository;
 import com.uq.jokievents.repository.ClientRepository;
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -91,16 +92,11 @@ public class ApplicationConfig {
     }
 
 
+    @Getter
     @Value("${base64.image}")
     private String base64Image;
 
-    public String getBase64Image() {
-        return base64Image;
-    }
-
+    @Getter
     @Value("${mercadopago.accesstoken}")
     private String accessToken;
-    public String getAccessToken() {
-        return accessToken;
-    }
 }
