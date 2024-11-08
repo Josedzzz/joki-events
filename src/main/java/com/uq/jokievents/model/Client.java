@@ -29,6 +29,7 @@ public class Client implements UserDetails {
     private String phoneNumber;
     private String email;
     private String password;
+
     private String idShoppingCart; // This is a "pointer" to the shopping car in the database.
     private ArrayList<String> listOfUsedCoupons;
     private boolean active;

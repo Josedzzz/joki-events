@@ -7,6 +7,6 @@ import java.util.Map;
 
 public interface PaymentService {
 
-    ResponseEntity<?> doPayment(String clientId);
+    String doPayment(String clientId);
     void receiveMercadopagoNotification(Map<String, Object> request);
 }

@@ -26,7 +26,7 @@ public class AuthenticationController {
     private final AuthenticationService authenticationService;
 
     @PostMapping("/login-admin")
-    public ResponseEntity<?> loginAdmin(@RequestBody @Valid AuthAdminDTO loginRequest) {
+    public ResponseEntity<ApiTokenResponse<String>> loginAdmin(@RequestBody @Valid AuthAdminDTO loginRequest) {
         try {
             // Call the service to attempt login and receive a map with Admin and JWT token
             Map<Admin, String> loginInfo = authenticationService.loginAdmin(loginRequest);
@@ -46,21 +46,21 @@ public class AuthenticationController {
             return new ResponseEntity<>(response, HttpStatus.CREATED);
 
         } catch (AccountNotFoundException | InvalidCredentialsException e) {
-            ApiResponse<String> response = new ApiResponse<>("Error", e.getMessage(), null);
+            ApiTokenResponse<String> response = new ApiTokenResponse<>("Error", e.getMessage(), null, null);
             return new ResponseEntity<>(response, HttpStatus.UNAUTHORIZED);
 
         } catch (InactiveAccountException e) {
-            ApiResponse<String> response = new ApiResponse<>("Error", e.getMessage(), null);
+            ApiTokenResponse<String> response = new ApiTokenResponse<>("Error", e.getMessage(), null, null);
             return new ResponseEntity<>(response, HttpStatus.FORBIDDEN);
 
         } catch (Exception e) {
-            ApiResponse<String> response = new ApiResponse<>("Error", "Login failed", null);
+            ApiTokenResponse<String> response = new ApiTokenResponse<>("Error", "Login failed", null, null);
             return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
     @PostMapping("/login-client")
-    public ResponseEntity<?> loginClient(@RequestBody @Valid LoginClientDTO loginRequest) {
+    public ResponseEntity<ApiTokenResponse<String>> loginClient(@RequestBody @Valid LoginClientDTO loginRequest) {
         try {
             // Call the service to attempt login and receive a JWT token if successful
             Map<Client, String> loginInfo = authenticationService.loginClient(loginRequest);
@@ -79,21 +79,21 @@ public class AuthenticationController {
             return new ResponseEntity<>(response, HttpStatus.CREATED);
 
         } catch (AccountNotFoundException | InvalidCredentialsException e) {
-            ApiResponse<String> response = new ApiResponse<>("Error", e.getMessage(), null);
+            ApiTokenResponse<String> response = new ApiTokenResponse<>("Error", e.getMessage(), null, null);
             return new ResponseEntity<>(response, HttpStatus.UNAUTHORIZED);
 
         } catch (InactiveAccountException e) {
-            ApiResponse<String> response = new ApiResponse<>("Error", e.getMessage(), null);
+            ApiTokenResponse<String> response = new ApiTokenResponse<>("Error", e.getMessage(), null, null);
             return new ResponseEntity<>(response, HttpStatus.FORBIDDEN);
 
         } catch (Exception e) {
-            ApiResponse<String> response = new ApiResponse<>("Error", "Login failed", null);
+            ApiTokenResponse<String> response = new ApiTokenResponse<>("Error", "Login failed", null, null);
             return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
     @PostMapping("/register-client")
-    public ResponseEntity<?> registerClient(@RequestBody @Valid RegisterClientDTO request) {
+    public ResponseEntity<ApiTokenResponse<String>> registerClient(@RequestBody @Valid RegisterClientDTO request) {
         try {
             // Call the service method
             Map<Client, String> registerInfo = authenticationService.registerClient(request);
@@ -103,22 +103,22 @@ public class AuthenticationController {
             String token = entry.getValue();
 
             // Construct a successful response
-            ApiTokenResponse<Object> response = new ApiTokenResponse<>("Success", "Client registered successfully", client.getId(), token);
+            ApiTokenResponse<String> response = new ApiTokenResponse<>("Success", "Client registered successfully", client.getId(), token);
             return new ResponseEntity<>(response, HttpStatus.CREATED);
 
         } catch (IdCardAlreadyInUseException | EmailAlreadyInUseException e) {
-            ApiResponse<String> response = new ApiResponse<>("Error", e.getMessage(), null);
+            ApiTokenResponse<String> response = new ApiTokenResponse<>("Error", e.getMessage(), null, null);
             return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
 
         } catch (Exception e) {
-            ApiResponse<String> response = new ApiResponse<>("Error", "Client registration failed", e.getMessage());
+            ApiTokenResponse<String> response = new ApiTokenResponse<>("Error", "Client registration failed", e.getMessage(), null);
             return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
     // EmailDTO the goat for real!
     @PostMapping("/send-recover-password-code")
-    public ResponseEntity<?> sendRecoverPasswordCode(@RequestBody @Valid EmailDTO dto) {
+    public ResponseEntity<ApiResponse<String>> sendRecoverPasswordCode(@RequestBody @Valid EmailDTO dto) {
         try {
             // Call the service method and get the success message if possible
             String resultMessage = authenticationService.sendRecoverPasswordCode(dto);
@@ -136,7 +136,7 @@ public class AuthenticationController {
 
 
     @PostMapping("/recover-password")
-    public ResponseEntity<?> recoverPassword(@RequestBody @Valid RecoverPassDTO dto) {
+    public ResponseEntity<ApiResponse<String>> recoverPassword(@RequestBody @Valid RecoverPassDTO dto) {
         try {
             authenticationService.recoverPassword(dto);
 

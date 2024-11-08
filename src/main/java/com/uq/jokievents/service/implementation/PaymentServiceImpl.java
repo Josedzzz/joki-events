@@ -11,6 +11,7 @@ import com.mercadopago.exceptions.MPException;
 import com.mercadopago.resources.payment.Payment;
 import com.mercadopago.resources.preference.Preference;
 import com.uq.jokievents.config.ApplicationConfig;
+import com.uq.jokievents.exceptions.*;
 import com.uq.jokievents.model.*;
 import com.uq.jokievents.repository.ClientRepository;
 import com.uq.jokievents.service.interfaces.EventService;
@@ -21,6 +22,7 @@ import com.uq.jokievents.utils.ClientSecurityUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -42,29 +44,39 @@ public class PaymentServiceImpl implements PaymentService {
     private final ApplicationConfig applicationConfig;
 
     @Override
-    public ResponseEntity<?> doPayment(String clientId) {
+    public String doPayment(String clientId) {
         try {
-            ResponseEntity<?> verificationResponse = ClientSecurityUtils.verifyClientAccessWithRole();
-            if (verificationResponse != null) {
-                return verificationResponse;
+            String verificationResponse = ClientSecurityUtils.verifyClientAccessWithRole();
+            if (verificationResponse.equals("UNAUTHORIZED")) {
+                throw new NotAuthorizedException("Not authorized to enter this endpoint");
             }
-
             // Get the order from the database
             Optional<ShoppingCart> shoppingCartOptional = obtenerOrden(clientId);
-            if (shoppingCartOptional.isEmpty()) return null;
+            if (shoppingCartOptional.isEmpty()) {
+                throw new ShoppinCartNotFoundException("The client does not have a shopping cart, grave error");
+            }
+
             ShoppingCart shoppingCart = shoppingCartOptional.get();
+            ArrayList<LocalityOrder> localityOrdersToBuy = shoppingCart.getLocalityOrders();
+            if (localityOrdersToBuy.isEmpty()) {
+                throw new EmptyShoppingCartException("The shopping cart is empty, nothing to buy");
+            }
 
             Double discountPercentage = shoppingCart.getAppliedDiscountPercent();
             List<PreferenceItemRequest> itemsPasarela = new ArrayList<>();
 
-            for (LocalityOrder localityOrder : shoppingCart.getLocalityOrders()) {
+            for (LocalityOrder localityOrder : localityOrdersToBuy) {
                 Optional<Event> eventOptional = eventService.getEventById(localityOrder.getEventId());
                 if (eventOptional.isEmpty()) continue;
 
                 Event event = eventOptional.get();
                 Locality locality = event.getLocalities(localityOrder.getLocalityName());
-                assert locality != null;
 
+                if (locality == null) {
+                    throw new LocalityNotFoundException("Locality within the " + event.getName() + " event, not found");
+                }
+
+                // todo guess why the fuck only the price shows on the payment
                 PreferenceItemRequest itemRequest = PreferenceItemRequest.builder()
                         .id(event.getId())
                         .title(event.getName())
@@ -100,20 +112,14 @@ public class PaymentServiceImpl implements PaymentService {
             shoppingCartService.saveShoppingCart(shoppingCart);
 
             // Only return the initPoint field
-            String initPoint = preference.getInitPoint();
-            ApiResponse<String> response = new ApiResponse<>("Success", "Payment done", initPoint);
-            return new ResponseEntity<>(response, HttpStatus.OK);
-
+            return preference.getInitPoint();
         } catch (MPApiException e) {
-            System.out.println("MercadoPago API error response: " + e.getApiResponse().getContent());
-            ApiResponse<?> response = new ApiResponse<>("Error", "Payment not done, API RELATED", e.getApiResponse().getContent());
-            return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
+            throw new PaymentProcessingException("Payment not done, API related issue: " + e.getApiResponse().getContent());
         } catch (Exception e) {
-            ApiResponse<?> response = new ApiResponse<>("Error", "Payment not done", e.toString());
-            return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
+            // todo I may want to add a logger to all of this
+            throw new PaymentProcessingException("An unexpected error occurred while processing the payment.");
         }
     }
-
 
     private Optional<ShoppingCart> obtenerOrden(String clientId) {
         Optional<Client> optionalClient = clientRepository.findById(clientId);
@@ -126,6 +132,7 @@ public class PaymentServiceImpl implements PaymentService {
     }
 
     @Override
+    @Async
     public void receiveMercadopagoNotification(Map<String, Object> request) {
         try {
             Object type = request.get("type");
@@ -175,8 +182,12 @@ public class PaymentServiceImpl implements PaymentService {
                     shoppingCartService.saveShoppingCart(order);
                 }
             }
-        } catch (MPException | MPApiException e) {
-            throw new RuntimeException(e);
+        } catch ( MPException e) {
+            throw new PaymentProcessingException("An unexpected error occurred while processing the payment of mercadopago.");
+        } catch (MPApiException e) {
+            throw new PaymentProcessingException("Payment notification error, API related issue: " + e.getApiResponse().getContent());
+        } catch (Exception e) {
+            throw new PaymentProcessingException("An unexpected error occurred while processing the payment.");
         }
     }
 
