@@ -3,6 +3,7 @@ package com.uq.jokievents.service.implementation;
 import com.uq.jokievents.dtos.LoadLocalityOrdersForClient;
 import com.uq.jokievents.dtos.LocalityOrderAsClientDTO;
 import com.uq.jokievents.dtos.UpdateClientDTO;
+import com.uq.jokievents.exceptions.*;
 import com.uq.jokievents.model.*;
 import com.uq.jokievents.repository.ClientRepository;
 import com.uq.jokievents.repository.CouponRepository;
@@ -43,130 +44,112 @@ public class ClientServiceImpl implements ClientService {
 
     /**
      * Updates a client from a dto.
-     * TODO Ms
      * @param clientId String
      * @param dto UpdateClientDTO
      * @return ResponseEntity
      */
     @Override
-    public ResponseEntity<?> updateClient(String clientId, @RequestBody UpdateClientDTO dto) {
+    public Map<Client, String> updateClient(String clientId, @RequestBody UpdateClientDTO dto) {
 
-        ResponseEntity<?> verificationResponse = ClientSecurityUtils.verifyClientAccessWithRole();
-        if (verificationResponse != null) {
-            return verificationResponse;
+        String verificationResponse = ClientSecurityUtils.verifyClientAccessWithRole();
+        if ("UNAUTHORIZED".equals(verificationResponse))) {
+            throw new NotAuthorizedException("Not authorized to enter this endpoint");
         }
-
-        StringBuilder optionalMessages = new StringBuilder();
 
         try {
             Optional<Client> existingClient = clientRepository.findById(clientId);
-            if (existingClient.isPresent()) {
-                Client client = existingClient.get();
-                System.out.println(client);
 
-                // Si existe déjelo igual
-                if (dto.email() != null && utils.existsEmailClient(dto.email())) {
-                    client.setEmail(dto.email());
-                } else {
-                    optionalMessages.append("Email changed, please confirm new email in the email we sent\n Account deactivated until then");
-                    client.setEmail(dto.email());
-                    client.setActive(false);
-                    client.setVerificationCodeExpiration(LocalDateTime.now().plusMinutes(15));
-                    emailService.sendVerificationMail(dto.email(), Generators.generateRndVerificationCode());
-                }
-
-                if (dto.phone() != null) {
-                    client.setPhoneNumber(dto.phone());
-                }
-                if (dto.name() != null) {
-                    client.setName(dto.name());
-                }
-                if (dto.address() != null) {
-                    client.setAddress(dto.address());
-                }
-
-                clientRepository.save(client);
-                // Update the token as they payload would change as well.
-                UserDetails clientDetails = clientRepository.findById(clientId).orElse(null);
-                String newToken = jwtService.getClientToken(clientDetails);
-
-                ApiTokenResponse<Object> response = new ApiTokenResponse<>("Success","Client update done", client, newToken);
-                return new ResponseEntity<>(response, HttpStatus.OK);
-            } else {
-                ApiResponse<String> response = new ApiResponse<>("Error", "Client not found", null);
-                return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
+            if (existingClient.isEmpty()) {
+                throw new AccountNotFoundException("Account not found");
             }
-        } catch (Exception e) {
-            ApiResponse<String> response = new ApiResponse<>("Error", "Failed to update client", null);
-            return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
+
+            Client client = existingClient.get();
+            // todo take into account possible null values of the dto
+
+            if (!client.getPhoneNumber().equals(dto.phone())){
+                client.setPhoneNumber(dto.phone());
+            }
+
+            // Si no es el mismo notificar para que active el correo de nuevo.
+            if (!client.getEmail().equals(dto.email())) {
+                client.setEmail(dto.email());
+                client.setActive(false);
+                client.setVerificationCodeExpiration(LocalDateTime.now().plusMinutes(15));
+                emailService.sendVerificationMail(dto.email(), Generators.generateRndVerificationCode());
+            }
+
+            if (!client.getName().equals(dto.name())){
+                client.setName(dto.name());
+            }
+            if (!client.getAddress().equals(dto.address())) {
+                client.setAddress(dto.address());
+            }
+
+            clientRepository.save(client);
+            // Update the token as they payload would change as well.
+            UserDetails clientDetails = clientRepository.findById(clientId).orElse(null);
+            String newToken = jwtService.getClientToken(clientDetails);
+
+            Map<Client, String> newPossibleLoginInfo = new HashMap<>();
+            newPossibleLoginInfo.put(client, newToken);
+            return newPossibleLoginInfo;
+        } catch (UpdateClientException e) {
+            throw new UpdateClientException(e.getMessage());
         }
     }
-
 
     @Override
-    public ResponseEntity<?> deleteAccount(String clientId) {
+    public void deleteAccount(String clientId) {
 
-        ResponseEntity<?> verificationResponse = ClientSecurityUtils.verifyClientAccessWithId(clientId);
-        if (verificationResponse != null) {
-            return verificationResponse;
+        String verificationResponse = ClientSecurityUtils.verifyClientAccessWithId(clientId);
+        if ("UNAUTHORIZED".equals(verificationResponse)) {
+            throw new NotAuthorizedException("Not authorized to delete this account");
         }
 
-        try {
-            Optional<Client> existingClient = clientRepository.findById(clientId);
-            if (existingClient.isPresent()) {
-                Client client = existingClient.get();
-                client.setActive(false);
-                clientRepository.save(client);
-                ApiResponse<String> response = new ApiResponse<>("Success", "Client account deleted", null);
-                return new ResponseEntity<>(response, HttpStatus.OK);
-            } else {
-                ApiResponse<String> response = new ApiResponse<>("Error", "Client not found", null);
-                return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
-            }
-        } catch (Exception e) {
-            ApiResponse<String> response = new ApiResponse<>("Error", "Failed to delete client", null);
-            return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
+        Optional<Client> existingClient = clientRepository.findById(clientId);
+        if (existingClient.isEmpty()) {
+            throw new AccountNotFoundException("Client not found");
         }
+
+        Client client = existingClient.get();
+        client.setActive(false);
+        clientRepository.save(client);
     }
 
+
+    // todo make the ClientController have the EventService instead and call the method of the service
     @Override
     public ResponseEntity<?> getAllEventsPaginated(int page, int size) {
         return eventService.getAllEventsPaginated(page, size);
     }
 
     @Override
-    public ResponseEntity<?> getAccountInformation(String clientId) {
+    public UpdateClientDTO getAccountInformation(String clientId) {
 
-        ResponseEntity<?> verificationResponse = ClientSecurityUtils.verifyClientAccessWithRole();
-        if (verificationResponse != null) {
-            return verificationResponse;
+        String verificationResponse = ClientSecurityUtils.verifyClientAccessWithRole();
+        if ("UNAUTHORIZED".equals(verificationResponse)) {
+            throw new NotAuthorizedException("Not authorized to view this account information");
         }
-        try {
-            Optional<Client> client = clientRepository.findById(clientId);
-            if (client.isPresent()) {
-                ApiResponse<UpdateClientDTO> response = getUpdateClientDTOApiResponse(client);
-                return new ResponseEntity<>(response, HttpStatus.OK);
-            } else {
-                ApiResponse<String> response = new ApiResponse<>("Error", "Client info not found", null);
-                return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
-            }
-        } catch (Exception e) {
-            ApiResponse<String> response = new ApiResponse<>("Error", "Failed to retrieve client info", null);
-            return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
+
+        Optional<Client> clientOpt = clientRepository.findById(clientId);
+        if (clientOpt.isEmpty()) {
+            throw new AccountNotFoundException("Client info not found");
         }
+
+        Client client = clientOpt.get();
+        return mapToUpdateClientDTO(client); // Converts `Client` to `UpdateClientDTO`
+    }
+
+    // Method generated by IntelliJ
+    private UpdateClientDTO mapToUpdateClientDTO(Client client) {
+        return new UpdateClientDTO(
+                client.getPhoneNumber(), client.getEmail(), client.getName(), client.getAddress()
+        );
     }
 
     /**
-     * Step 1: Find the event by ID
-     * Step 2: Find the locality in the event
-     * Step 3: Update the locality's capacity
-     * Step 4: Save the updated event with the new locality capacity
-     * Step 5: Find the client by their ID
-     * Step 6: Find the client's shopping cart
-     * Step 7: Create the LocalityOrder and add it to the ShoppingCart
-     * Step 8: Update the total price in the shopping cart
-     * Step 9: Save the updated shopping cart
-     * Step 10: Success
+     * Orders a locality
+     * todo adapt it to the Exception handling code by myself, chatgpt might mess up
      * @param clientId String
      * @param dto LocalityOrderAsClientDTO
      * @return ResponseEntity<?>
@@ -250,6 +233,13 @@ public class ClientServiceImpl implements ClientService {
         }
     }
 
+    /**
+     * Cancels a locality
+     * todo convert it myself
+     * @param clientId String
+     * @param dto LocalityOrderAsClient
+     * @return String
+     */
     @Override
     public ResponseEntity<?> cancelLocalityOrder(String clientId, LocalityOrderAsClientDTO dto) {
         ResponseEntity<?> verificationResponse = ClientSecurityUtils.verifyClientAccessWithRole();
@@ -331,6 +321,15 @@ public class ClientServiceImpl implements ClientService {
     // Should only load possible to buy LocalityOrders and its done but waiting to implement it when cleansing the database.
     // If this method does not work it may be due of EventRepository findByLocalitiesName() method.
     // FUCK SRP
+
+    /**
+     * Loads the shopping cart when a Client click on it
+     * todo convert this myself and complete it
+     * @param clientId String
+     * @param page int
+     * @param size int
+     * @return void
+     */
     @Override
     public ResponseEntity<?> loadShoppingCart(String clientId, int page, int size) {
         ResponseEntity<?> verificationResponse = ClientSecurityUtils.verifyClientAccessWithRole();
@@ -488,62 +487,31 @@ public class ClientServiceImpl implements ClientService {
         } else {
             return new ResponseEntity<>(new ApiResponse<>("Error", "No ordered localities to apply a coupon", null), HttpStatus.NOT_FOUND);
         }
-
     }
 
     @Override
-    public ResponseEntity<?> verifyClient(String clientId, String verificationCode) {
-        try {
-            // Fetch the client from the repository
-            Optional<Client> clientOptional = clientRepository.findById(clientId);
+    public void verifyClient(String clientId, String verificationCode) {
 
-            // Check if the client exists
-            if (clientOptional.isEmpty()) {
-                ApiResponse<String> response = new ApiResponse<>("Error", "Client not found", null);
-                return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
-            }
+        Client client = clientRepository.findById(clientId)
+                .orElseThrow(() -> new AccountNotFoundException("Client not found"));
 
-            Client client = clientOptional.get();
-
-            // Verify if client is already active
-            if (client.isActive()) {
-                ApiResponse<String> response = new ApiResponse<>("Success", "Client is already active", null);
-                return new ResponseEntity<>(response, HttpStatus.OK);
-            }
-
-            if (!client.getVerificationCodeExpiration().isBefore(LocalDateTime.now())) {
-                ApiResponse<String> response = new ApiResponse<>("Error", "Activation code expired", null);
-                return new ResponseEntity<>(response, HttpStatus.OK);
-            }
-
-            boolean correctCode = client.getVerificationCode().equals(verificationCode);
-
-            // Check if the  code is the same as the one stored in the database
-            if (correctCode) {
-                // Set the client as active
-                client.setActive(true);
-            }
-
-            clientRepository.save(client);
-
-            ApiResponse<String> response = new ApiResponse<>("Success", "Client has been verified and activated", null);
-            return new ResponseEntity<>(response, HttpStatus.OK);
-
-        } catch (Exception e) {
-            ApiResponse<String> response = new ApiResponse<>("Error", "An error occurred during verification", e.getMessage());
-            return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
+        // Verify if client is already active
+        if (client.isActive()) {
+            throw new ClientAlreadyActiveException("Client is already active");
         }
-    }
 
+        // Check if the activation code has expired
+        if (client.getVerificationCodeExpiration().isBefore(LocalDateTime.now())) {
+            throw new VerificationCodeExpiredException("Activation code expired");
+        }
 
-    // Method generated by IntelliJ
-    private static ApiResponse<UpdateClientDTO> getUpdateClientDTOApiResponse(Optional<Client> client) {
-        String phone = client.get().getPhoneNumber();
-        String email = client.get().getEmail();
-        String name = client.get().getName();
-        String address = client.get().getAddress();
+        // Check if the provided verification code matches
+        if (!client.getVerificationCode().equals(verificationCode)) {
+            throw new IncorrectVerificationCodeException("Incorrect verification code");
+        }
 
-        UpdateClientDTO dto = new UpdateClientDTO(phone, email, name, address);
-        return new ApiResponse<>("Success", "Client info returned", dto);
+        // If verification code is correct, activate the client
+        client.setActive(true);
+        clientRepository.save(client);
     }
 }

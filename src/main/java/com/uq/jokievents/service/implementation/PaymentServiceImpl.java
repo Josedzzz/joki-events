@@ -158,6 +158,7 @@ public class PaymentServiceImpl implements PaymentService {
 
                 // Only proceed if the payment was successful
                 // TODO The "approved" shall be implemented by us, somehow. Ask Rojo!
+                // todo make the approved empty the client shopping cart and add it to the buying history (buying history attribute must be added to the Client model class)
                 if ("approved".equals(payment.getStatus())) {
                     // For each locality ordered, update the corresponding event and locality capacity
                     for (LocalityOrder localityOrder : order.getLocalityOrders()) {
