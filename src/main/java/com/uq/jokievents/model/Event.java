@@ -21,17 +21,17 @@ public class Event {
 
     @Id
     private String id;
-    private String name; // LO
-    private String address; // LO
-    private String city; // LO
+    private String name;
+    private String address;
+    private String city;
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'")
-    private LocalDateTime eventDate; // LO
-    private boolean availableForPurchase;
+    private LocalDateTime eventDate;
+    private boolean availableForPurchase; // todo make this false if the totalAvailablePlaces get to 0 in the payment method
     private List<Locality> localities;
-    private int totalAvailablePlaces;
-    private String eventImageUrl; // LO
+    private int totalAvailablePlaces; // todo check if this is reducing when a payment is "approved"
+    private String eventImageUrl;
     private String localitiesImageUrl;
-    private EventType eventType; // LO
+    private EventType eventType;
 
     public Locality getLocalities(String localityName) {
         for (Locality locality : localities) {

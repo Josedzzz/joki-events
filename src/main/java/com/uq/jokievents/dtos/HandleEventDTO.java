@@ -25,10 +25,8 @@ public record HandleEventDTO(
         @NotEmpty(message = "At least one locality is required")
         List<CreateLocalityDTO> localities,
 
-        @NotNull
         String eventImageUrl,
 
-        @NotNull
         String localitiesImageUrl,
 
         @NotNull(message = "Event type is required")

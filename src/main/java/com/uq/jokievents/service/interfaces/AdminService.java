@@ -27,6 +27,8 @@ public interface AdminService {
     ApiResponse<Map<String, Object>> getAllCouponsPaginated(int page, int size);
     ApiResponse<UpdateAdminDTO> getAccountInformation(String adminId);
     void generateEventsReport(LocalDateTime startDate, LocalDateTime endDate);
+
+    ApiTokenResponse<Map<String, Object>> getAllAdmins() throws Exception;
 }
 
 

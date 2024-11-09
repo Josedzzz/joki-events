@@ -25,8 +25,8 @@ import java.util.function.Function;
 @RequiredArgsConstructor
 public class JwtServiceImpl implements JwtService {
 
-    // Short-lived Access Token expiration time, for now it is 120 mins long
-    private final long ACCESS_TOKEN_EXPIRATION = 120 * 60 * 1000;
+    // Short-lived Access Token expiration time, for now it is a day long
+    private final long ACCESS_TOKEN_EXPIRATION = 1440 * 60 * 1000;
     @Value("${jwt.secret}")
     private String SECRET_KEY;
 

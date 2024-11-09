@@ -12,7 +12,7 @@ import org.springframework.data.mongodb.core.mapping.Document;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Document(collection = "distributionlocalities")
+@Document(collection = "localities")
 public class Locality {
 
     @Id @JsonIgnore

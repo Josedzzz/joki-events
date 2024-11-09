@@ -1,5 +1,6 @@
 package com.uq.jokievents.model;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.uq.jokievents.model.enums.CouponType;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
@@ -16,7 +17,7 @@ public class Coupon {
     private String id;
     private String name;
     private double discountPercent;
-    private LocalDateTime expirationDate;
+    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss.SSS") private LocalDateTime expirationDate;
     private double minPurchaseAmount;
     private CouponType couponType; //    UNIQUE or INDIVIDUAL
 }

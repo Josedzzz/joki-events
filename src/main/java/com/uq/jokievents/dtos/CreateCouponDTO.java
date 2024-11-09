@@ -2,6 +2,7 @@ package com.uq.jokievents.dtos;
 
 import java.time.LocalDateTime;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.uq.jokievents.model.enums.CouponType;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.Max;

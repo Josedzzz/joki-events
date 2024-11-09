@@ -5,7 +5,7 @@ import jakarta.validation.constraints.*;
 public record CreateLocalityDTO(
 
         @NotBlank(message = "Name is required")
-        String name,
+        String localityName,
 
         @Positive(message = "Price must be positive")
         double price,

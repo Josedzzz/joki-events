@@ -2,10 +2,7 @@ package com.uq.jokievents.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.uq.jokievents.model.enums.Role;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import lombok.RequiredArgsConstructor;
+import lombok.*;
 import org.bson.types.ObjectId;
 import java.time.LocalDateTime;
 import org.springframework.data.annotation.Id;

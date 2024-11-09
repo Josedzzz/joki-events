@@ -47,9 +47,8 @@ public class AuthenticationController {
         } catch (AccountException e) {
             ApiTokenResponse<String> response = new ApiTokenResponse<>("Error", e.getMessage(), null, null);
             return new ResponseEntity<>(response, HttpStatus.UNAUTHORIZED);
-
         } catch (Exception e) {
-            ApiTokenResponse<String> response = new ApiTokenResponse<>("Error", "Login failed", null, null);
+            ApiTokenResponse<String> response = new ApiTokenResponse<>("Error", e.getMessage(), null, null);
             return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
