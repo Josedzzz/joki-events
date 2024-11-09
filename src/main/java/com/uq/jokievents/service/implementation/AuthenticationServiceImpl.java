@@ -229,6 +229,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
 
         // Sending the verification email
         emailService.sendVerificationMail(client.getEmail(), verificationCode);
+        emailService.sendDiscountCouponMail(client.getEmail());
 
         // Saving the client and shopping cart to the database
         clientRepository.save(client);

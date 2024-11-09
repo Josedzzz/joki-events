@@ -124,10 +124,11 @@ public class AdminServiceImpl implements AdminService{
         coupon.setDiscountPercent(dto.discount());
         coupon.setExpirationDate(dto.expirationDate());
         coupon.setMinPurchaseAmount(dto.minPurchaseAmount());
-        Coupon savedCoupon = couponRepository.save(coupon);
+        coupon.setCouponType(dto.couponType());
+        couponRepository.save(coupon);
 
         // Return success response
-        return new ApiResponse<>("Success", "Coupon creation done", savedCoupon);
+        return new ApiResponse<>("Success", "Coupon creation done", coupon);
     }
 
 

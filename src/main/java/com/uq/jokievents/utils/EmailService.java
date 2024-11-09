@@ -1,17 +1,24 @@
 package com.uq.jokievents.utils;
 
 import com.uq.jokievents.model.Client;
+import com.uq.jokievents.model.Coupon;
+import com.uq.jokievents.model.enums.CouponType;
+import com.uq.jokievents.repository.CouponRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+import java.util.Random;
+
 @Service
 @RequiredArgsConstructor(onConstructor_ = {@Autowired})
 public class EmailService {
 
     private final JavaMailSender mailSender;
+    private final CouponRepository couponRepository;
 
     /**
      * Sends an email to a clients email from application.properties data (my gmail!!!)
@@ -23,6 +30,20 @@ public class EmailService {
         message.setTo(to);
         message.setSubject("Verification Email");
         message.setText("Please use the following code to activate your account: " + verCode);
+        mailSender.send(message);
+    }
+
+    // todo iterate over all the coupons, send an individual coupon
+    public void sendDiscountCouponMail(String to) {
+
+        List<Coupon> individualCoupons = couponRepository.findByCouponType(CouponType.INDIVIDUAL);
+        Random random = new Random();
+        Coupon randomCoupon = individualCoupons.get(random.nextInt(individualCoupons.size()));
+
+        SimpleMailMessage message = new SimpleMailMessage();
+        message.setTo(to);
+        message.setSubject("Discount Coupon for your new Account");
+        message.setText("Use this coupon: " + randomCoupon.getName() + " to get a " + randomCoupon.getDiscountPercent() + "% discount.\nAvailable for purchases that cost more than $" + randomCoupon.getMinPurchaseAmount() + " until " + randomCoupon.getExpirationDate() + "\n Be smart and buy!");
         mailSender.send(message);
     }
 

@@ -1,6 +1,8 @@
 package com.uq.jokievents.dtos;
 
 import java.time.LocalDateTime;
+
+import com.uq.jokievents.model.enums.CouponType;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.NotBlank;
@@ -20,6 +22,8 @@ public record CreateCouponDTO(
 
         @NotNull(message = "Minimum purchase amount cannot be null")
         @Min(value = 0, message = "Minimum purchase amount must be greater than or equal to 0")
-        Double minPurchaseAmount
+        Double minPurchaseAmount,
+
+        CouponType couponType
 ) {}
 
