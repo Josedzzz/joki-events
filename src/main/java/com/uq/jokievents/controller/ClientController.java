@@ -1,6 +1,7 @@
 package com.uq.jokievents.controller;
 
 import com.uq.jokievents.dtos.LocalityOrderAsClientDTO;
+import com.uq.jokievents.dtos.SearchEventDTO;
 import com.uq.jokievents.exceptions.*;
 import com.uq.jokievents.model.Admin;
 import com.uq.jokievents.model.Client;
@@ -105,8 +106,27 @@ public class ClientController {
 
 
     @GetMapping("/get-paginated-events")
-    public ResponseEntity<?> getAllEventsPaginated(@RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "16") int size) {
-        return clientService.getAllEventsPaginated(page, size);
+    public ResponseEntity<ApiResponse<?>> getAllEventsPaginated(@RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "16") int size) {
+        try {
+            Map<String, Object> paginatedEvents = clientService.getAllEventsPaginated(page, size);
+            ApiResponse<Map<String, Object>> response = new ApiResponse<>("Success", "Retrieving the events", paginatedEvents);
+            return new ResponseEntity<>(response, HttpStatus.OK);
+        } catch (AccountException e) {
+            ApiResponse<String> response = new ApiResponse<>("Error", e.getMessage(), null);
+            return new ResponseEntity<>(response, HttpStatus.UNAUTHORIZED);
+        }
+    }
+
+    @PostMapping("/search-event")
+    public ResponseEntity<?> searchEvent(@RequestBody SearchEventDTO dto, @RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "16") int size) {
+        try {
+            Map<String, Object> paginatedQueryEvents = clientService.searchEvent(dto, page, size);
+            ApiResponse<Map<String, Object>> response = new ApiResponse<>("Success", "Retrieving the events", paginatedQueryEvents);
+            return new ResponseEntity<>(response, HttpStatus.OK);
+        } catch (AccountException e) {
+            ApiResponse<String> response = new ApiResponse<>("Error", e.getMessage(), null);
+            return new ResponseEntity<>(response, HttpStatus.UNAUTHORIZED);
+        }
     }
 
     @GetMapping("/get-client-account-info/{clientId}")

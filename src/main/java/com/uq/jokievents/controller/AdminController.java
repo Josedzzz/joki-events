@@ -1,15 +1,27 @@
 package com.uq.jokievents.controller;
 
 import com.uq.jokievents.dtos.*;
+import com.uq.jokievents.exceptions.AccountException;
+import com.uq.jokievents.exceptions.AuthorizationException;
+import com.uq.jokievents.exceptions.LogicException;
+import com.uq.jokievents.model.Admin;
+import com.uq.jokievents.model.Client;
+import com.uq.jokievents.model.Coupon;
+import com.uq.jokievents.model.Event;
 import com.uq.jokievents.service.interfaces.AdminService;
 
+import com.uq.jokievents.utils.ApiResponse;
+import com.uq.jokievents.utils.ApiTokenResponse;
 import lombok.RequiredArgsConstructor;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
+import java.time.LocalDateTime;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/admin")
@@ -23,24 +35,36 @@ public class AdminController {
     private final AdminService adminService;
 
     /**
-     * Example JSON:
-     * {
-     *  "username": "XD",
-     *  "email": "mail@mail.com"
-     * }
-     *
      * @param adminId String
-     * @param dto     UpdateAdminDTO
+     * @param dto UpdateAdminDTO
      * @return ResponseEntity
      */
     @PostMapping("/{adminId}/update")
-    public ResponseEntity<?> updateAdmin(@PathVariable String adminId, @Valid @RequestBody UpdateAdminDTO dto) {
-        return adminService.updateAdmin(adminId, dto);
+    public ResponseEntity<ApiTokenResponse<?>> updateAdmin(@PathVariable String adminId, @Valid @RequestBody UpdateAdminDTO dto) {
+        try {
+            ApiTokenResponse<Object> response = adminService.updateAdmin(adminId, dto);
+            return new ResponseEntity<>(response, HttpStatus.OK);
+        } catch (AuthorizationException e) {
+            ApiTokenResponse<String> response = new ApiTokenResponse<>("Error", e.getMessage(), null, null);
+            return new ResponseEntity<>(response, HttpStatus.FORBIDDEN);
+        } catch (AccountException e) {
+            ApiTokenResponse<String> response = new ApiTokenResponse<>("Error", e.getMessage(), null, null);
+            return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
+        }
     }
 
-    @DeleteMapping("/{adminId}/delete")
-    public ResponseEntity<?> deleteAdminById(@PathVariable String adminId) {
-        return adminService.deleteAdminAccount(adminId);
+    @PostMapping("/{adminId}/delete")
+    public ResponseEntity<ApiResponse<?>> deleteAdminById(@PathVariable String adminId) {
+        try {
+            ApiResponse<String> response = adminService.deleteAdminAccount(adminId);
+            return new ResponseEntity<>(response, HttpStatus.OK);
+        } catch (AuthorizationException e) {
+            ApiResponse<String> response = new ApiResponse<>("Error", e.getMessage(), null);
+            return new ResponseEntity<>(response, HttpStatus.FORBIDDEN);
+        } catch (AccountException e) {
+            ApiResponse<String> response = new ApiResponse<>("Error", e.getMessage(), null);
+            return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
+        }
     }
 
     /**
@@ -50,88 +74,198 @@ public class AdminController {
      * @return ResponseEntity
      */
     @PostMapping("/create-coupon")
-    public ResponseEntity<?> createCoupon(@Valid @RequestBody CreateCouponDTO dto) {
-        return adminService.createCoupon(dto);
+    public ResponseEntity<ApiResponse<?>> createCoupon(@RequestBody CreateCouponDTO dto) {
+        try {
+            ApiResponse<Coupon> response = adminService.createCoupon(dto);
+            return new ResponseEntity<>(response, HttpStatus.CREATED);
+        } catch (LogicException e) {
+            ApiResponse<String> errorResponse = new ApiResponse<>("Error", e.getMessage(), null);
+            return new ResponseEntity<>(errorResponse, HttpStatus.CONFLICT);
+        } catch (AuthorizationException e) {
+            ApiResponse<String> errorResponse = new ApiResponse<>("Error", e.getMessage(), null);
+            return new ResponseEntity<>(errorResponse, HttpStatus.FORBIDDEN);
+        } catch (Exception e) {
+            ApiResponse<String> errorResponse = new ApiResponse<>("Error", "Failed to create coupon", null);
+            return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
 
     /**
-     * Input JSON:
-     * {
-     * "discount": 20.0,
-     * "expirationDate": "2024-12-31T23:59:59",
-     * "minPurchaseAmount": 110.0
-     * }
-     * Output JSON:
-     * {
-     * "status": "Success",
-     * "message": "Coupon updated",
-     * "data": {
-     * "id": "66e116c1f6751275233b24ff",
-     * "couponName": "Summer Sale",
-     * "discountPercent": 20.0,
-     * "expirationDate": "2024-12-31T23:59:59",
-     * "minPurchaseAmount": 110.0,
-     * "used": false
-     * }
-     * }
-     *
      * @param dto UpdateCouponDTO
      * @return ResponseEntity
      */
     @PostMapping("/update-coupon/{couponId}")
-    public ResponseEntity<?> updateCoupon(@PathVariable String couponId, @Valid @RequestBody UpdateCouponDTO dto) {
-        return adminService.updateCoupon(couponId, dto);
+    public ResponseEntity<ApiResponse<?>> updateCoupon(
+            @PathVariable String couponId,
+            @RequestBody @Valid UpdateCouponDTO dto) {
+        try {
+            ApiResponse<Coupon> response = adminService.updateCoupon(couponId, dto);
+            return new ResponseEntity<>(response, HttpStatus.OK);
+        } catch (AuthorizationException e) {
+            ApiResponse<String> errorResponse = new ApiResponse<>("Error", e.getMessage(), null);
+            return new ResponseEntity<>(errorResponse, HttpStatus.FORBIDDEN);
+        } catch (LogicException e) {
+            ApiResponse<String> errorResponse = new ApiResponse<>("Error", e.getMessage(), null);
+            return new ResponseEntity<>(errorResponse, HttpStatus.NOT_FOUND);
+        } catch (Exception e) {
+            ApiResponse<String> errorResponse = new ApiResponse<>("Error", "Failed to update coupon", null);
+            return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
 
-    @DeleteMapping("/delete-coupon/{couponId}")
-    public ResponseEntity<?> deleteCouponById(@PathVariable String couponId) {
-        return adminService.deleteCoupon(couponId);
+    @PostMapping("/delete-coupon/{couponId}")
+    public ResponseEntity<ApiResponse<String>> deleteCoupon(@PathVariable String couponId) {
+        try {
+            ApiResponse<String> response = adminService.deleteCoupon(couponId);
+            return new ResponseEntity<>(response, HttpStatus.OK);
+        } catch (AuthorizationException e) {
+            ApiResponse<String> errorResponse = new ApiResponse<>("Error", e.getMessage(), null);
+            return new ResponseEntity<>(errorResponse, HttpStatus.FORBIDDEN);
+        } catch (LogicException e) {
+            ApiResponse<String> errorResponse = new ApiResponse<>("Error", e.getMessage(), null);
+            return new ResponseEntity<>(errorResponse, HttpStatus.NOT_FOUND);
+        } catch (Exception e) {
+            ApiResponse<String> errorResponse = new ApiResponse<>("Error", "Failed to delete coupon", null);
+            return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
 
-    @DeleteMapping("/delete-all-coupons")
-    public ResponseEntity<?> deleteAllCoupons() {
-        return adminService.deleteAllCoupons();
+    @PostMapping("/delete-all-coupons")
+    public ResponseEntity<ApiResponse<String>> deleteAllCoupons() {
+        try {
+            ApiResponse<String> response = adminService.deleteAllCoupons();
+            return ResponseEntity.ok(response);
+        } catch (AuthorizationException e) {
+            ApiResponse<String> errorResponse = new ApiResponse<>("Error", e.getMessage(), null);
+            return new ResponseEntity<>(errorResponse, HttpStatus.FORBIDDEN);
+        } catch (LogicException e) {
+            ApiResponse<String> errorResponse = new ApiResponse<>("Error", e.getMessage(), null);
+            return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
+        } catch (Exception e) {
+            ApiResponse<String> errorResponse = new ApiResponse<>("Error", "Failed to delete all coupons", null);
+            return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
 
     @PostMapping("/create-event")
-    public ResponseEntity<?> createEvent(@Valid @RequestBody HandleEventDTO dto) {
-        return adminService.addEvent(dto);
+    public ResponseEntity<ApiResponse<?>> addEvent(@RequestBody HandleEventDTO dto) {
+        try {
+            ApiResponse<Event> response = adminService.addEvent(dto);
+            return ResponseEntity.status(HttpStatus.CREATED).body(response);
+        } catch (AuthorizationException e) {
+            ApiResponse<String> errorResponse = new ApiResponse<>("Error", e.getMessage(), null);
+            return new ResponseEntity<>(errorResponse, HttpStatus.FORBIDDEN);
+        } catch (LogicException e) {
+            ApiResponse<String> errorResponse = new ApiResponse<>("Error", e.getMessage(), null);
+            return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
+        } catch (Exception e) {
+            ApiResponse<String> errorResponse = new ApiResponse<>("Error", "Failed to create event", null);
+            return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
 
     @GetMapping("/get-paginated-events")
-    public ResponseEntity<?> getAllEventsPaginated(@RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "16") int size) {
-        return adminService.getAllEventsPaginated(page, size);
+    public ResponseEntity<ApiResponse<?>> getAllEventsPaginated(
+            @RequestParam int page,
+            @RequestParam int size) {
+        try {
+            ApiResponse<Map<String, Object>> response = adminService.getAllEventsPaginated(page, size);
+            return ResponseEntity.status(HttpStatus.OK).body(response);
+        } catch (AuthorizationException e) {
+            ApiResponse<String> errorResponse = new ApiResponse<>("Error", e.getMessage(), null);
+            return new ResponseEntity<>(errorResponse, HttpStatus.FORBIDDEN);
+        } catch (LogicException e) {
+            ApiResponse<String> errorResponse = new ApiResponse<>("Error", e.getMessage(), null);
+            return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
+        } catch (Exception e) {
+            ApiResponse<String> errorResponse = new ApiResponse<>("Error", "Failed to retrieve events", null);
+            return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
 
-    @PostMapping("/update-event/{id}")
-    public ResponseEntity<?> updateEvent(@PathVariable String id, @Valid @RequestBody HandleEventDTO dto) {
-        return adminService.updateEvent(id, dto);
+    @PostMapping("/update-event/{eventId}")
+    public ResponseEntity<ApiResponse<?>> updateEvent(
+            @PathVariable String eventId,
+            @Valid @RequestBody HandleEventDTO dto) {
+        try {
+            ApiResponse<Event> response = adminService.updateEvent(eventId, dto);
+            return ResponseEntity.status(HttpStatus.OK).body(response);
+        } catch (AuthorizationException e) {
+            ApiResponse<String> errorResponse = new ApiResponse<>("Error", e.getMessage(), null);
+            return new ResponseEntity<>(errorResponse, HttpStatus.FORBIDDEN);
+        } catch (LogicException e) {
+            ApiResponse<String> errorResponse = new ApiResponse<>("Error", e.getMessage(), null);
+            return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
+        } catch (Exception e) {
+            ApiResponse<String> errorResponse = new ApiResponse<>("Error", "Failed to update event", null);
+            return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
 
     // POST until further notice.
-    @PostMapping("/delete-event/{id}")
-    public ResponseEntity<?> deleteEventById(@Valid @PathVariable String id) {
-        return adminService.deleteEvent(id);
+    @PostMapping("/delete-event/{eventId}")
+    public ResponseEntity<ApiResponse<String>> deleteEventById(@Valid @PathVariable String eventId) {
+        try {
+            ApiResponse<String> response = adminService.deleteEvent(eventId);
+            return new ResponseEntity<>(response, HttpStatus.OK);
+        } catch (AuthorizationException e) {
+            ApiResponse<String> response = new ApiResponse<>("Error", e.getMessage(), null);
+            return new ResponseEntity<>(response, HttpStatus.FORBIDDEN);
+        } catch (LogicException e) {
+            ApiResponse<String> response = new ApiResponse<>("Error", e.getMessage(), null);
+            return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
+        }
     }
 
     // POST until further notice.
     @PostMapping("/delete-all-events")
-    public ResponseEntity<?> deleteAllEvents() {
-        return adminService.deleteAllEvents();
+    public ResponseEntity<ApiResponse<String>> deleteAllEvents() {
+        try {
+            ApiResponse<String> response = adminService.deleteAllEvents();
+            return ResponseEntity.status(HttpStatus.OK).body(response);
+        } catch (AuthorizationException e) {
+            ApiResponse<String> errorResponse = new ApiResponse<>("Error", e.getMessage(), null);
+            return new ResponseEntity<>(errorResponse, HttpStatus.FORBIDDEN);
+        } catch (LogicException e) {
+            ApiResponse<String> errorResponse = new ApiResponse<>("Error", e.getMessage(), null);
+            return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
+        } catch (Exception e) {
+            ApiResponse<String> errorResponse = new ApiResponse<>("Error", "Failed to delete all events", null);
+            return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
-
     @GetMapping("/get-paginated-coupons")
-    public ResponseEntity<?> getAllCouponsPaginated(@RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "8") int size) {
-        return adminService.getAllCouponsPaginated(page, size);
+    public ResponseEntity<ApiResponse<?>> getAllCouponsPaginated(
+            @RequestParam int page, @RequestParam int size) {
+        try {
+            ApiResponse<Map<String, Object>> response = adminService.getAllCouponsPaginated(page, size);
+            return ResponseEntity.status(HttpStatus.OK).body(response);
+        } catch (LogicException e) {
+            ApiResponse<String> errorResponse = new ApiResponse<>("Error", e.getMessage(), null);
+            return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
+        } catch (Exception e) {
+            ApiResponse<String> errorResponse = new ApiResponse<>("Error", "Failed to retrieve coupons", null);
+            return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
 
     @GetMapping("/get-admin-account-info/{adminId}")
-    public ResponseEntity<?> getLoginInformation(@PathVariable String adminId) {
-        return adminService.getAccountInformation(adminId);
+    public ResponseEntity<ApiResponse<?>> getAccountInformation(
+            @PathVariable String adminId) {
+        try {
+            ApiResponse<UpdateAdminDTO> response = adminService.getAccountInformation(adminId);
+            return ResponseEntity.status(HttpStatus.OK).body(response);
+        } catch (LogicException e) {
+            ApiResponse<String> errorResponse = new ApiResponse<>("Error", e.getMessage(), null);
+            return new ResponseEntity<>(errorResponse, HttpStatus.NOT_FOUND);
+        } catch (Exception e) {
+            ApiResponse<String> errorResponse = new ApiResponse<>("Error", "Failed to retrieve admin info", null);
+            return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
 
     @GetMapping("/event-report")
-    public ResponseEntity<?> getEventsReport(@RequestParam String startDate, @RequestParam String endDate) {
-        return adminService.generateEventsReport(startDate, endDate);
+    public ResponseEntity<?> getEventsReport(@RequestParam LocalDateTime startDate, @RequestParam LocalDateTime endDate) {
+        return null;
     }
 }

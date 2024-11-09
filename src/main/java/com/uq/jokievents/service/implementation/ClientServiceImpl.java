@@ -13,24 +13,19 @@ import com.uq.jokievents.repository.CouponRepository;
 import com.uq.jokievents.repository.EventRepository;
 import com.uq.jokievents.repository.ShoppingCartRepository;
 import com.uq.jokievents.service.interfaces.ClientService;
-import com.uq.jokievents.service.interfaces.EventService;
 import com.uq.jokievents.service.interfaces.JwtService;
-import com.uq.jokievents.service.interfaces.ShoppingCartService;
 import com.uq.jokievents.utils.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.RequestBody;
 
 import java.time.LocalDateTime;
-import java.time.LocalTime;
 import java.util.*;
 
 @Service
@@ -39,13 +34,11 @@ import java.util.*;
 public class ClientServiceImpl implements ClientService {
 
     private final ClientRepository clientRepository;
-    private final JwtService jwtService;
-    private final EventService eventService;
-    private final ShoppingCartService shoppingCartService;
     private final CouponRepository couponRepository;
-    private final EmailService emailService;
     private final ShoppingCartRepository shoppingCartRepository;
     private final EventRepository eventRepository;
+    private final EmailService emailService;
+    private final JwtService jwtService;
 
     @Value("${image.not.found}")
     private String notFoundString;
@@ -127,39 +120,32 @@ public class ClientServiceImpl implements ClientService {
 
     // todo make the ClientController have the EventService instead and call the method of the service
     @Override
-    public ResponseEntity<?> getAllEventsPaginated(int page, int size) {
-
+    public Map<String, Object> getAllEventsPaginated(int page, int size) {
+        // Verify client access
         String verificationResponse = ClientSecurityUtils.verifyClientAccessWithRole();
         if ("UNAUTHORIZED".equals(verificationResponse)) {
-            throw new AccountException("Not authorized to delete this account");
+            throw new AccountException("Not authorized to access events");
         }
 
-        try {
-            Pageable pageable = PageRequest.of(page, size);
-            Page<Event> eventPage = eventRepository.findAll(pageable);
+        Pageable pageable = PageRequest.of(page, size);
+        Page<Event> eventPage = eventRepository.findAll(pageable);
 
-            Map<String, Object> responseData = new HashMap<>();
-            responseData.put("content", eventPage.getContent());
-            responseData.put("totalPages", eventPage.getTotalPages());
-            responseData.put("totalElements", eventPage.getTotalElements());
-            responseData.put("currentPage", eventPage.getNumber());
+        // Populate pagination data
+        Map<String, Object> responseData = new HashMap<>();
+        responseData.put("content", eventPage.getContent());
+        responseData.put("totalPages", eventPage.getTotalPages());
+        responseData.put("totalElements", eventPage.getTotalElements());
+        responseData.put("currentPage", eventPage.getNumber());
 
-            ApiResponse<Map<String, Object>> response = new ApiResponse<>("Success", "Events retrieved successfully", responseData);
-            return new ResponseEntity<>(response, HttpStatus.OK);
-        } catch (Exception e) {
-            ApiResponse<String> errorResponse = new ApiResponse<>("Error", "Failed to retrieve events", null);
-            return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
-        }
+        return responseData;
     }
 
-
-    // todo I WAS HERE, ADAPTING SEARCH EVENT FOR CLIENT AND DELETING THE EVENT SERVICE CLASS, IT WAS A GOOD IDEA WITH BAD EXECUTION
     @Override
-    public ResponseEntity<?> searchEvent(SearchEventDTO dto, int page, int size) {
-
+    public Map<String, Object> searchEvent(SearchEventDTO dto, int page, int size) {
+        // Verify client access
         String verificationResponse = ClientSecurityUtils.verifyClientAccessWithRole();
         if ("UNAUTHORIZED".equals(verificationResponse)) {
-            throw new AccountException("Not authorized to delete this account");
+            throw new AccountException("Not authorized to access events");
         }
 
         String eventName = dto.eventName();
@@ -168,48 +154,39 @@ public class ClientServiceImpl implements ClientService {
         LocalDateTime endDate = dto.endDate();
         EventType eventType = dto.eventType();
 
-        try {
-            // Fetch all events from the repository
-            List<Event> allEvents = eventRepository.findAll();
+        // Fetch all events from the repository
+        List<Event> allEvents = eventRepository.findAll();
 
-            // Use stream to filter events based on the criteria
-            List<Event> filteredEvents = allEvents.stream()
-                    .filter(event ->
-                            (eventName == null || eventName.isEmpty() || (event.getName() != null && event.getName().toLowerCase().contains(eventName.toLowerCase()))) // Flexible event name match
-                                    && (city == null || city.isEmpty() || (event.getCity() != null && event.getCity().toLowerCase().contains(city.toLowerCase()))) // Flexible city match
-                                    && (startDate == null || (event.getEventDate() != null && !event.getEventDate().isBefore(startDate))) // Correct start date filter
-                                    && (endDate == null || (event.getEventDate() != null && !event.getEventDate().isAfter(endDate))) // Correct end date filter
-                                    && (eventType == null || eventType.equals(event.getEventType())) // Strict event type match
-                    )
-                    .toList(); // Collect the filtered events into a list
+        // Filter events based on the criteria
+        List<Event> filteredEvents = allEvents.stream()
+                .filter(event ->
+                        (eventName == null || eventName.isEmpty() || (event.getName() != null && event.getName().toLowerCase().contains(eventName.toLowerCase())))
+                                && (city == null || city.isEmpty() || (event.getCity() != null && event.getCity().toLowerCase().contains(city.toLowerCase())))
+                                && (startDate == null || (event.getEventDate() != null && !event.getEventDate().isBefore(startDate)))
+                                && (endDate == null || (event.getEventDate() != null && !event.getEventDate().isAfter(endDate)))
+                                && (eventType == null || eventType.equals(event.getEventType()))
+                )
+                .toList();
 
-            // Calculate pagination
-            int totalElements = filteredEvents.size();  // Total number of filtered events
-            int totalPages = (int) Math.ceil((double) totalElements / size);  // Total number of pages
-            int start = page * size;  // Start index
-            int end = Math.min(start + size, totalElements);  // End index
+        // Calculate pagination
+        int totalElements = filteredEvents.size();
+        int totalPages = (int) Math.ceil((double) totalElements / size);
+        int start = page * size;
+        int end = Math.min(start + size, totalElements);
 
-            // Ensure the requested page is within bounds
-            if (start >= totalElements) {
-                return new ResponseEntity<>(new ApiResponse<>("Success", "No events found for the specified page", List.of()), HttpStatus.OK);
-            }
+        // Ensure the requested page is within bounds
+        List<Event> paginatedEvents = (start >= totalElements) ? List.of() : filteredEvents.subList(start, end);
 
-            // Get the sublist for the current page
-            List<Event> paginatedEvents = filteredEvents.subList(start, end);
+        // Prepare pagination metadata
+        Map<String, Object> paginationData = new HashMap<>();
+        paginationData.put("totalPages", totalPages);
+        paginationData.put("currentPage", page);
+        paginationData.put("totalElements", totalElements);
+        paginationData.put("content", paginatedEvents);
 
-            // Prepare pagination metadata
-            Map<String, Object> paginationData = new HashMap<>();
-            paginationData.put("totalPages", totalPages);
-            paginationData.put("currentPage", page);
-            paginationData.put("totalElements", totalElements);
-            paginationData.put("content", paginatedEvents);  // The paginated events for the current page
-
-            // Return response
-            return new ResponseEntity<>(new ApiResponse<>("Success", "Events found", paginationData), HttpStatus.OK);
-        } catch (Exception e) {
-            return new ResponseEntity<>(new ApiResponse<>("Error", "An error occurred", e.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
-        }
+        return paginationData;
     }
+
 
     @Override
     public UpdateClientDTO getAccountInformation(String clientId) {
@@ -273,7 +250,7 @@ public class ClientServiceImpl implements ClientService {
                 .orElseThrow(() -> new AccountException("Client not found"));
 
         // Fetch the shopping cart
-        ShoppingCart shoppingCart = shoppingCartService.findShoppingCartById(client.getIdShoppingCart())
+        ShoppingCart shoppingCart = shoppingCartRepository.findById(client.getIdShoppingCart())
                 .orElseThrow(() -> new ShoppingCartException("Shopping cart not found"));
 
         // Create and add the locality order to the shopping cart
@@ -291,7 +268,7 @@ public class ClientServiceImpl implements ClientService {
                 .sum();
         shoppingCart.setTotalPrice(updatedTotalPrice);
 
-        shoppingCartService.saveShoppingCart(shoppingCart);
+        shoppingCartRepository.save(shoppingCart);
     }
 
 
@@ -315,7 +292,7 @@ public class ClientServiceImpl implements ClientService {
         Client client = clientOptional.get();
 
         // Find the client's shopping cart
-        Optional<ShoppingCart> shoppingCartOptional = shoppingCartService.findShoppingCartById(client.getIdShoppingCart());
+        Optional<ShoppingCart> shoppingCartOptional = shoppingCartRepository.findById(client.getIdShoppingCart());
         if (shoppingCartOptional.isEmpty()) {
             throw new ShoppingCartException("Shopping cart not found");
         }
@@ -362,7 +339,7 @@ public class ClientServiceImpl implements ClientService {
                 .mapToDouble(LocalityOrder::getTotalPaymentAmount).sum());
 
         // Save the updated shopping cart and event
-        shoppingCartService.saveShoppingCart(shoppingCart);
+        shoppingCartRepository.save(shoppingCart);
         eventRepository.save(event);
     }
 
@@ -391,7 +368,7 @@ public class ClientServiceImpl implements ClientService {
         }
 
         Client client = clientOptional.get();
-        Optional<ShoppingCart> shoppingCartOptional = shoppingCartService.findShoppingCartById(client.getIdShoppingCart());
+        Optional<ShoppingCart> shoppingCartOptional = shoppingCartRepository.findById(client.getIdShoppingCart());
         if (shoppingCartOptional.isEmpty()) {
             throw new ShoppingCartException("Shopping cart not found");
         }
@@ -458,7 +435,7 @@ public class ClientServiceImpl implements ClientService {
                 .orElseThrow(() -> new AccountException("Client not found"));
 
         // Fetch the shopping cart
-        ShoppingCart clientShoppingCart = shoppingCartService.findShoppingCartById(client.getIdShoppingCart())
+        ShoppingCart clientShoppingCart = shoppingCartRepository.findById(client.getIdShoppingCart())
                 .orElseThrow(() -> new ShoppingCartException("Shopping cart not found"));
 
         if (clientShoppingCart.isCouponClaimed()) {

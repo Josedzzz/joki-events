@@ -13,7 +13,6 @@ import com.uq.jokievents.model.enums.EventType;
 import com.uq.jokievents.repository.AdminRepository;
 import com.uq.jokievents.repository.CouponRepository;
 import com.uq.jokievents.repository.EventRepository;
-import com.uq.jokievents.service.interfaces.CouponService;
 import com.uq.jokievents.service.implementation.JwtServiceImpl;
 import com.uq.jokievents.utils.Generators;
 import org.junit.jupiter.api.AfterEach;
@@ -36,7 +35,6 @@ import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
@@ -60,9 +58,6 @@ public class AdminServicesTest {
 
     @Autowired
     private JwtServiceImpl jwtService;
-
-    @Autowired
-    private CouponService couponService;
 
     @Autowired
     private CouponRepository couponRepository;
@@ -236,7 +231,7 @@ public class AdminServicesTest {
         existingCoupon.setDiscountPercent(20.0);
         existingCoupon.setExpirationDate(LocalDateTime.now().plusDays(30));
         existingCoupon.setMinPurchaseAmount(100.0);
-        couponService.saveCoupon(existingCoupon); // Save the coupon to the repository
+        couponRepository.save(existingCoupon); // Save the coupon to the repository
 
         // Create a DTO for the request that conflicts with the existing coupon
         CreateCouponDTO couponDTO = new CreateCouponDTO("SummerSale", 25.0, LocalDateTime.now().plusDays(30), 200.0);

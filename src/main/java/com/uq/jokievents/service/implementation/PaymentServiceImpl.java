@@ -15,9 +15,8 @@ import com.uq.jokievents.exceptions.*;
 import com.uq.jokievents.model.*;
 import com.uq.jokievents.repository.ClientRepository;
 import com.uq.jokievents.repository.EventRepository;
-import com.uq.jokievents.service.interfaces.EventService;
+import com.uq.jokievents.repository.ShoppingCartRepository;
 import com.uq.jokievents.service.interfaces.PaymentService;
-import com.uq.jokievents.service.interfaces.ShoppingCartService;
 import com.uq.jokievents.utils.ClientSecurityUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.scheduling.annotation.Async;
@@ -33,12 +32,10 @@ import java.util.Optional;
 @Service
 @Transactional
 @RequiredArgsConstructor
-// TODO Implement this methods after doing the event payment logic
 public class PaymentServiceImpl implements PaymentService {
 
-    private final ShoppingCartService shoppingCartService;
+    private final ShoppingCartRepository shoppingCartRepository;
     private final ClientRepository clientRepository;
-    private final EventService eventService;
     private final ApplicationConfig applicationConfig;
     private final EventRepository eventRepository;
 
@@ -108,7 +105,7 @@ public class PaymentServiceImpl implements PaymentService {
             Preference preference = client.create(preferenceRequest);
 
             shoppingCart.setPaymentGatewayId(preference.getId());
-            shoppingCartService.saveShoppingCart(shoppingCart);
+            shoppingCartRepository.save(shoppingCart);
 
             // Only return the initPoint field
             return preference.getInitPoint();
@@ -127,11 +124,12 @@ public class PaymentServiceImpl implements PaymentService {
         }
         Client client = optionalClient.get();
         String shoppingCartClientId = client.getIdShoppingCart();
-        return shoppingCartService.findShoppingCartById(shoppingCartClientId);
+        return shoppingCartRepository.findById(shoppingCartClientId);
     }
 
     @Override
     @Async
+    // todo handle the during-after-cancelled buy here
     public void receiveMercadopagoNotification(Map<String, Object> request) {
         try {
             Object type = request.get("type");
@@ -179,7 +177,7 @@ public class PaymentServiceImpl implements PaymentService {
                     // Save payment details to the order and update order status
                     OrderPayment orderPayment = createPayment(payment);
                     order.setOrderPayment(orderPayment);
-                    shoppingCartService.saveShoppingCart(order);
+                    shoppingCartRepository.save(order);
                 }
             }
         } catch ( MPException e) {

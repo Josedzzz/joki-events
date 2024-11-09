@@ -3,9 +3,12 @@ package com.uq.jokievents.service.implementation;
 import javax.validation.Valid;
 
 import com.uq.jokievents.dtos.*;
+import com.uq.jokievents.exceptions.AccountException;
 import com.uq.jokievents.exceptions.AuthorizationException;
+import com.uq.jokievents.exceptions.LogicException;
 import com.uq.jokievents.model.Event;
 import com.uq.jokievents.model.Locality;
+import com.uq.jokievents.repository.CouponRepository;
 import com.uq.jokievents.repository.EventRepository;
 import com.uq.jokievents.service.interfaces.*;
 import com.uq.jokievents.utils.*;
@@ -41,181 +44,171 @@ public class AdminServiceImpl implements AdminService{
 
     private final AdminRepository adminRepository;
     private final EventRepository eventRepository;
+    private final CouponRepository couponRepository;
     private final ImageService imageService;
-    private final EventService eventService;
-    private final CouponService couponService;
     private final JwtService jwtService;
 
     @Override
-    public ResponseEntity<?> updateAdmin(String adminId, @RequestBody UpdateAdminDTO dto) {
-
-        ResponseEntity<?> verificationResponse = AdminSecurityUtils.verifyAdminAccessWithId(adminId);
-        if (verificationResponse != null) {
-            return verificationResponse;
+    public ApiTokenResponse<Object> updateAdmin(String adminId, UpdateAdminDTO dto) {
+        // todo fix the logic
+        // Verify admin access
+        String verificationResponse = AdminSecurityUtils.verifyAdminAccessWithRole();
+        if ("UNAUTHORIZED".equals(verificationResponse)) {
+            throw new AuthorizationException("Not authorized to access this endpoint");
         }
-        Admin admin = new Admin(); // je réserve la mémoire
+
         try {
-            // This optional will always bring the Admin object, as the admin is the one updating itself.
-            Optional<Admin> existingAdmin = adminRepository.findById(adminId);
-            if (existingAdmin.isPresent()) {
-                admin = existingAdmin.get(); // This conditional will never fail, just protocol
-            }
+            // Fetch the admin record
+            Admin admin = adminRepository.findById(adminId).orElseThrow(() ->
+                    new AccountException("Admin not found"));
+
+            // Update fields
             admin.setUsername(dto.username());
             admin.setEmail(dto.email());
 
-            Admin updatedAdmin = adminRepository.save(admin);
-            // Generar nuevo token con los datos actualizados
-            UserDetails adminDetails = adminRepository.findById(adminId).orElse(null);
+            // Save the updated admin record
+            adminRepository.save(admin);
+
+            // Generate new token with updated details
+            UserDetails adminDetails = adminRepository.findById(adminId).orElseThrow();
             String newToken = jwtService.getAdminToken(adminDetails);
-            // Devolver la respuesta con Admin en 'data' y el token en 'token'
-            ApiTokenResponse<Object> response = new ApiTokenResponse<>("Success","Admin update done", updatedAdmin, newToken);
-            return new ResponseEntity<>(response, HttpStatus.OK);
-        } catch (Exception e) {
-            ApiResponse<String> response = new ApiResponse<>("Error", "Failed to update admin", null);
-            return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
+
+            return new ApiTokenResponse<Object>("Success", "Admin updated", admin, newToken);
+        } catch (AccountException e) {
+            throw new AccountException("Failed to update admin, serverside: " + e.getMessage());
         }
     }
 
-    @Override
-    public ResponseEntity<?> deleteAdminAccount(String adminId) {
 
-        ResponseEntity<?> verificationResponse = AdminSecurityUtils.verifyAdminAccessWithId(adminId);
-        if (verificationResponse != null) {
-            return verificationResponse;
+    @Override
+    public ApiResponse<String> deleteAdminAccount(String adminId) {
+        // Verify admin access
+        String verificationResponse = AdminSecurityUtils.verifyAdminAccessWithId(adminId);
+        if ("UNAUTHORIZED".equals(verificationResponse)) {
+            throw new AuthorizationException("Not authorized to delete this account");
         }
-        Admin admin = new Admin(); // je réserve la mémoire
+
         try {
-            Optional<Admin> existingAdmin = adminRepository.findById(adminId);
-            if (existingAdmin.isPresent()) admin = existingAdmin.get();
+            // Fetch the admin record
+            Admin admin = adminRepository.findById(adminId).orElseThrow(() ->
+                    new AccountException("Admin not found"));
+
+            // Deactivate the account
             admin.setActive(false);
             adminRepository.save(admin);
-            ApiResponse<String> response = new ApiResponse<>("Success", "Admin account deactivated", null);
-            return new ResponseEntity<>(response, HttpStatus.OK);
-        } catch (Exception e) {
-            // Would only output if the database fails
-            ApiResponse<String> response = new ApiResponse<>("Error", "Failed to delete admin", null);
-            return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
+            return new ApiResponse<>("Success", "Event deleted", null);
+        } catch (AccountException e) {
+            // Rethrow as a custom exception for the controller to handle
+            throw new AccountException("Failed to deactivate admin account, serverside: " + e.getMessage());
         }
     }
 
+
     @Override
-    public ResponseEntity<?> createCoupon(CreateCouponDTO dto) {
-
-        ResponseEntity<?> verificationResponse = AdminSecurityUtils.verifyAdminAccessWithRole();
-        if (verificationResponse != null) {
-            return verificationResponse;
+    public ApiResponse<Coupon> createCoupon(CreateCouponDTO dto) {
+        // Verify admin access
+        String verificationResponse = AdminSecurityUtils.verifyAdminAccessWithRole();
+        if ("UNAUTHORIZED".equals(verificationResponse)) {
+            throw new AuthorizationException("Not authorized to create this coupon");
         }
 
-        // Check if a coupon with the same localityName already exists
-        Optional<Coupon> existingCoupon = couponService.findCouponByName(dto.name());
-
+        // Check if a coupon with the same name already exists
+        Optional<Coupon> existingCoupon = couponRepository.findById(dto.name());
         if (existingCoupon.isPresent()) {
-            ApiResponse<String> response = new ApiResponse<>("Error", "Coupon with the same name already exists", null);
-            return new ResponseEntity<>(response, HttpStatus.CONFLICT);
+            throw new LogicException("Coupon with the same name already exists");
         }
 
+        // Create and save the new coupon
         Coupon coupon = new Coupon();
         coupon.setName(dto.name());
         coupon.setDiscountPercent(dto.discount());
         coupon.setExpirationDate(dto.expirationDate());
         coupon.setMinPurchaseAmount(dto.minPurchaseAmount());
+        Coupon savedCoupon = couponRepository.save(coupon);
 
-        Coupon savedCoupon = couponService.saveCoupon(coupon);
-        ApiResponse<Coupon> response = new ApiResponse<>("Success", "Coupon creation done", savedCoupon);
-        return new ResponseEntity<>(response, HttpStatus.CREATED);
+        // Return success response
+        return new ApiResponse<>("Success", "Coupon creation done", savedCoupon);
     }
+
 
     @Override
-    public ResponseEntity<?> updateCoupon(String couponId, @Valid UpdateCouponDTO dto) {
-
-        ResponseEntity<?> verificationResponse = AdminSecurityUtils.verifyAdminAccessWithRole();
-        if (verificationResponse != null) {
-            return verificationResponse;
-        }
-
-        Coupon coupon = new Coupon();
-
-        try {
-            Optional<Coupon> optionalCoupon = couponService.findCouponInstanceById(couponId);
-            if (optionalCoupon.isPresent()) {
-                coupon = optionalCoupon.get();
-            }
-            // Update the fields
-            coupon.setDiscountPercent(dto.discount());
-            coupon.setExpirationDate(dto.expirationDate());
-            coupon.setMinPurchaseAmount(dto.minPurchaseAmount());
-
-            // Save the updated coupon
-            Coupon updatedCoupon = couponService.saveCoupon(coupon);
-            ApiResponse<Coupon> response = new ApiResponse<>("Success", "Coupon updated", updatedCoupon);
-            return new ResponseEntity<>(response, HttpStatus.OK);
-
-        } catch (Exception e) {
-            ApiResponse<String> response = new ApiResponse<>("Error", "Failed to update coupon", null);
-            return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-    }
-
-    public ResponseEntity<?> deleteCoupon(String couponId){
-
-        ResponseEntity<?> verificationResponse = AdminSecurityUtils.verifyAdminAccessWithRole();
-        if (verificationResponse != null) {
-            return verificationResponse;
-        }
-
-        try {
-            Optional<Coupon> existingCoupon = couponService.findCouponInstanceById(couponId); // This is basically "couponRepository.findById(couponId);"
-            if (existingCoupon.isPresent()) {
-                couponService.deleteCouponById(couponId);
-                ApiResponse<String> response = new ApiResponse<>("Success", "Coupon deleted", null);
-                return new ResponseEntity<>(response, HttpStatus.OK);
-            } else {
-                // Could this ever happen? No, don't mind checking this in a test future Daniel.
-                ApiResponse<String> response = new ApiResponse<>("Error", "Coupon not found", null);
-                return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
-            }
-        } catch (Exception e) {
-            ApiResponse<String> response = new ApiResponse<>("Error", "Failed to delete coupon", null);
-            return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-    }
-
-    public ResponseEntity<?> deleteAllCoupons() {
-
-        ResponseEntity<?> verificationResponse = AdminSecurityUtils.verifyAdminAccessWithRole();
-        if (verificationResponse != null) {
-            return verificationResponse;
-        }
-
-        try {
-            couponService.deleteAllCoupons();
-            ApiResponse<String> response = new ApiResponse<>("Success", "All coupons deleted", null);
-            return new ResponseEntity<>(response, HttpStatus.OK);
-        } catch (Exception e) {
-            ApiResponse<String> response = new ApiResponse<>("Error", "Failed to delete all coupons", null);
-            return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-    }
-
-    @Override
-    public ResponseEntity<?> addEvent(HandleEventDTO dto) {
-
+    public ApiResponse<Coupon> updateCoupon(String couponId, UpdateCouponDTO dto) {
+        // Verify admin access
         String verificationResponse = AdminSecurityUtils.verifyAdminAccessWithRole();
         if ("UNAUTHORIZED".equals(verificationResponse)) {
-            throw new AuthorizationException("Not authorized to enter this endpoint");
+            throw new AuthorizationException("Not authorized to update this coupon");
+        }
+
+        // Retrieve and update the coupon
+        Coupon coupon = couponRepository.findById(couponId)
+                .orElseThrow(() -> new LogicException("Coupon not found"));
+
+        // Update the coupon fields
+        coupon.setDiscountPercent(dto.discount());
+        coupon.setExpirationDate(dto.expirationDate());
+        coupon.setMinPurchaseAmount(dto.minPurchaseAmount());
+
+        // Save and return updated coupon
+        Coupon updatedCoupon = couponRepository.save(coupon);
+        return new ApiResponse<>("Success", "Coupon updated", updatedCoupon);
+    }
+
+
+    @Override
+    public ApiResponse<String> deleteCoupon(String couponId) {
+        // Verify admin access
+        String verificationResponse = AdminSecurityUtils.verifyAdminAccessWithRole();
+        if ("UNAUTHORIZED".equals(verificationResponse)) {
+            throw new AuthorizationException("Not authorized to delete this coupon");
+        }
+
+        // Check if the coupon exists
+        couponRepository.findById(couponId)
+                .orElseThrow(() -> new LogicException("Coupon not found"));
+
+        // Delete the coupon
+        couponRepository.deleteById(couponId);
+        return new ApiResponse<>("Success", "Coupon deleted", null);
+    }
+
+
+    @Override
+    public ApiResponse<String> deleteAllCoupons() {
+        // Verify admin access
+        String verificationResponse = AdminSecurityUtils.verifyAdminAccessWithRole();
+        if ("UNAUTHORIZED".equals(verificationResponse)) {
+            throw new AuthorizationException("Not authorized to delete coupons");
         }
 
         try {
+            couponRepository.deleteAll();
+            return new ApiResponse<>("Success", "All coupons deleted", null);
+        } catch (Exception e) {
+            throw new LogicException("Failed to delete all coupons");
+        }
+    }
+
+
+    @Override
+    public ApiResponse<Event> addEvent(HandleEventDTO dto) {
+        // Verify admin access
+        String verificationResponse = AdminSecurityUtils.verifyAdminAccessWithRole();
+        if ("UNAUTHORIZED".equals(verificationResponse)) {
+            throw new AuthorizationException("Not authorized to create an event");
+        }
+
+        try {
+            // Upload images and create event
             String imageUrl = imageService.uploadImage(dto.eventImageUrl());
             String localitiesUrl = imageService.uploadImage(dto.localitiesImageUrl());
+
             Event event = Event.builder()
                     .name(dto.name())
                     .address(dto.address())
                     .city(dto.city())
                     .eventDate(dto.date())
-                    .availableForPurchase(true)  // El negro? Mi color. Si es, jeje
+                    .availableForPurchase(true)  // Event available for purchase
                     .localities(dto.localities().stream().map(localityDTO ->
-                            // Locality has a JsonIgnore on the id parameter
                             Locality.builder()
                                     .name(localityDTO.name())
                                     .price(localityDTO.price())
@@ -230,21 +223,19 @@ public class AdminServiceImpl implements AdminService{
 
             eventRepository.save(event);
 
-            ApiResponse<Event> response = new ApiResponse<>("Success", "Event created successfully", event);
-            return new ResponseEntity<>(response, HttpStatus.CREATED);
-
+            return new ApiResponse<>("Success", "Event created successfully", event);
         } catch (Exception e) {
-            ApiResponse<String> response = new ApiResponse<>("Error", "Failed to create or update event event", e.getMessage());
-            return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
+            throw new LogicException("Failed to create or update event: " +  e.getMessage());
         }
     }
 
-    @Override
-    public ResponseEntity<?> getAllEventsPaginated(int page, int size) {
 
+    @Override
+    public ApiResponse<Map<String, Object>> getAllEventsPaginated(int page, int size) {
+        // Verify admin access
         String verificationResponse = AdminSecurityUtils.verifyAdminAccessWithRole();
         if ("UNAUTHORIZED".equals(verificationResponse)) {
-            throw new AuthorizationException("Not authorized to enter this endpoint");
+            throw new AuthorizationException("Not authorized to retrieve events");
         }
 
         try {
@@ -257,31 +248,23 @@ public class AdminServiceImpl implements AdminService{
             responseData.put("totalElements", eventPage.getTotalElements());
             responseData.put("currentPage", eventPage.getNumber());
 
-            ApiResponse<Map<String, Object>> response = new ApiResponse<>("Success", "Events retrieved successfully", responseData);
-            return new ResponseEntity<>(response, HttpStatus.OK);
+            return new ApiResponse<>("Success", "Events retrieved successfully", responseData);
         } catch (Exception e) {
-            ApiResponse<String> errorResponse = new ApiResponse<>("Error", "Failed to retrieve events", null);
-            return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
+            throw new LogicException("Failed to retrieve events: " + e.getMessage());
         }
     }
 
     @Override
-    public ResponseEntity<?> updateEvent(String eventId, @Valid HandleEventDTO dto) {
-
+    public ApiResponse<Event> updateEvent(String eventId, @Valid HandleEventDTO dto) {
+        // Verify admin access
         String verificationResponse = AdminSecurityUtils.verifyAdminAccessWithRole();
         if ("UNAUTHORIZED".equals(verificationResponse)) {
-            throw new AuthorizationException("Not authorized to enter this endpoint");
+            throw new AuthorizationException("Not authorized to update this event");
         }
 
         // Fetch the existing event by ID
-        Optional<Event> existingEventOpt = eventRepository.findById(eventId);
-        if (existingEventOpt.isEmpty()) {
-            ApiResponse<Event> response = new ApiResponse<>("Success", "Event not found", null);
-            return new ResponseEntity<>(response, HttpStatus.CREATED);
-        }
-
-        // Get the existing event object
-        Event existingEvent = existingEventOpt.get();
+        Event existingEvent = eventRepository.findById(eventId)
+                .orElseThrow(() -> new LogicException("Event not found"));
 
         // Map the List<CreateLocalityDTO> to List<Locality>
         List<Locality> updatedLocalities = dto.localities().stream()
@@ -298,8 +281,7 @@ public class AdminServiceImpl implements AdminService{
                 String uploadedEventImageUrl = imageService.uploadImage(dto.eventImageUrl());
                 existingEvent.setEventImageUrl(uploadedEventImageUrl);
             } catch (IOException e) {
-                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                        .body("Failed to upload event image.");
+                throw new LogicException("Failed to upload event image: " + e.getMessage());
             }
         }
 
@@ -309,8 +291,7 @@ public class AdminServiceImpl implements AdminService{
                 String uploadedLocalitiesImageUrl = imageService.uploadImage(dto.localitiesImageUrl());
                 existingEvent.setLocalitiesImageUrl(uploadedLocalitiesImageUrl);
             } catch (IOException e) {
-                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                        .body("Failed to upload localities image.");
+                throw new LogicException("Failed to upload localities image: " + e.getMessage());
             }
         }
 
@@ -326,90 +307,91 @@ public class AdminServiceImpl implements AdminService{
         // Save the updated event
         eventRepository.save(existingEvent);
 
-        ApiResponse<Event> response = new ApiResponse<>("Success", "Event updated", existingEvent);
-        return new ResponseEntity<>(response, HttpStatus.OK);
+        return new ApiResponse<>("Success", "Event updated", existingEvent);
     }
 
-    public ResponseEntity<?> deleteEvent(String eventId){
-
-        ResponseEntity<?> verificationResponse = AdminSecurityUtils.verifyAdminAccessWithRole();
-        if (verificationResponse != null) {
-            return verificationResponse;
+    @Override
+    public ApiResponse<String> deleteEvent(String eventId) {
+        // Verify admin access
+        String verificationResponse = AdminSecurityUtils.verifyAdminAccessWithRole();
+        if ("UNAUTHORIZED".equals(verificationResponse)) {
+            throw new AuthorizationException("Not authorized to delete this event");
         }
 
-        try {
-            Optional<Event> existingEvent = eventRepository.findById(eventId); // Long life to SRP
-            if (existingEvent.isPresent()) {
-                eventRepository.deleteById(eventId);
-                ApiResponse<String> response = new ApiResponse<>("Success", "Event deleted", null);
-                return new ResponseEntity<>(response, HttpStatus.OK);
-            } else {
-                ApiResponse<String> response = new ApiResponse<>("Error", "Event not found", null);
-                return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
-            }
-        } catch (Exception e) {
-            ApiResponse<String> response = new ApiResponse<>("Error", "Failed to delete Event", null);
-            return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
-        }
+        // Check if the coupon exists
+        eventRepository.findById(eventId)
+                .orElseThrow(() -> new LogicException("Event not found"));
+
+        // Delete the coupon
+        eventRepository.deleteById(eventId);
+        return new ApiResponse<>("Success", "Event deleted", null);
     }
 
-    public ResponseEntity<?> deleteAllEvents() {
-
-        ResponseEntity<?> verificationResponse = AdminSecurityUtils.verifyAdminAccessWithRole();
-        if (verificationResponse != null) {
-            return verificationResponse;
+    @Override
+    public ApiResponse<String> deleteAllEvents() {
+        // Verify admin access
+        String verificationResponse = AdminSecurityUtils.verifyAdminAccessWithRole();
+        if ("UNAUTHORIZED".equals(verificationResponse)) {
+            throw new AuthorizationException("Not authorized to delete all events");
         }
 
         try {
             eventRepository.deleteAll();
-            ApiResponse<String> response = new ApiResponse<>("Success", "All events deleted", null);
-            return new ResponseEntity<>(response, HttpStatus.OK);
+            return new ApiResponse<>("Success", "All events deleted", null);
         } catch (Exception e) {
-            ApiResponse<String> response = new ApiResponse<>("Error", "Failed to delete all events", null);
-            return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
+            throw new LogicException("Failed to delete all events: " + e.getMessage());
         }
     }
 
-    @Override
-    public ResponseEntity<?> getAllCouponsPaginated(int page, int size) {
-        return couponService.getAllCouponsPaginated(page, size);
-    }
 
     @Override
-    public ResponseEntity<?> getAccountInformation(String adminId) {
-        ResponseEntity<?> verificationResponse = AdminSecurityUtils.verifyAdminAccessWithRole();
-        if (verificationResponse != null) {
-            return verificationResponse;
+    public ApiResponse<Map<String, Object>> getAllCouponsPaginated(int page, int size) {
+
+        String verificationResponse = AdminSecurityUtils.verifyAdminAccessWithRole();
+        if ("UNAUTHORIZED".equals(verificationResponse)) {
+            throw new AuthorizationException("Not authorized to delete all events");
         }
         try {
-            Optional<Admin> admin = adminRepository.findById(adminId);
-            if (admin.isPresent()) {
-                String username = admin.get().getUsername();
-                String email = admin.get().getEmail();
+            Pageable pageable = PageRequest.of(page, size);
+            Page<Coupon> couponPage = couponRepository.findAll(pageable);
 
-                UpdateAdminDTO dto = new UpdateAdminDTO(username, email);
-                ApiResponse<UpdateAdminDTO> response = new ApiResponse<>("Success", "Admin info returned", dto);
-                return new ResponseEntity<>(response, HttpStatus.OK);
-            } else {
-                ApiResponse<String> response = new ApiResponse<>("Error", "Admin info not found", null);
-                return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
-            }
+            Map<String, Object> responseData = new HashMap<>();
+            responseData.put("content", couponPage.getContent());
+            responseData.put("totalPages", couponPage.getTotalPages());
+            responseData.put("totalElements", couponPage.getTotalElements());
+            responseData.put("currentPage", couponPage.getNumber());
+
+            return new ApiResponse<>("Success", "Coupons retrieved successfully", responseData);
         } catch (Exception e) {
-            ApiResponse<String> response = new ApiResponse<>("Error", "Failed to retrieve admin info", null);
-            return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
+            throw new LogicException("Failed to retrieve coupons: " + e.getMessage());
         }
     }
 
-    @Override
-    public ResponseEntity<?> generateEventsReport(String startDate, String endDate) {
 
-        ResponseEntity<?> verificationResponse = AdminSecurityUtils.verifyAdminAccessWithRole();
-        if (verificationResponse != null) {
-            return verificationResponse;
+    @Override
+    public ApiResponse<UpdateAdminDTO> getAccountInformation(String adminId) {
+        String verificationResponse = AdminSecurityUtils.verifyAdminAccessWithRole();
+        if ("UNAUTHORIZED".equals(verificationResponse)) {
+            throw new AuthorizationException("Not authorized to view admin info");
         }
 
-        LocalDateTime ldtStartDate = LocalDate.parse(startDate).atStartOfDay();
-        LocalDateTime ldtEndDate = LocalDate.parse(endDate).atTime(LocalTime.MAX);
-        return eventService.generateEventsReport(ldtStartDate, ldtEndDate);
+        try {
+            Admin admin = adminRepository.findById(adminId)
+                    .orElseThrow(() -> new LogicException("Admin not found"));
+
+            String username = admin.getUsername();
+            String email = admin.getEmail();
+            UpdateAdminDTO dto = new UpdateAdminDTO(username, email);
+
+            return new ApiResponse<>("Success", "Admin info returned", dto);
+        } catch (Exception e) {
+            throw new LogicException("Failed to retrieve admin info: " + e.getMessage());
+        }
+    }
+
+
+    @Override
+    public void generateEventsReport(LocalDateTime startDate, LocalDateTime endDate) {
+
     }
 }
