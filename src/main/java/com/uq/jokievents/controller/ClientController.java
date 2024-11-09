@@ -24,22 +24,28 @@ import org.springframework.web.bind.annotation.*;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/api/clients")
+@RequestMapping("/api/client")
 @RequiredArgsConstructor
 public class ClientController {
 
     private final ClientService clientService;
 
-    /**
-     * Update an existing client by id
-     * @param id String
-     * @param dto UpdateClientDTO
-     * @return ResponseEntity
-     */
-    @PostMapping("/{id}/update")
-    public ResponseEntity<ApiTokenResponse<String>> updateClient(@PathVariable String id, @Valid @RequestBody UpdateClientDTO dto) {
+    @PostMapping("/{clientId}/verify")
+    public ResponseEntity<ApiResponse<String>> verifyClient(@PathVariable String clientId, @RequestParam String verificationCode) {
         try {
-            Map<Client, String> newPossibleLoginInfo = clientService.updateClient(id, dto);
+            clientService.verifyClient(clientId, verificationCode);
+            ApiResponse<String> response = new ApiResponse<>("Success", "Client has been verified and activated", null);
+            return new ResponseEntity<>(response, HttpStatus.OK);
+        } catch (AccountException | LogicException e) {
+            ApiResponse<String> response = new ApiResponse<>("Error", e.getMessage(), null);
+            return new ResponseEntity<>(response, HttpStatus.CONFLICT);
+        }
+    }
+
+    @PostMapping("/{clientId}/update")
+    public ResponseEntity<ApiTokenResponse<String>> updateClient(@PathVariable String clientId, @Valid @RequestBody UpdateClientDTO dto) {
+        try {
+            Map<Client, String> newPossibleLoginInfo = clientService.updateClient(clientId, dto);
             Map.Entry<Client, String> entry = newPossibleLoginInfo.entrySet().iterator().next();
             ApiTokenResponse<String> response = getResponse(entry); // IntelliJ generated method
             return new ResponseEntity<>(response, HttpStatus.OK);
@@ -66,18 +72,13 @@ public class ClientController {
 
         return new ApiTokenResponse<>(
                 "Success",
-                "Client updated successfully" + optionalMessage,
+                "Client updated successfully " + optionalMessage,
                 client.getId(),
                 token
         );
     }
 
-    /**
-     * Delete client by id
-     * @param clientId String
-     * @return a ResponseEntity object with and HTTP status
-     */
-    @PostMapping("/{clientId}/delete")
+    @PostMapping("/{clientId}/delete-account")
     public ResponseEntity<ApiResponse<String>> deleteAccount(@PathVariable String clientId) {
         try {
             clientService.deleteAccount(clientId);
@@ -88,23 +89,6 @@ public class ClientController {
             return new ResponseEntity<>(response, HttpStatus.UNAUTHORIZED);
         }
     }
-
-
-    @PostMapping("/{clientId}/verify")
-    public ResponseEntity<ApiResponse<String>> verifyClient(@PathVariable String clientId, @RequestParam String verificationCode) {
-        try {
-            clientService.verifyClient(clientId, verificationCode);
-            ApiResponse<String> response = new ApiResponse<>("Success", "Client has been verified and activated", null);
-            return new ResponseEntity<>(response, HttpStatus.OK);
-        } catch (AccountException e) {
-            ApiResponse<String> response = new ApiResponse<>("Error", e.getMessage(), null);
-            return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
-        } catch (LogicException e) {
-            ApiResponse<String> response = new ApiResponse<>("Success", e.getMessage(), null);
-            return new ResponseEntity<>(response, HttpStatus.OK);
-        }
-    }
-
 
     @GetMapping("/get-paginated-events")
     public ResponseEntity<ApiResponse<?>> getAllEventsPaginated(@RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "16") int size) {
@@ -130,7 +114,7 @@ public class ClientController {
         }
     }
 
-    @GetMapping("/get-client-account-info/{clientId}")
+    @GetMapping("/{clientId}/get-client-account-info")
     public ResponseEntity<ApiResponse<?>> getAccountInformation(@PathVariable String clientId) {
         try {
             UpdateClientDTO clientInfo = clientService.getAccountInformation(clientId);
@@ -145,13 +129,8 @@ public class ClientController {
         }
     }
 
-
-    /**
-     * @param dto LocalityOrderAsClientDTO
-     * @return ResponseEntity
-     */
-    @PostMapping("/order-locality/{clientId}")
-    public ResponseEntity<?> orderLocality(@PathVariable String clientId, @RequestBody LocalityOrderAsClientDTO dto) {
+    @PostMapping("/{clientId}/order-locality")
+    public ResponseEntity<?> orderLocality(@PathVariable String clientId, @RequestBody  LocalityOrderAsClientDTO dto) {
         try {
             clientService.orderLocality(clientId, dto);
             ApiResponse<String> response = new ApiResponse<>("Success", "Locality ordered successfully", null);
@@ -162,13 +141,7 @@ public class ClientController {
         }
     }
 
-    /**
-     * Same input JSON as orderLocality method.
-     * @param clientId String
-     * @param dto LocalityOrderAsClientDTO
-     * @return ResponseEntity
-     */
-    @PostMapping("/cancel-locality-order/{clientId}")
+    @PostMapping("/{clientId}/cancel-locality-order")
     public ResponseEntity<?> cancelLocalityOrder(@PathVariable String clientId, @RequestBody LocalityOrderAsClientDTO dto) {
 
         try {
@@ -181,9 +154,8 @@ public class ClientController {
         }
     }
 
-    @GetMapping("/load-shopping-cart/{clientId}")
-    public ResponseEntity<?> loadShoppingCart(@PathVariable String clientId, @RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "16") int size) {
-
+    @GetMapping("/{clientId}/load-shopping-cart")
+    public ResponseEntity<?> loadShoppingCart(@PathVariable String clientId, @RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "5") int size) {
         try {
             Map<String, Object> clientShoppingCart = clientService.loadShoppingCart(clientId, page, size);
             ApiResponse<Map<String, Object>> response = new ApiResponse<>("Success", "Client shopping cart loaded", clientShoppingCart);
@@ -201,7 +173,7 @@ public class ClientController {
      * @param couponName String
      * @return ResponseEntity
      */
-    @PostMapping("/apply-coupon/{clientId}")
+    @PostMapping("/{clientId}/apply-coupon")
     public ResponseEntity<ApiResponse<String>> applyCoupon(@PathVariable String clientId, @RequestParam String couponName) {
         try {
             clientService.applyCoupon(clientId, couponName);

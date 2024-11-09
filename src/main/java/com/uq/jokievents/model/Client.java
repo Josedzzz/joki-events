@@ -22,22 +22,21 @@ import org.springframework.security.core.userdetails.UserDetails;
 @Builder
 public class Client implements UserDetails {
 
-    @Id
-    private String id;
+    @Id private String id;
     private String idCard;
     private String name;
     private String address;
     private String phoneNumber;
     private String email;
     private String password;
-    private String idShoppingCart; // This is a "pointer" to the shopping car in the database.
+    // This is a "pointer" to the shopping car in the database. Could have used @Transient too I guess
+    private String idShoppingCart;
     @Transient private List<Purchase> purchaseHistory;
     private ArrayList<String> listOfUsedCoupons;
     private boolean active;
     private String verificationCode;
     private LocalDateTime verificationCodeExpiration;
-    @Builder.Default
-    private Role role = Role.CLIENT;
+    @Builder.Default private Role role = Role.CLIENT;
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {

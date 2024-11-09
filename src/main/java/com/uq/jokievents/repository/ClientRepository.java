@@ -10,7 +10,7 @@ import java.util.Optional;
 
 @Repository
 public interface ClientRepository extends MongoRepository<Client, String> {
-        Optional<Client> findByEmail(String email);
+    Optional<Client> findByEmail(String email);
     boolean existsByEmail(String email);
     boolean existsByIdCard(String idCard);
 }

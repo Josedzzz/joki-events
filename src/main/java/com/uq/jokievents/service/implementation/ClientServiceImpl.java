@@ -39,19 +39,37 @@ public class ClientServiceImpl implements ClientService {
     private final EmailService emailService;
     private final JwtService jwtService;
 
-    /**
-     * Updates a client from a dto.
-     * @param clientId String
-     * @param dto UpdateClientDTO
-     * @return ResponseEntity
-     */
+
+    @Override
+    public void verifyClient(String clientId, String verificationCode) {
+
+        Client client = clientRepository.findById(clientId)
+                .orElseThrow(() -> new AccountException("Client not found"));
+
+        // Verify if client is already active
+        if (client.isActive()) {
+            throw new AccountException("Client is already active");
+        }
+
+        // Check if the activation code has expired
+        if (client.getVerificationCodeExpiration().isBefore(LocalDateTime.now())) {
+            throw new LogicException("Activation code expired");
+        }
+
+        // Check if the provided verification code matches
+        if (!client.getVerificationCode().equals(verificationCode)) {
+            throw new LogicException("Incorrect verification code");
+        }
+
+        // If verification code is correct, activate the client and reset the other necessary attributes
+        client.setActive(true);
+        client.setVerificationCode("");
+        client.setVerificationCodeExpiration(LocalDateTime.now());
+        clientRepository.save(client);
+    }
+
     @Override
     public Map<Client, String> updateClient(String clientId, @RequestBody UpdateClientDTO dto) {
-
-        String verificationResponse = ClientSecurityUtils.verifyClientAccessWithRole();
-        if ("UNAUTHORIZED".equals(verificationResponse)) {
-            throw new AuthorizationException("Not authorized to enter this endpoint");
-        }
 
         try {
             Optional<Client> existingClient = clientRepository.findById(clientId);
@@ -61,13 +79,12 @@ public class ClientServiceImpl implements ClientService {
             }
 
             Client client = existingClient.get();
+            // Update or not everything, I can tell for sure it is a good petition of updating so why verify more?
             client.setPhoneNumber(dto.phone());
-
             // Si no es el mismo notificar para que active el correo de nuevo.
             if (!client.getEmail().equals(dto.email())) {
                 newEmailVerification(dto, client);
             }
-
             client.setName(dto.name());
             client.setAddress(dto.address());
 
@@ -96,11 +113,6 @@ public class ClientServiceImpl implements ClientService {
     @Override
     public void deleteAccount(String clientId) {
 
-        String verificationResponse = ClientSecurityUtils.verifyClientAccessWithId(clientId);
-        if ("UNAUTHORIZED".equals(verificationResponse)) {
-            throw new AccountException("Not authorized to delete this account");
-        }
-
         Optional<Client> existingClient = clientRepository.findById(clientId);
         if (existingClient.isEmpty()) {
             throw new AccountException("Client not found");
@@ -111,14 +123,8 @@ public class ClientServiceImpl implements ClientService {
         clientRepository.save(client);
     }
 
-
     @Override
     public Map<String, Object> getAllEventsPaginated(int page, int size) {
-        // Verify client access
-        String verificationResponse = ClientSecurityUtils.verifyClientAccessWithRole();
-        if ("UNAUTHORIZED".equals(verificationResponse)) {
-            throw new AccountException("Not authorized to access events");
-        }
 
         Pageable pageable = PageRequest.of(page, size);
         Page<Event> eventPage = eventRepository.findAll(pageable);
@@ -135,11 +141,6 @@ public class ClientServiceImpl implements ClientService {
 
     @Override
     public Map<String, Object> searchEvent(SearchEventDTO dto, int page, int size) {
-        // Verify client access
-        String verificationResponse = ClientSecurityUtils.verifyClientAccessWithRole();
-        if ("UNAUTHORIZED".equals(verificationResponse)) {
-            throw new AccountException("Not authorized to access events");
-        }
 
         String eventName = dto.eventName();
         String city = dto.city();
@@ -151,10 +152,11 @@ public class ClientServiceImpl implements ClientService {
         List<Event> allEvents = eventRepository.findAll();
 
         // Filter events based on the criteria
+        // todo filter out inactive events, will do it when I figure out how the fuck Asynch methods work
         List<Event> filteredEvents = allEvents.stream()
                 .filter(event ->
-                        (eventName == null || eventName.isEmpty() || (event.getName() != null && event.getName().toLowerCase().contains(eventName.toLowerCase())))
-                                && (city == null || city.isEmpty() || (event.getCity() != null && event.getCity().toLowerCase().contains(city.toLowerCase())))
+                        (eventName.isEmpty() || (event.getName() != null && event.getName().toLowerCase().contains(eventName.toLowerCase())))
+                                && (city.isEmpty() || (event.getCity() != null && event.getCity().toLowerCase().contains(city.toLowerCase())))
                                 && (startDate == null || (event.getEventDate() != null && !event.getEventDate().isBefore(startDate)))
                                 && (endDate == null || (event.getEventDate() != null && !event.getEventDate().isAfter(endDate)))
                                 && (eventType == null || eventType.equals(event.getEventType()))
@@ -180,14 +182,8 @@ public class ClientServiceImpl implements ClientService {
         return paginationData;
     }
 
-
     @Override
     public UpdateClientDTO getAccountInformation(String clientId) {
-
-        String verificationResponse = ClientSecurityUtils.verifyClientAccessWithRole();
-        if ("UNAUTHORIZED".equals(verificationResponse)) {
-            throw new AuthorizationException("Not authorized to view this account information");
-        }
 
         Optional<Client> clientOpt = clientRepository.findById(clientId);
         if (clientOpt.isEmpty()) {
@@ -198,7 +194,6 @@ public class ClientServiceImpl implements ClientService {
         return mapToUpdateClientDTO(client); // Converts `Client` to `UpdateClientDTO`
     }
 
-    // Method generated by IntelliJ
     private UpdateClientDTO mapToUpdateClientDTO(Client client) {
         return new UpdateClientDTO(
                 client.getPhoneNumber(), client.getEmail(), client.getName(), client.getAddress()
@@ -207,12 +202,6 @@ public class ClientServiceImpl implements ClientService {
 
     @Override
     public void orderLocality(String clientId, LocalityOrderAsClientDTO dto) {
-
-        // Verify client access
-        String verificationResponse = ClientSecurityUtils.verifyClientAccessWithId(clientId);
-        if ("UNAUTHORIZED".equals(verificationResponse)) {
-            throw new AccountException("Not authorized to delete this account");
-        }
 
         // Retrieve the event
         Event event = eventRepository.findById(dto.eventId())
@@ -230,12 +219,12 @@ public class ClientServiceImpl implements ClientService {
                 .orElseThrow(() -> new EventException("Locality not found in the event"));
 
         // Validate payment amount
-        double expectedPayment = dto.ticketsSelected() * locality.getPrice();
-        if (dto.totalPaymentAmount() < expectedPayment) {
+        double expectedPayment = dto.selectedTickets() * locality.getPrice();
+        if (dto.totalPaymentAmount() != expectedPayment) {
             throw new PaymentException("Incorrect payment amount");
         }
 
-        // Save the event after ordering (if required by business logic)
+        // Save the event after ordering
         eventRepository.save(event);
 
         // Fetch the client
@@ -250,32 +239,19 @@ public class ClientServiceImpl implements ClientService {
         LocalityOrder localityOrder = new LocalityOrder();
         localityOrder.setEventId(dto.eventId());
         localityOrder.setLocalityName(dto.localityName());
-        localityOrder.setNumTicketsSelected(dto.ticketsSelected());
+        localityOrder.setNumTicketsSelected(dto.selectedTickets());
         localityOrder.setTotalPaymentAmount(dto.totalPaymentAmount());
 
         shoppingCart.getLocalityOrders().add(localityOrder);
 
         // Update and save the shopping cart total price
-        double updatedTotalPrice = shoppingCart.getLocalityOrders().stream()
-                .mapToDouble(LocalityOrder::getTotalPaymentAmount)
-                .sum();
-        shoppingCart.setTotalPrice(updatedTotalPrice);
-
+        double newTotalPrice = shoppingCart.getTotalPrice() + expectedPayment;
+        shoppingCart.setTotalPrice(newTotalPrice);
         shoppingCartRepository.save(shoppingCart);
     }
 
-
-    /**
-     * Cancels a locality
-     * @param clientId String
-     * @param dto LocalityOrderAsClient
-     */
     @Override
     public void cancelLocalityOrder(String clientId, LocalityOrderAsClientDTO dto) {
-        String verificationResponse = ClientSecurityUtils.verifyClientAccessWithId(clientId);
-        if ("UNAUTHORIZED".equals(verificationResponse)) {
-            throw new AccountException("Account not authorized");
-        }
         // Find the client
         Optional<Client> clientOptional = clientRepository.findById(clientId);
         if (clientOptional.isEmpty()) {
@@ -295,7 +271,7 @@ public class ClientServiceImpl implements ClientService {
         // Find the LocalityOrder to be canceled
         LocalityOrder orderToCancel = shoppingCart.getLocalityOrders().stream()
                 .filter(order -> order.getLocalityName().equals(dto.localityName())
-                        && order.getNumTicketsSelected() >= dto.ticketsSelected()
+                        && order.getNumTicketsSelected() >= dto.selectedTickets()
                         && order.getTotalPaymentAmount() >= dto.totalPaymentAmount())
                 .findFirst()
                 .orElse(null);
@@ -320,38 +296,20 @@ public class ClientServiceImpl implements ClientService {
             throw new EventException("Locality not found in event");
         }
 
-        // Restore the tickets in the locality
-        localityToUpdate.setMaxCapacity(localityToUpdate.getMaxCapacity() + dto.ticketsSelected());
-        event.setTotalAvailablePlaces(event.getTotalAvailablePlaces() + dto.ticketsSelected());
-
         // Remove the LocalityOrder from the shopping cart
         shoppingCart.getLocalityOrders().remove(orderToCancel);
 
         // Recalculate total price
-        shoppingCart.setTotalPrice(shoppingCart.getLocalityOrders().stream()
-                .mapToDouble(LocalityOrder::getTotalPaymentAmount).sum());
+        double priceToRestar = localityToUpdate.getPrice() * dto.selectedTickets();
+        shoppingCart.setTotalPrice(shoppingCart.getTotalPrice() - priceToRestar);
 
         // Save the updated shopping cart and event
         shoppingCartRepository.save(shoppingCart);
         eventRepository.save(event);
     }
 
-    /**
-     * Loads the shopping cart when a Client click on it
-     * This method should be called when a client clicks on the Shopping Cart button on the frontend.
-     * Should only load possible to buy LocalityOrders and its done but waiting to implement it when cleansing the database.
-     * If this method does not work it may be due of EventRepository findByLocalitiesName() method.
-     * @param clientId String
-     * @param page int
-     * @param size int
-     */
     @Override
     public Map<String, Object> loadShoppingCart(String clientId, int page, int size) {
-        // Verify client access
-        String verificationResponse = ClientSecurityUtils.verifyClientAccessWithId(clientId);
-        if ("UNAUTHORIZED".equals(verificationResponse)) {
-            throw new AccountException("Account not authorized");
-        }
 
         // Main logic with exceptions instead of ResponseEntity
         Optional<Client> clientOptional = clientRepository.findById(clientId);
@@ -362,7 +320,7 @@ public class ClientServiceImpl implements ClientService {
         Client client = clientOptional.get();
         Optional<ShoppingCart> shoppingCartOptional = shoppingCartRepository.findById(client.getIdShoppingCart());
         if (shoppingCartOptional.isEmpty()) {
-            throw new ShoppingCartException("Shopping cart not found");
+            throw new ShoppingCartException("Shopping cart not found, grave error");
         }
 
         ShoppingCart shoppingCart = shoppingCartOptional.get();
@@ -372,18 +330,13 @@ public class ClientServiceImpl implements ClientService {
             Optional<Event> eventOptional = eventRepository.findById(localityOrder.getEventId());
 
             if (eventOptional.isEmpty()) {
-                localityOrdersList.add(new LoadLocalityOrdersForClient(
-                        localityOrder.getPayingOrderId(), localityOrder.getNumTicketsSelected(),
-                        localityOrder.getLocalityName(), localityOrder.getTotalPaymentAmount(),
-                        "NoID", "Event not found, it may have been cancelled", "",
-                        "", null, "Not Available", null));
-            } else {
-                Event event = eventOptional.get();
-                if (!LocalDateTime.now().plusDays(2).isBefore(event.getEventDate())) {
-                    continue; // Skip orders for events occurring soon
-                }
-                localityOrdersList.add(getLoadLocalityOrdersForClient(localityOrder, eventOptional));
+                continue; // Skip orders for not found events
             }
+            Event event = eventOptional.get();
+            if (!LocalDateTime.now().plusDays(2).isBefore(event.getEventDate())) {
+                continue; // Skip orders for events occurring soon
+            }
+            localityOrdersList.add(getLoadLocalityOrdersForClient(localityOrder, eventOptional));
         }
 
         // Pagination logic
@@ -415,16 +368,8 @@ public class ClientServiceImpl implements ClientService {
                 event.getEventType());
     }
 
-    // todo check if I need to re-think this when checking the Coupon logic
     @Override
     public void applyCoupon(String clientId, String couponName) {
-
-        // Verify client access
-        String verificationResponse = ClientSecurityUtils.verifyClientAccessWithId(clientId);
-        if ("UNAUTHORIZED".equals(verificationResponse)) {
-            throw new AccountException("Account not authorized");
-        }
-
         // Fetch the client
         Client client = clientRepository.findById(clientId)
                 .orElseThrow(() -> new AccountException("Client not found"));
@@ -462,37 +407,6 @@ public class ClientServiceImpl implements ClientService {
         // Save changes
         clientRepository.save(client);
         shoppingCartRepository.save(clientShoppingCart);
-    }
-
-    @Override
-    public void verifyClient(String clientId, String verificationCode) {
-
-        String verificationResponse = ClientSecurityUtils.verifyClientAccessWithId(clientId);
-        if ("UNAUTHORIZED".equals(verificationResponse)) {
-            throw new AccountException("Account not authorized");
-        }
-
-        Client client = clientRepository.findById(clientId)
-                .orElseThrow(() -> new AccountException("Client not found"));
-
-        // Verify if client is already active
-        if (client.isActive()) {
-            throw new AccountException("Client is already active");
-        }
-
-        // Check if the activation code has expired
-        if (client.getVerificationCodeExpiration().isBefore(LocalDateTime.now())) {
-            throw new LogicException("Activation code expired");
-        }
-
-        // Check if the provided verification code matches
-        if (!client.getVerificationCode().equals(verificationCode)) {
-            throw new LogicException("Incorrect verification code");
-        }
-
-        // If verification code is correct, activate the client
-        client.setActive(true);
-        clientRepository.save(client);
     }
 
     @Override

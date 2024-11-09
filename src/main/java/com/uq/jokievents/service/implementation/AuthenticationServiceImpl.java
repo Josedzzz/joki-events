@@ -27,6 +27,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 
 @Service
 @Transactional
@@ -39,7 +40,6 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     private final AuthenticationManager authenticationManager;
     private final AdminRepository adminRepository;
     private final ShoppingCartRepository shoppingCartRepository;
-    private final Utils utils;
     private final EmailService emailService;
 
     @Override
@@ -183,7 +183,32 @@ public class AuthenticationServiceImpl implements AuthenticationService {
 
     @Override
     public Map<Client, String> registerClient(@Valid RegisterClientDTO request) {
-        // Creating the client using the builder pattern
+        // this method is "a prueba de bombas"
+        String email = request.email();
+        Client slowClient = clientRepository.findByEmail(email).orElse(null);
+
+        // Check if the client exists already
+        if (slowClient != null) {
+            // If the client is active, throw an error
+            if (slowClient.isActive()) {
+                throw new AccountException("Client is already active");
+            } else {
+                // Resend verification code for inactive clients
+                String newVerificationCode = Generators.generateRndVerificationCode();
+                slowClient.setVerificationCode(newVerificationCode);
+                slowClient.setVerificationCodeExpiration(LocalDateTime.now().plusMinutes(15));
+                clientRepository.save(slowClient);
+                emailService.sendVerificationMail(email, newVerificationCode);
+                throw new LogicException("Could not activate your account last time; verification code resent to your email.");
+            }
+        }
+
+        // Check for unique ID card constraint
+        if (clientRepository.existsByIdCard(request.idCard())) {
+            throw new AccountException("The identification card is in use");
+        }
+
+        // Client creation
         Client client = Client.builder()
                 .idCard(request.idCard())
                 .name(request.name())
@@ -193,26 +218,15 @@ public class AuthenticationServiceImpl implements AuthenticationService {
                 .password(passwordEncoder.encode(request.password()))
                 .build();
 
-        // Verifications for client registration
-        if (utils.existsByIdCard(client.getIdCard())) {
-            throw new AccountException("The identification card is in use");
-        }
-
-        if (utils.existsEmailClient(client.getEmail())) {
-            throw new AccountException("The email is in use");
-        }
-
-        // Generating the verification code and expiration
+        // Generate and assign verification code with expiration
         String verificationCode = Generators.generateRndVerificationCode();
-        LocalDateTime expiration = LocalDateTime.now().plusMinutes(15);
-
-        // Assigning attributes to client
         client.setVerificationCode(verificationCode);
-        client.setVerificationCodeExpiration(expiration);
+        client.setVerificationCodeExpiration(LocalDateTime.now().plusMinutes(15));
         client.setListOfUsedCoupons(new ArrayList<>());
         client.setIdShoppingCart(String.valueOf(new ObjectId()));
+        client.setActive(false); // Set as inactive until verified
 
-        // Creating the shopping cart for the client
+        // Create shopping cart for client
         ShoppingCart clientShoppingCart = ShoppingCart.builder()
                 .id(client.getIdShoppingCart())
                 .paymentGatewayId("")
@@ -226,22 +240,21 @@ public class AuthenticationServiceImpl implements AuthenticationService {
                 .couponClaimed(false)
                 .build();
 
-        client.setActive(false); // Set the client as inactive until verified
-
-        // Sending the verification email
-        emailService.sendVerificationMail(client.getEmail(), verificationCode);
-        emailService.sendDiscountCouponMail(client.getEmail());
-
-        // Saving the client and shopping cart to the database
+        // Save client and shopping cart
         clientRepository.save(client);
         shoppingCartRepository.save(clientShoppingCart);
 
-        // Return a custom object that includes the necessary information for the controller
+        // Send verification and discount emails after successful save
+        emailService.sendVerificationMail(client.getEmail(), verificationCode);
+        emailService.sendDiscountCouponMail(client.getEmail());
+
+        // Prepare registration information for response
         Map<Client, String> registerInfo = new HashMap<>();
         String token = jwtService.getClientToken(client);
         registerInfo.put(client, token);
         return registerInfo;
     }
+
 
 }
 

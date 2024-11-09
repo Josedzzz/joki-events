@@ -9,6 +9,6 @@ public record LocalityOrderAsClientDTO(
 
         double totalPaymentAmount,
 
-        int ticketsSelected
+        int selectedTickets
 ) {}
 

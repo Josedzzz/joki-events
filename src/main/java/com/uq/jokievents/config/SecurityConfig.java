@@ -21,6 +21,8 @@ public class SecurityConfig{
 
     private final AuthenticationProvider authProvider;
 
+    // todo remember to uncomment this
+
 //    @Bean
 //    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
 //        return http

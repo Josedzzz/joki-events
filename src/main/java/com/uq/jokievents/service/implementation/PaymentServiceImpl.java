@@ -156,17 +156,32 @@ public class PaymentServiceImpl implements PaymentService {
 
                 ShoppingCart order = orderOpt.get();
 
+                // Check if the payment status is "approved"
                 if ("approved".equals(payment.getStatus())) {
+                    // Iterate through each LocalityOrder in the order
                     for (LocalityOrder localityOrder : order.getLocalityOrders()) {
+                        // Retrieve the event associated with the localityOrder using its event ID
                         Optional<Event> eventOpt = eventRepository.findById(localityOrder.getEventId());
+
+                        // If no event is found for the given ID, skip the current iteration
                         if (eventOpt.isEmpty()) continue;
 
+                        // Get the event object from the Optional
                         Event event = eventOpt.get();
+
+                        // Retrieve the specific locality from the event based on the locality name
                         Locality locality = event.getLocalities(localityOrder.getLocalityName());
+
+                        // If no locality is found for the given locality name, skip the current iteration
                         if (locality == null) continue;
 
+                        // Decrease the maximum capacity of the locality by the number of selected tickets
                         locality.setMaxCapacity(locality.getMaxCapacity() - localityOrder.getNumTicketsSelected());
+
+                        // Decrease the total available places of the event by the number of selected tickets
                         event.setTotalAvailablePlaces(event.getTotalAvailablePlaces() - localityOrder.getNumTicketsSelected());
+
+                        // Save the updated event back to the repository
                         eventRepository.save(event);
                     }
 

@@ -99,7 +99,12 @@ public class AuthenticationController {
         } catch (AccountException e) {
             ApiTokenResponse<String> response = new ApiTokenResponse<>("Error", e.getMessage(), null, null);
             return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
-        } catch (Exception e) {
+        } catch (LogicException e) {
+            // todo tell Jose about this possibility when registering
+            ApiTokenResponse<String> response = new ApiTokenResponse<>("Redirect", e.getMessage(), null, null);
+            return new ResponseEntity<>(response, HttpStatus.CONFLICT);
+        }
+        catch (Exception e) {
             ApiTokenResponse<String> response = new ApiTokenResponse<>("Error", "Client registration failed", e.getMessage(), null);
             return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
         }
