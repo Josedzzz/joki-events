@@ -61,26 +61,15 @@ public class ClientServiceImpl implements ClientService {
             }
 
             Client client = existingClient.get();
-            // todo take into account possible null values of the dto
-
-            if (!client.getPhoneNumber().equals(dto.phone())){
-                client.setPhoneNumber(dto.phone());
-            }
+            client.setPhoneNumber(dto.phone());
 
             // Si no es el mismo notificar para que active el correo de nuevo.
             if (!client.getEmail().equals(dto.email())) {
-                client.setEmail(dto.email());
-                client.setActive(false);
-                client.setVerificationCodeExpiration(LocalDateTime.now().plusMinutes(15));
-                emailService.sendVerificationMail(dto.email(), Generators.generateRndVerificationCode());
+                newEmailVerification(dto, client);
             }
 
-            if (!client.getName().equals(dto.name())){
-                client.setName(dto.name());
-            }
-            if (!client.getAddress().equals(dto.address())) {
-                client.setAddress(dto.address());
-            }
+            client.setName(dto.name());
+            client.setAddress(dto.address());
 
             clientRepository.save(client);
             // Update the token as they payload would change as well.
@@ -93,6 +82,15 @@ public class ClientServiceImpl implements ClientService {
         } catch (AccountException ignored) {
             throw new AccountException("Account not found");
         }
+    }
+
+    private void newEmailVerification(UpdateClientDTO dto, Client client) {
+        client.setEmail(dto.email());
+        client.setActive(false);
+        String verificationCode = Generators.generateRndVerificationCode();
+        client.setVerificationCode(verificationCode);
+        client.setVerificationCodeExpiration(LocalDateTime.now().plusMinutes(15));
+        emailService.sendVerificationMail(dto.email(), verificationCode);
     }
 
     @Override

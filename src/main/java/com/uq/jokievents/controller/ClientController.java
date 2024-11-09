@@ -8,6 +8,7 @@ import com.uq.jokievents.model.Client;
 import com.uq.jokievents.service.interfaces.ClientService;
 import com.uq.jokievents.utils.ApiResponse;
 import com.uq.jokievents.utils.ApiTokenResponse;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 import org.springframework.http.HttpStatus;
@@ -36,7 +37,7 @@ public class ClientController {
      * @return ResponseEntity
      */
     @PostMapping("/{id}/update")
-    public ResponseEntity<ApiTokenResponse<String>> updateClient(@PathVariable String id, @RequestBody UpdateClientDTO dto) {
+    public ResponseEntity<ApiTokenResponse<String>> updateClient(@PathVariable String id, @Valid @RequestBody UpdateClientDTO dto) {
         try {
             Map<Client, String> newPossibleLoginInfo = clientService.updateClient(id, dto);
             Map.Entry<Client, String> entry = newPossibleLoginInfo.entrySet().iterator().next();

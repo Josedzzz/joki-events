@@ -21,7 +21,6 @@ public class EmailService {
     private final CouponRepository couponRepository;
 
     /**
-     * Sends an email to a clients email from application.properties data (my gmail!!!)
      * @param to clients mail
      * @param verCode verification code of the client
      */
