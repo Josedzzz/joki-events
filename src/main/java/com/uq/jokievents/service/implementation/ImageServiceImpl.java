@@ -16,25 +16,14 @@ import java.util.UUID;
 @Service
 @RequiredArgsConstructor
 public class ImageServiceImpl implements ImageService {
+
     @Override
     public String uploadImage(String base64Image) throws IOException {
 
         assert base64Image != null;
         base64Image = base64Image.trim();
         // Check if the input is valid
-        if (!base64Image.startsWith("data:image/")) {
-            throw new IllegalArgumentException("Invalid Base64 image format.");
-        }
-
-        // Split the Base64 string to get the actual data
-        String[] parts = base64Image.split(",");
-
-        // Ensure we have the correct part containing the image data
-        if (parts.length != 2) {
-            throw new IllegalArgumentException("Base64 string is improperly formatted.");
-        }
-
-        String imageData = parts[1]; // This is the Base64 encoded data
+        String imageData = getString(base64Image);
 
         // Decode the Base64 string into a byte array
         byte[] imageBytes = Base64.getDecoder().decode(imageData);
@@ -54,7 +43,22 @@ public class ImageServiceImpl implements ImageService {
         );
     }
 
+    private static String getString(String base64Image) {
+        if (!base64Image.startsWith("data:image/")) {
+            throw new IllegalArgumentException("Invalid Base64 image format.");
+        }
 
+        // Split the Base64 string to get the actual data
+        String[] parts = base64Image.split(",");
+
+        // Ensure we have the correct part containing the image data
+        if (parts.length != 2) {
+            throw new IllegalArgumentException("Base64 string is improperly formatted.");
+        }
+
+        // This is the Base64 encoded data
+        return parts[1];
+    }
 
     @Override
     public void deleteImage(String imageName) {

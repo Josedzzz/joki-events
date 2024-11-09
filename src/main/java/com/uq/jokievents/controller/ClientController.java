@@ -217,4 +217,16 @@ public class ClientController {
             return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
+
+    @GetMapping("/{clientId}/purchase-history")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> getPurchaseHistory(
+            @PathVariable String clientId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        ApiResponse<Map<String, Object>> response = clientService.loadPurchaseHistory(clientId, page, size);
+        // Fuck Up Some Commas
+        HttpStatus status = "Success".equals(response.getStatus()) ? HttpStatus.OK : HttpStatus.INTERNAL_SERVER_ERROR;
+        return new ResponseEntity<>(response, status);
+    }
+
 }

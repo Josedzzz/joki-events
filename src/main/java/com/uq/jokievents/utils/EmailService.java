@@ -39,4 +39,17 @@ public class EmailService {
         mailSender.send(message);
     }
 
+    /**
+     * Sends an email with a QR that contains the recent Purchase information
+     * @param to String
+     * @param subject String
+     * @param body String
+     */
+    public void sendPurchaseEmail(String to, String subject, String body) {
+        SimpleMailMessage message = new SimpleMailMessage();
+        message.setTo(to);
+        message.setSubject(subject);
+        message.setText(body);
+        mailSender.send(message);
+    }
 }

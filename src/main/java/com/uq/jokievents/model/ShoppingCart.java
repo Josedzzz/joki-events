@@ -26,5 +26,4 @@ public class ShoppingCart {
     private String paymentCoupon;
     private Double appliedDiscountPercent;
     private boolean couponClaimed;
-    // TODO Add private LocalDateTime purchaseDate.
 }

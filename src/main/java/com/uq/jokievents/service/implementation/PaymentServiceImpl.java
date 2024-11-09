@@ -15,15 +15,20 @@ import com.uq.jokievents.exceptions.*;
 import com.uq.jokievents.model.*;
 import com.uq.jokievents.repository.ClientRepository;
 import com.uq.jokievents.repository.EventRepository;
+import com.uq.jokievents.repository.PurchaseRepository;
 import com.uq.jokievents.repository.ShoppingCartRepository;
+import com.uq.jokievents.service.interfaces.ImageService;
 import com.uq.jokievents.service.interfaces.PaymentService;
 import com.uq.jokievents.utils.ClientSecurityUtils;
+import com.uq.jokievents.utils.EmailService;
+import com.uq.jokievents.utils.Generators;
 import lombok.RequiredArgsConstructor;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -36,6 +41,9 @@ public class PaymentServiceImpl implements PaymentService {
 
     private final ShoppingCartRepository shoppingCartRepository;
     private final ClientRepository clientRepository;
+    private final PurchaseRepository purchaseRepository;
+    private final ImageService imageService;
+    private final EmailService emailService;
     private final ApplicationConfig applicationConfig;
     private final EventRepository eventRepository;
 
@@ -88,6 +96,7 @@ public class PaymentServiceImpl implements PaymentService {
 
             MercadoPagoConfig.setAccessToken(applicationConfig.getAccessToken());
 
+            // todo do we have to assign this urls?
             PreferenceBackUrlsRequest backUrls = PreferenceBackUrlsRequest.builder()
                     .success("URL PAGO EXITOSO")
                     .failure("URL PAGO FALLIDO")
@@ -129,35 +138,25 @@ public class PaymentServiceImpl implements PaymentService {
 
     @Override
     @Async
-    // todo handle the during-after-cancelled buy here
     public void receiveMercadopagoNotification(Map<String, Object> request) {
         try {
             Object type = request.get("type");
 
             if ("payment".equals(type)) {
 
-                // "Capture" the json of the request
                 String inputJson = request.get("data").toString();
                 String paymentId = inputJson.replaceAll("\\D+", "");
 
-                // Get mercadopago client and its payment
                 PaymentClient client = new PaymentClient();
                 Payment payment = client.get(Long.parseLong(paymentId));
 
-                // Get orderId from metadata
                 String orderId = payment.getMetadata().get("id_orden").toString();
-
-
-                // Fetch the order from the database
                 Optional<ShoppingCart> orderOpt = obtenerOrden(orderId);
                 if (orderOpt.isEmpty()) return;
+
                 ShoppingCart order = orderOpt.get();
 
-                // Only proceed if the payment was successful
-                // TODO The "approved" shall be implemented by us, somehow. Ask Rojo!
-                // todo make the approved empty the client shopping cart and add it to the buying history (buying history attribute must be added to the Client model class)
                 if ("approved".equals(payment.getStatus())) {
-                    // For each locality ordered, update the corresponding event and locality capacity
                     for (LocalityOrder localityOrder : order.getLocalityOrders()) {
                         Optional<Event> eventOpt = eventRepository.findById(localityOrder.getEventId());
                         if (eventOpt.isEmpty()) continue;
@@ -166,21 +165,41 @@ public class PaymentServiceImpl implements PaymentService {
                         Locality locality = event.getLocalities(localityOrder.getLocalityName());
                         if (locality == null) continue;
 
-                        // Update the available seats
                         locality.setMaxCapacity(locality.getMaxCapacity() - localityOrder.getNumTicketsSelected());
                         event.setTotalAvailablePlaces(event.getTotalAvailablePlaces() - localityOrder.getNumTicketsSelected());
-
-                        // Save the event with updated capacities
                         eventRepository.save(event);
                     }
 
-                    // Save payment details to the order and update order status
                     OrderPayment orderPayment = createPayment(payment);
                     order.setOrderPayment(orderPayment);
                     shoppingCartRepository.save(order);
+
+                    // Create and save the purchase
+                    Purchase purchase = Purchase.builder()
+                            .clientId(order.getIdClient())
+                            .purchaseDate(LocalDateTime.now())
+                            .purchasedItems(new ArrayList<>(order.getLocalityOrders()))
+                            .totalAmount(orderPayment.getPaymentValue())
+                            .paymentMethod(payment.getPaymentTypeId())
+                            .build();
+
+                    purchaseRepository.save(purchase);
+
+                    // Clear the shopping cart for the client
+                    order.setLocalityOrders(new ArrayList<>());
+                    order.setTotalPrice(0.0);
+                    order.setTotalPriceWithDiscount(0.0);
+                    order.setPaymentCoupon(null);
+                    order.setAppliedDiscountPercent(null);
+                    order.setCouponClaimed(false);
+                    shoppingCartRepository.save(order);
+
+                    // Send the purchase QR code to the client
+                    Client purchaseClient = clientRepository.findById(order.getIdClient()).orElseThrow(() -> new RuntimeException("Client not found"));
+                    sendPurchaseQRCodeEmail(purchaseClient, purchase);
                 }
             }
-        } catch ( MPException e) {
+        } catch (MPException e) {
             throw new PaymentException("An unexpected error occurred while processing the payment of mercadopago.");
         } catch (MPApiException e) {
             throw new PaymentException("Payment notification error, API related issue: " + e.getApiResponse().getContent());
@@ -192,13 +211,30 @@ public class PaymentServiceImpl implements PaymentService {
     private OrderPayment createPayment(Payment payment) {
         OrderPayment orderPayment = new OrderPayment();
         orderPayment.setId(payment.getId().toString());
-        orderPayment.setPaymentDate( payment.getDateCreated().toLocalDateTime());
+        orderPayment.setPaymentDate(payment.getDateCreated().toLocalDateTime());
         orderPayment.setPaymentStatus(payment.getStatus());
         orderPayment.setPaymentStatus(payment.getStatusDetail());
         orderPayment.setPaymentType(payment.getPaymentTypeId());
         orderPayment.setPaymentCurrency(payment.getCurrencyId());
         orderPayment.setAuthorizationCode(payment.getAuthorizationCode());
-        orderPayment.setPaymentValue(payment.getTransactionAmount().floatValue());
+        orderPayment.setPaymentValue(payment.getTransactionAmount());
         return orderPayment;
+    }
+
+    private void sendPurchaseQRCodeEmail(Client client, Purchase purchase) {
+        try {
+            // Generate the QR code from purchase details (e.g., purchase ID, amount, etc.)
+            String qrCodeData = "Purchase ID: " + purchase.getId() + "\nTotal Amount: " + purchase.getTotalAmount();
+            String base64QRCode = Generators.generateQRCode(qrCodeData);
+
+            // Upload the QR code image to Firebase Storages
+            String qrCodeUrl = imageService.uploadImage(base64QRCode);
+
+            // Send the email with the QR code URL (use your email service to send this)
+            String emailBody = "Dear " + client.getName() + ",\n\nHere is your purchase QR code:\n" + qrCodeUrl;
+            emailService.sendPurchaseEmail(client.getEmail(), "Your Purchase QR Code", emailBody);
+        } catch (Exception e) {
+            throw new LogicException(e.getMessage());
+        }
     }
 }

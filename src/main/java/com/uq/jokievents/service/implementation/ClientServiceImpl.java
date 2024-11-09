@@ -3,20 +3,18 @@ package com.uq.jokievents.service.implementation;
 import com.uq.jokievents.dtos.LoadLocalityOrdersForClient;
 import com.uq.jokievents.dtos.LocalityOrderAsClientDTO;
 import com.uq.jokievents.dtos.SearchEventDTO;
-import com.uq.jokievents.exceptions.PaymentException;
 import com.uq.jokievents.dtos.UpdateClientDTO;
 import com.uq.jokievents.exceptions.*;
 import com.uq.jokievents.model.*;
 import com.uq.jokievents.model.enums.EventType;
-import com.uq.jokievents.repository.ClientRepository;
-import com.uq.jokievents.repository.CouponRepository;
-import com.uq.jokievents.repository.EventRepository;
-import com.uq.jokievents.repository.ShoppingCartRepository;
+import com.uq.jokievents.repository.*;
 import com.uq.jokievents.service.interfaces.ClientService;
 import com.uq.jokievents.service.interfaces.JwtService;
-import com.uq.jokievents.utils.*;
+import com.uq.jokievents.utils.ApiResponse;
+import com.uq.jokievents.utils.ClientSecurityUtils;
+import com.uq.jokievents.utils.EmailService;
+import com.uq.jokievents.utils.Generators;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -36,12 +34,10 @@ public class ClientServiceImpl implements ClientService {
     private final ClientRepository clientRepository;
     private final CouponRepository couponRepository;
     private final ShoppingCartRepository shoppingCartRepository;
+    private final PurchaseRepository purchaseRepository;
     private final EventRepository eventRepository;
     private final EmailService emailService;
     private final JwtService jwtService;
-
-    @Value("${image.not.found}")
-    private String notFoundString;
 
     /**
      * Updates a client from a dto.
@@ -118,7 +114,6 @@ public class ClientServiceImpl implements ClientService {
     }
 
 
-    // todo make the ClientController have the EventService instead and call the method of the service
     @Override
     public Map<String, Object> getAllEventsPaginated(int page, int size) {
         // Verify client access
@@ -348,7 +343,6 @@ public class ClientServiceImpl implements ClientService {
      * This method should be called when a client clicks on the Shopping Cart button on the frontend.
      * Should only load possible to buy LocalityOrders and its done but waiting to implement it when cleansing the database.
      * If this method does not work it may be due of EventRepository findByLocalitiesName() method.
-     * todo convert this myself and complete it
      * @param clientId String
      * @param page int
      * @param size int
@@ -428,7 +422,10 @@ public class ClientServiceImpl implements ClientService {
     public void applyCoupon(String clientId, String couponName) {
 
         // Verify client access
-        ClientSecurityUtils.verifyClientAccessWithRole();
+        String verificationResponse = ClientSecurityUtils.verifyClientAccessWithId(clientId);
+        if ("UNAUTHORIZED".equals(verificationResponse)) {
+            throw new AccountException("Account not authorized");
+        }
 
         // Fetch the client
         Client client = clientRepository.findById(clientId)
@@ -472,6 +469,11 @@ public class ClientServiceImpl implements ClientService {
     @Override
     public void verifyClient(String clientId, String verificationCode) {
 
+        String verificationResponse = ClientSecurityUtils.verifyClientAccessWithId(clientId);
+        if ("UNAUTHORIZED".equals(verificationResponse)) {
+            throw new AccountException("Account not authorized");
+        }
+
         Client client = clientRepository.findById(clientId)
                 .orElseThrow(() -> new AccountException("Client not found"));
 
@@ -494,4 +496,37 @@ public class ClientServiceImpl implements ClientService {
         client.setActive(true);
         clientRepository.save(client);
     }
+
+    @Override
+    public ApiResponse<Map<String, Object>> loadPurchaseHistory(String clientId, int page, int size) {
+
+        String verificationResponse = ClientSecurityUtils.verifyClientAccessWithId(clientId);
+        if ("UNAUTHORIZED".equals(verificationResponse)) {
+            throw new AccountException("Account not authorized");
+        }
+
+        try {
+            List<Purchase> allPurchases = purchaseRepository.findByClientId(clientId); // Retrieve all purchases for the client
+
+            // Calculate start and end indexes for the current page
+            int start = Math.min(page * size, allPurchases.size());
+            int end = Math.min(start + size, allPurchases.size());
+            List<Purchase> paginatedPurchases = allPurchases.subList(start, end);
+
+            // Prepare pagination details
+            Map<String, Object> responseData = new HashMap<>();
+            responseData.put("content", paginatedPurchases);
+            responseData.put("totalElements", allPurchases.size());
+            responseData.put("totalPages", (int) Math.ceil((double) allPurchases.size() / size));
+            responseData.put("currentPage", page);
+
+            return new ApiResponse<>("Success", "Purchase history retrieved successfully", responseData);
+
+        } catch (Exception e) {
+            return new ApiResponse<>("Error", "Failed to retrieve purchase history", null);
+        }
+    }
+
+
+
 }

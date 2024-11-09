@@ -3,6 +3,8 @@ package com.uq.jokievents.service.interfaces;
 import com.uq.jokievents.dtos.LocalityOrderAsClientDTO;
 import com.uq.jokievents.dtos.SearchEventDTO;
 import com.uq.jokievents.model.Client;
+import com.uq.jokievents.model.Purchase;
+import com.uq.jokievents.utils.ApiResponse;
 import org.apache.coyote.Response;
 import org.springframework.http.ResponseEntity;
 import com.uq.jokievents.dtos.UpdateClientDTO;
@@ -23,4 +25,5 @@ public interface ClientService {
     Map<String, Object> loadShoppingCart(String clientId, int page, int size);
     void applyCoupon(String clientId, String coupon);
     void verifyClient(String clientId, String verificationCode);
+    ApiResponse<Map<String, Object>> loadPurchaseHistory(String clientId, int page, int size);
 }
