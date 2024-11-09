@@ -8,25 +8,23 @@ import org.springframework.security.core.context.SecurityContextHolder;
 
 public class AdminSecurityUtils {
 
-    public static ResponseEntity<?> verifyAdminAccessWithId(String id) {
+    public static String verifyAdminAccessWithId(String id) {
         Admin loggedInAdmin = (Admin) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         String loggedInAdminId = loggedInAdmin.getId();
 
         // Check if the logged-in client is the same as the one being updated
         if (!loggedInAdminId.equals(id) || !SecurityContextHolder.getContext().getAuthentication().getAuthorities().contains(new SimpleGrantedAuthority("ADMIN"))) {
-            ApiResponse<String> response = new ApiResponse<>("Error", "You are not authorized to access", null);
-            return new ResponseEntity<>(response, HttpStatus.FORBIDDEN);
+            return "UNAUTHORIZED";
         }
-        return null; // return null if everything is okay (nothing is ever okay)
+        return "AUTHORIZED"; // return null if everything is okay (nothing is ever okay)
     }
 
-    public static ResponseEntity<?> verifyAdminAccessWithRole() {
+    public static String verifyAdminAccessWithRole() {
         // Check if the user has the "ADMIN" role
         if (!SecurityContextHolder.getContext().getAuthentication().getAuthorities().contains(new SimpleGrantedAuthority("ADMIN"))) {
-            ApiResponse<String> response = new ApiResponse<>("Error", "You are not authorized to access", null);
-            return new ResponseEntity<>(response, HttpStatus.FORBIDDEN);
+            return "UNAUTHORIZED";
         }
-        return null;
+        return "AUTHORIZED";
     }
 }
 

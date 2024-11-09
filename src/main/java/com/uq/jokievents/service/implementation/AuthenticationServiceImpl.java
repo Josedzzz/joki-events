@@ -47,14 +47,14 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         String username = request.username();
         String password = request.password();
         Admin admin = adminRepository.findByUsername(username)
-                .orElseThrow(() -> new AccountNotFoundException("Account not found in the database"));
+                .orElseThrow(() -> new AccountException("Account not found in the database"));
 
         if (!admin.isActive()) {
-            throw new InactiveAccountException("The admin is not active");
+            throw new AccountException("The admin is not active");
         }
 
         if (!passwordEncoder.matches(password, admin.getPassword())) {
-            throw new InvalidCredentialsException("Invalid username or password");
+            throw new AccountException("Invalid username or password");
         }
 
         authenticationManager.authenticate(
@@ -73,14 +73,14 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         String rawPassword = request.password();
 
         Client client = clientRepository.findByEmail(email)
-                .orElseThrow(() -> new AccountNotFoundException("Client not found"));
+                .orElseThrow(() -> new AccountException("Client not found"));
 
         if (!client.isActive()) {
-            throw new InactiveAccountException("Client is not active");
+            throw new AccountException("Client is not active");
         }
 
         if (!passwordEncoder.matches(rawPassword, client.getPassword())) {
-            throw new InvalidCredentialsException("Invalid password");
+            throw new AccountException("Invalid password");
         }
 
         Map<Client, String> loginInfo = new HashMap<>();
@@ -97,15 +97,15 @@ public class AuthenticationServiceImpl implements AuthenticationService {
 
         // Check if the email belongs to an Admin or Client and process accordingly
         if (adminRepository.findByEmail(email).isPresent()) {
-            Admin admin = adminRepository.findByEmail(email).orElseThrow(() -> new AccountNotFoundException("Admin not found"));
+            Admin admin = adminRepository.findByEmail(email).orElseThrow(() -> new AccountException("Admin not found"));
             sendVerificationCodeAdmin(admin);
             return "Recovery code sent to Admin successfully";
         } else if (clientRepository.findByEmail(email).isPresent()) {
-            Client client = clientRepository.findByEmail(email).orElseThrow(() -> new AccountNotFoundException("Client not found"));
+            Client client = clientRepository.findByEmail(email).orElseThrow(() -> new AccountException("Client not found"));
             sendVerificationCodeClient(client);
             return "Recovery code sent to Client successfully";
         } else {
-            throw new AccountNotFoundException("No one is registered with that email");
+            throw new AccountException("No one is registered with that email");
         }
     }
 
@@ -141,31 +141,31 @@ public class AuthenticationServiceImpl implements AuthenticationService {
 
         // Attempt to recover password for either Admin or Client
         if (adminRepository.findByEmail(email).isPresent()) {
-            Admin admin = adminRepository.findByEmail(email).orElseThrow(() -> new AccountNotFoundException("Admin not found"));
+            Admin admin = adminRepository.findByEmail(email).orElseThrow(() -> new AccountException("Admin not found"));
 
             validateVerificationCode(admin.getVerificationCode(), admin.getVerificationCodeExpiration(), verificationCode);
 
             updateAdminPassword(admin, newPassword);
             adminRepository.save(admin);
         } else if (clientRepository.findByEmail(email).isPresent()) {
-            Client client = clientRepository.findByEmail(email).orElseThrow(() -> new AccountNotFoundException("Client not found"));
+            Client client = clientRepository.findByEmail(email).orElseThrow(() -> new AccountException("Client not found"));
 
             validateVerificationCode(client.getVerificationCode(), client.getVerificationCodeExpiration(), verificationCode);
 
             updateClientPassword(client, newPassword);
             clientRepository.save(client);
         } else {
-            throw new AccountNotFoundException("No account found with that email");
+            throw new AccountException("No account found with that email");
         }
     }
 
     private void validateVerificationCode(String storedCode, LocalDateTime expiration, String providedCode) {
         if (expiration.isBefore(LocalDateTime.now())) {
-            throw new ExpiredVerificationCodeException("Verification code has expired");
+            throw new LogicException("Verification code has expired");
         }
 
         if (!storedCode.equals(providedCode)) {
-            throw new InvalidVerificationCodeException("Invalid verification code");
+            throw new LogicException("Invalid verification code");
         }
     }
 
@@ -194,11 +194,11 @@ public class AuthenticationServiceImpl implements AuthenticationService {
 
         // Verifications for client registration
         if (utils.existsByIdCard(client.getIdCard())) {
-            throw new IdCardAlreadyInUseException("The identification card is in use");
+            throw new AccountException("The identification card is in use");
         }
 
         if (utils.existsEmailClient(client.getEmail())) {
-            throw new EmailAlreadyInUseException("The email is in use");
+            throw new AccountException("The email is in use");
         }
 
         // Generating the verification code and expiration

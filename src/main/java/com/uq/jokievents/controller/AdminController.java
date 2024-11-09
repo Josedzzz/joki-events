@@ -44,26 +44,6 @@ public class AdminController {
     }
 
     /**
-     * Example input JSON:
-     * {
-     * "localityName": "Summer Sale",
-     * "discount": 15.0,
-     * "expirationDate": "2024-12-31T23:59:59",
-     * "minPurchaseAmount": 100.0
-     * }
-     * Example output JSON:
-     * {
-     * "status": "Success",
-     * "message": "Created coupon done",
-     * "data": {
-     * "id": "66e116c1f6751275233b24ff",
-     * "localityName": "Summer Sale",
-     * "discountPercent": 15.0,
-     * "expirationDate": "2024-12-31T23:59:59",
-     * "minPurchaseQuantity": 100.0,
-     * "used": false
-     * }
-     * }
      * Either this or error messages and data would be always empty.
      *
      * @param dto CreateCouponDTO

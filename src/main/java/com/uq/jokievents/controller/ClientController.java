@@ -16,11 +16,9 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.http.ResponseEntity;
 
 import com.uq.jokievents.dtos.UpdateClientDTO;
-import com.uq.jokievents.dtos.VerifyClientDTO;
 
 import org.springframework.web.bind.annotation.*;
 
-import java.util.HashMap;
 import java.util.Map;
 
 @RestController
@@ -44,17 +42,13 @@ public class ClientController {
             ApiTokenResponse<String> response = getResponse(entry); // IntelliJ generated method
             return new ResponseEntity<>(response, HttpStatus.OK);
         }
-        catch (NotAuthorizedException e) {
+        catch (AuthorizationException e) {
             ApiTokenResponse<String> response = new ApiTokenResponse<>("Error", e.getMessage(), null, null);
             return new ResponseEntity<>(response, HttpStatus.UNAUTHORIZED);
         }
-        catch (UpdateClientException e) {
+        catch (AccountException e) {
             ApiTokenResponse<String> response = new ApiTokenResponse<>("Error", e.getMessage(), null, null);
             return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
-        }
-        catch (AccountNotFoundException e) {
-            ApiTokenResponse<String> response = new ApiTokenResponse<>("Error", e.getMessage(), null, null);
-            return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
         }
     }
 
@@ -87,15 +81,9 @@ public class ClientController {
             clientService.deleteAccount(clientId);
             ApiResponse<String> response = new ApiResponse<>("Success", "Client account deleted", null);
             return new ResponseEntity<>(response, HttpStatus.OK);
-        } catch (NotAuthorizedException e) {
+        } catch (AccountException e) {
             ApiResponse<String> response = new ApiResponse<>("Error", e.getMessage(), null);
             return new ResponseEntity<>(response, HttpStatus.UNAUTHORIZED);
-        } catch (AccountNotFoundException e) {
-            ApiResponse<String> response = new ApiResponse<>("Error", e.getMessage(), null);
-            return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
-        } catch (Exception e) {
-            ApiResponse<String> response = new ApiResponse<>("Error", "Failed to delete client", null);
-            return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -106,21 +94,12 @@ public class ClientController {
             clientService.verifyClient(clientId, verificationCode);
             ApiResponse<String> response = new ApiResponse<>("Success", "Client has been verified and activated", null);
             return new ResponseEntity<>(response, HttpStatus.OK);
-        } catch (AccountNotFoundException e) {
+        } catch (AccountException e) {
             ApiResponse<String> response = new ApiResponse<>("Error", e.getMessage(), null);
             return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
-        } catch (ClientAlreadyActiveException e) {
+        } catch (LogicException e) {
             ApiResponse<String> response = new ApiResponse<>("Success", e.getMessage(), null);
             return new ResponseEntity<>(response, HttpStatus.OK);
-        } catch (VerificationCodeExpiredException e) {
-            ApiResponse<String> response = new ApiResponse<>("Error", e.getMessage(), null);
-            return new ResponseEntity<>(response, HttpStatus.GONE);
-        } catch (IncorrectVerificationCodeException e) {
-            ApiResponse<String> response = new ApiResponse<>("Error", e.getMessage(), null);
-            return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
-        } catch (Exception e) {
-            ApiResponse<String> response = new ApiResponse<>("Error", "An error occurred during verification", e.getMessage());
-            return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -136,33 +115,30 @@ public class ClientController {
             UpdateClientDTO clientInfo = clientService.getAccountInformation(clientId);
             ApiResponse<UpdateClientDTO> response = new ApiResponse<>("Success", "Client info retrieved", clientInfo);
             return new ResponseEntity<>(response, HttpStatus.OK);
-        } catch (NotAuthorizedException e) {
+        } catch (AuthorizationException e) {
             ApiResponse<String> response = new ApiResponse<>("Error", e.getMessage(), null);
             return new ResponseEntity<>(response, HttpStatus.UNAUTHORIZED);
-        } catch (AccountNotFoundException e) {
+        } catch (AccountException e) {
             ApiResponse<String> response = new ApiResponse<>("Error", e.getMessage(), null);
             return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
-        } catch (Exception e) {
-            ApiResponse<String> response = new ApiResponse<>("Error", "Failed to retrieve client info", null);
-            return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
 
     /**
-     * Example input JSON
-     * {
-     *     "eventId": "mongo-generated-id",
-     *     "localityName": "VIP Section",
-     *     "totalPaymentAmount": 150.00,
-     *     "ticketsSelected": 3
-     * }
      * @param dto LocalityOrderAsClientDTO
      * @return ResponseEntity
      */
     @PostMapping("/order-locality/{clientId}")
     public ResponseEntity<?> orderLocality(@PathVariable String clientId, @RequestBody LocalityOrderAsClientDTO dto) {
-        return clientService.orderLocality(clientId, dto);
+        try {
+            clientService.orderLocality(clientId, dto);
+            ApiResponse<String> response = new ApiResponse<>("Success", "Locality ordered successfully", null);
+            return new ResponseEntity<>(response, HttpStatus.OK);
+        } catch (Exception e) {
+            ApiResponse<String> response = new ApiResponse<>("Error", e.getMessage(), null);
+            return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
+        }
     }
 
     /**
@@ -173,22 +149,52 @@ public class ClientController {
      */
     @PostMapping("/cancel-locality-order/{clientId}")
     public ResponseEntity<?> cancelLocalityOrder(@PathVariable String clientId, @RequestBody LocalityOrderAsClientDTO dto) {
-        return clientService.cancelLocalityOrder(clientId, dto);
+
+        try {
+            clientService.cancelLocalityOrder(clientId, dto);
+            ApiResponse<String> response = new ApiResponse<>("Success", "Client order cancelled", null);
+            return new ResponseEntity<>(response, HttpStatus.OK);
+        } catch (Exception e) {
+            ApiResponse<String> response = new ApiResponse<>("Error", e.getMessage(), null);
+            return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
+        }
     }
 
     @GetMapping("/load-shopping-cart/{clientId}")
     public ResponseEntity<?> loadShoppingCart(@PathVariable String clientId, @RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "16") int size) {
-        return clientService.loadShoppingCart(clientId, page, size);
+
+        try {
+            Map<String, Object> clientShoppingCart = clientService.loadShoppingCart(clientId, page, size);
+            ApiResponse<Map<String, Object>> response = new ApiResponse<>("Success", "Client shopping cart loaded", clientShoppingCart);
+            return new ResponseEntity<>(response, HttpStatus.OK);
+        } catch (Exception e) {
+            ApiResponse<String> response = new ApiResponse<>("Error", e.getMessage(), null);
+            return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
+        }
     }
 
     /**
-     * Check if that String couponName must be changed to a dto.
+     * todo Check if that String couponName must be changed to a dto.
+     * most likely not
      * @param clientId String
      * @param couponName String
      * @return ResponseEntity
      */
     @PostMapping("/apply-coupon/{clientId}")
-    public ResponseEntity<?> applyCoupon(@PathVariable String clientId, String couponName) {
-        return clientService.applyCoupon(clientId, couponName);
+    public ResponseEntity<ApiResponse<String>> applyCoupon(@PathVariable String clientId, @RequestParam String couponName) {
+        try {
+            clientService.applyCoupon(clientId, couponName);
+            ApiResponse<String> response = new ApiResponse<>("Success", "Coupon applied successfully", null);
+            return new ResponseEntity<>(response, HttpStatus.OK);
+        } catch (AccountException | ShoppingCartException e ) {
+            ApiResponse<String> response = new ApiResponse<>("Error", e.getMessage(), null);
+            return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
+        } catch (LogicException | PaymentException e) {
+            ApiResponse<String> response = new ApiResponse<>("Error", e.getMessage(), null);
+            return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+        } catch (Exception e) {
+            ApiResponse<String> response = new ApiResponse<>("Error", "An unexpected error occurred", e.getMessage());
+            return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
 }

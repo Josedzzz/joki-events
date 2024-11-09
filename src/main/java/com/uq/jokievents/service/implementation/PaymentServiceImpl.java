@@ -14,14 +14,12 @@ import com.uq.jokievents.config.ApplicationConfig;
 import com.uq.jokievents.exceptions.*;
 import com.uq.jokievents.model.*;
 import com.uq.jokievents.repository.ClientRepository;
+import com.uq.jokievents.repository.EventRepository;
 import com.uq.jokievents.service.interfaces.EventService;
 import com.uq.jokievents.service.interfaces.PaymentService;
 import com.uq.jokievents.service.interfaces.ShoppingCartService;
-import com.uq.jokievents.utils.ApiResponse;
 import com.uq.jokievents.utils.ClientSecurityUtils;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -42,38 +40,39 @@ public class PaymentServiceImpl implements PaymentService {
     private final ClientRepository clientRepository;
     private final EventService eventService;
     private final ApplicationConfig applicationConfig;
+    private final EventRepository eventRepository;
 
     @Override
     public String doPayment(String clientId) {
         try {
             String verificationResponse = ClientSecurityUtils.verifyClientAccessWithRole();
             if (verificationResponse.equals("UNAUTHORIZED")) {
-                throw new NotAuthorizedException("Not authorized to enter this endpoint");
+                throw new AuthorizationException("Not authorized to enter this endpoint");
             }
             // Get the order from the database
             Optional<ShoppingCart> shoppingCartOptional = obtenerOrden(clientId);
             if (shoppingCartOptional.isEmpty()) {
-                throw new ShoppinCartNotFoundException("The client does not have a shopping cart, grave error");
+                throw new AccountException("The client does not have a shopping cart, grave error");
             }
 
             ShoppingCart shoppingCart = shoppingCartOptional.get();
             ArrayList<LocalityOrder> localityOrdersToBuy = shoppingCart.getLocalityOrders();
             if (localityOrdersToBuy.isEmpty()) {
-                throw new EmptyShoppingCartException("The shopping cart is empty, nothing to buy");
+                throw new ShoppingCartException("The shopping cart is empty, nothing to buy");
             }
 
             Double discountPercentage = shoppingCart.getAppliedDiscountPercent();
             List<PreferenceItemRequest> itemsPasarela = new ArrayList<>();
 
             for (LocalityOrder localityOrder : localityOrdersToBuy) {
-                Optional<Event> eventOptional = eventService.getEventById(localityOrder.getEventId());
+                Optional<Event> eventOptional = eventRepository.findById(localityOrder.getEventId());
                 if (eventOptional.isEmpty()) continue;
 
                 Event event = eventOptional.get();
                 Locality locality = event.getLocalities(localityOrder.getLocalityName());
 
                 if (locality == null) {
-                    throw new LocalityNotFoundException("Locality within the " + event.getName() + " event, not found");
+                    throw new EventException("Locality within the " + event.getName() + " event, not found");
                 }
 
                 // todo guess why the fuck only the price shows on the payment
@@ -114,10 +113,10 @@ public class PaymentServiceImpl implements PaymentService {
             // Only return the initPoint field
             return preference.getInitPoint();
         } catch (MPApiException e) {
-            throw new PaymentProcessingException("Payment not done, API related issue: " + e.getApiResponse().getContent());
+            throw new PaymentException("Payment not done, API related issue: " + e.getApiResponse().getContent());
         } catch (Exception e) {
             // todo I may want to add a logger to all of this
-            throw new PaymentProcessingException("An unexpected error occurred while processing the payment.");
+            throw new PaymentException("An unexpected error occurred while processing the payment.");
         }
     }
 
@@ -162,7 +161,7 @@ public class PaymentServiceImpl implements PaymentService {
                 if ("approved".equals(payment.getStatus())) {
                     // For each locality ordered, update the corresponding event and locality capacity
                     for (LocalityOrder localityOrder : order.getLocalityOrders()) {
-                        Optional<Event> eventOpt = eventService.getEventById(localityOrder.getEventId());
+                        Optional<Event> eventOpt = eventRepository.findById(localityOrder.getEventId());
                         if (eventOpt.isEmpty()) continue;
 
                         Event event = eventOpt.get();
@@ -174,7 +173,7 @@ public class PaymentServiceImpl implements PaymentService {
                         event.setTotalAvailablePlaces(event.getTotalAvailablePlaces() - localityOrder.getNumTicketsSelected());
 
                         // Save the event with updated capacities
-                        eventService.saveEvent(event);
+                        eventRepository.save(event);
                     }
 
                     // Save payment details to the order and update order status
@@ -184,11 +183,11 @@ public class PaymentServiceImpl implements PaymentService {
                 }
             }
         } catch ( MPException e) {
-            throw new PaymentProcessingException("An unexpected error occurred while processing the payment of mercadopago.");
+            throw new PaymentException("An unexpected error occurred while processing the payment of mercadopago.");
         } catch (MPApiException e) {
-            throw new PaymentProcessingException("Payment notification error, API related issue: " + e.getApiResponse().getContent());
+            throw new PaymentException("Payment notification error, API related issue: " + e.getApiResponse().getContent());
         } catch (Exception e) {
-            throw new PaymentProcessingException("An unexpected error occurred while processing the payment.");
+            throw new PaymentException("An unexpected error occurred while processing the payment.");
         }
     }
 

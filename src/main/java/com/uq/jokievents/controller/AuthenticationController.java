@@ -44,14 +44,9 @@ public class AuthenticationController {
             );
 
             return new ResponseEntity<>(response, HttpStatus.CREATED);
-
-        } catch (AccountNotFoundException | InvalidCredentialsException e) {
+        } catch (AccountException e) {
             ApiTokenResponse<String> response = new ApiTokenResponse<>("Error", e.getMessage(), null, null);
             return new ResponseEntity<>(response, HttpStatus.UNAUTHORIZED);
-
-        } catch (InactiveAccountException e) {
-            ApiTokenResponse<String> response = new ApiTokenResponse<>("Error", e.getMessage(), null, null);
-            return new ResponseEntity<>(response, HttpStatus.FORBIDDEN);
 
         } catch (Exception e) {
             ApiTokenResponse<String> response = new ApiTokenResponse<>("Error", "Login failed", null, null);
@@ -78,13 +73,9 @@ public class AuthenticationController {
             );
             return new ResponseEntity<>(response, HttpStatus.CREATED);
 
-        } catch (AccountNotFoundException | InvalidCredentialsException e) {
+        } catch (AccountException e) {
             ApiTokenResponse<String> response = new ApiTokenResponse<>("Error", e.getMessage(), null, null);
             return new ResponseEntity<>(response, HttpStatus.UNAUTHORIZED);
-
-        } catch (InactiveAccountException e) {
-            ApiTokenResponse<String> response = new ApiTokenResponse<>("Error", e.getMessage(), null, null);
-            return new ResponseEntity<>(response, HttpStatus.FORBIDDEN);
 
         } catch (Exception e) {
             ApiTokenResponse<String> response = new ApiTokenResponse<>("Error", "Login failed", null, null);
@@ -106,10 +97,9 @@ public class AuthenticationController {
             ApiTokenResponse<String> response = new ApiTokenResponse<>("Success", "Client registered successfully", client.getId(), token);
             return new ResponseEntity<>(response, HttpStatus.CREATED);
 
-        } catch (IdCardAlreadyInUseException | EmailAlreadyInUseException e) {
+        } catch (AccountException e) {
             ApiTokenResponse<String> response = new ApiTokenResponse<>("Error", e.getMessage(), null, null);
             return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
-
         } catch (Exception e) {
             ApiTokenResponse<String> response = new ApiTokenResponse<>("Error", "Client registration failed", e.getMessage(), null);
             return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
@@ -124,7 +114,7 @@ public class AuthenticationController {
             String resultMessage = authenticationService.sendRecoverPasswordCode(dto);
             ApiResponse<String> response = new ApiResponse<>("Success", resultMessage, null);
             return new ResponseEntity<>(response, HttpStatus.OK);
-        } catch (AccountNotFoundException e) {
+        } catch (AccountException e) {
             ApiResponse<String> response = new ApiResponse<>("Error", e.getMessage(), null);
             return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
 
@@ -143,13 +133,9 @@ public class AuthenticationController {
             ApiResponse<String> response = new ApiResponse<>("Success", "Password recovery completed successfully", null);
             return new ResponseEntity<>(response, HttpStatus.OK);
 
-        } catch (AccountNotFoundException e) {
+        } catch (AccountException e) {
             ApiResponse<String> response = new ApiResponse<>("Error", e.getMessage(), null);
             return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
-
-        } catch (ExpiredVerificationCodeException | InvalidVerificationCodeException e) {
-            ApiResponse<String> response = new ApiResponse<>("Error", e.getMessage(), null);
-            return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
 
         } catch (Exception e) {
             ApiResponse<String> response = new ApiResponse<>("Error", "Password recovery failed", null);

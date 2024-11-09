@@ -1,16 +1,17 @@
 package com.uq.jokievents.utils;
 
 import com.uq.jokievents.model.Client;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Service;
 
 @Service
+@RequiredArgsConstructor(onConstructor_ = {@Autowired})
 public class EmailService {
 
-    @Autowired
-    private JavaMailSender mailSender;
+    private final JavaMailSender mailSender;
 
     /**
      * Sends an email to a clients email from application.properties data (my gmail!!!)

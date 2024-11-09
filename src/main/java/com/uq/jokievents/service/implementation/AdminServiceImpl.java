@@ -3,14 +3,21 @@ package com.uq.jokievents.service.implementation;
 import javax.validation.Valid;
 
 import com.uq.jokievents.dtos.*;
+import com.uq.jokievents.exceptions.AuthorizationException;
 import com.uq.jokievents.model.Event;
+import com.uq.jokievents.model.Locality;
+import com.uq.jokievents.repository.EventRepository;
 import com.uq.jokievents.service.interfaces.*;
 import com.uq.jokievents.utils.*;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import com.uq.jokievents.model.Admin;
 import com.uq.jokievents.model.Coupon;
 import com.uq.jokievents.repository.AdminRepository;
 
+import java.io.IOException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
@@ -23,6 +30,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 
 import java.time.LocalTime;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import lombok.RequiredArgsConstructor;
 
@@ -32,9 +40,9 @@ import lombok.RequiredArgsConstructor;
 public class AdminServiceImpl implements AdminService{
 
     private final AdminRepository adminRepository;
-    private final EmailService emailService;
+    private final EventRepository eventRepository;
+    private final ImageService imageService;
     private final EventService eventService;
-    private final PasswordEncoder passwordEncoder;
     private final CouponService couponService;
     private final JwtService jwtService;
 
@@ -192,28 +200,134 @@ public class AdminServiceImpl implements AdminService{
     @Override
     public ResponseEntity<?> addEvent(HandleEventDTO dto) {
 
-        ResponseEntity<?> verificationResponse = AdminSecurityUtils.verifyAdminAccessWithRole();
-        if (verificationResponse != null) {
-            return verificationResponse;
+        String verificationResponse = AdminSecurityUtils.verifyAdminAccessWithRole();
+        if ("UNAUTHORIZED".equals(verificationResponse)) {
+            throw new AuthorizationException("Not authorized to enter this endpoint");
         }
 
-        // Delegating the  event creation to EventService as god intended or maybe not, makes sense for it to be here as it is a sole admin function. No client can create an event.
-        return eventService.addEvent(dto);
+        try {
+            String imageUrl = imageService.uploadImage(dto.eventImageUrl());
+            String localitiesUrl = imageService.uploadImage(dto.localitiesImageUrl());
+            Event event = Event.builder()
+                    .name(dto.name())
+                    .address(dto.address())
+                    .city(dto.city())
+                    .eventDate(dto.date())
+                    .availableForPurchase(true)  // El negro? Mi color. Si es, jeje
+                    .localities(dto.localities().stream().map(localityDTO ->
+                            // Locality has a JsonIgnore on the id parameter
+                            Locality.builder()
+                                    .name(localityDTO.name())
+                                    .price(localityDTO.price())
+                                    .maxCapacity(localityDTO.maxCapacity())
+                                    .build()
+                    ).collect(Collectors.toList()))
+                    .totalAvailablePlaces(dto.totalAvailablePlaces())
+                    .eventImageUrl(imageUrl)
+                    .localitiesImageUrl(localitiesUrl)
+                    .eventType(dto.eventType())
+                    .build();
+
+            eventRepository.save(event);
+
+            ApiResponse<Event> response = new ApiResponse<>("Success", "Event created successfully", event);
+            return new ResponseEntity<>(response, HttpStatus.CREATED);
+
+        } catch (Exception e) {
+            ApiResponse<String> response = new ApiResponse<>("Error", "Failed to create or update event event", e.getMessage());
+            return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
 
     @Override
     public ResponseEntity<?> getAllEventsPaginated(int page, int size) {
-        return eventService.getAllEventsPaginated(page, size);
+
+        String verificationResponse = AdminSecurityUtils.verifyAdminAccessWithRole();
+        if ("UNAUTHORIZED".equals(verificationResponse)) {
+            throw new AuthorizationException("Not authorized to enter this endpoint");
+        }
+
+        try {
+            Pageable pageable = PageRequest.of(page, size);
+            Page<Event> eventPage = eventRepository.findAll(pageable);
+
+            Map<String, Object> responseData = new HashMap<>();
+            responseData.put("content", eventPage.getContent());
+            responseData.put("totalPages", eventPage.getTotalPages());
+            responseData.put("totalElements", eventPage.getTotalElements());
+            responseData.put("currentPage", eventPage.getNumber());
+
+            ApiResponse<Map<String, Object>> response = new ApiResponse<>("Success", "Events retrieved successfully", responseData);
+            return new ResponseEntity<>(response, HttpStatus.OK);
+        } catch (Exception e) {
+            ApiResponse<String> errorResponse = new ApiResponse<>("Error", "Failed to retrieve events", null);
+            return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
 
     @Override
     public ResponseEntity<?> updateEvent(String eventId, @Valid HandleEventDTO dto) {
 
-        ResponseEntity<?> verificationResponse = AdminSecurityUtils.verifyAdminAccessWithRole();
-        if (verificationResponse != null) {
-            return verificationResponse;
+        String verificationResponse = AdminSecurityUtils.verifyAdminAccessWithRole();
+        if ("UNAUTHORIZED".equals(verificationResponse)) {
+            throw new AuthorizationException("Not authorized to enter this endpoint");
         }
-        return eventService.updateEvent(eventId, dto);
+
+        // Fetch the existing event by ID
+        Optional<Event> existingEventOpt = eventRepository.findById(eventId);
+        if (existingEventOpt.isEmpty()) {
+            ApiResponse<Event> response = new ApiResponse<>("Success", "Event not found", null);
+            return new ResponseEntity<>(response, HttpStatus.CREATED);
+        }
+
+        // Get the existing event object
+        Event existingEvent = existingEventOpt.get();
+
+        // Map the List<CreateLocalityDTO> to List<Locality>
+        List<Locality> updatedLocalities = dto.localities().stream()
+                .map(dtoLocality -> Locality.builder()
+                        .name(dtoLocality.name())
+                        .price(dtoLocality.price())
+                        .maxCapacity(dtoLocality.maxCapacity())
+                        .build())
+                .toList();
+
+        // Validate and upload the event image if needed
+        if (dto.eventImageUrl() != null && dto.eventImageUrl().startsWith("data:image/")) {
+            try {
+                String uploadedEventImageUrl = imageService.uploadImage(dto.eventImageUrl());
+                existingEvent.setEventImageUrl(uploadedEventImageUrl);
+            } catch (IOException e) {
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                        .body("Failed to upload event image.");
+            }
+        }
+
+        // Validate and upload the localities image if needed
+        if (dto.localitiesImageUrl() != null && dto.localitiesImageUrl().startsWith("data:image/")) {
+            try {
+                String uploadedLocalitiesImageUrl = imageService.uploadImage(dto.localitiesImageUrl());
+                existingEvent.setLocalitiesImageUrl(uploadedLocalitiesImageUrl);
+            } catch (IOException e) {
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                        .body("Failed to upload localities image.");
+            }
+        }
+
+        // Update the fields from the DTO
+        existingEvent.setName(dto.name());
+        existingEvent.setCity(dto.city());
+        existingEvent.setAddress(dto.address());
+        existingEvent.setEventDate(dto.date());
+        existingEvent.setTotalAvailablePlaces(dto.totalAvailablePlaces());
+        existingEvent.setLocalities(updatedLocalities);
+        existingEvent.setEventType(dto.eventType());
+
+        // Save the updated event
+        eventRepository.save(existingEvent);
+
+        ApiResponse<Event> response = new ApiResponse<>("Success", "Event updated", existingEvent);
+        return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
     public ResponseEntity<?> deleteEvent(String eventId){
@@ -224,9 +338,9 @@ public class AdminServiceImpl implements AdminService{
         }
 
         try {
-            Optional<Event> existingEvent = eventService.getEventById(eventId); // Long life to SRP
+            Optional<Event> existingEvent = eventRepository.findById(eventId); // Long life to SRP
             if (existingEvent.isPresent()) {
-                eventService.deleteEventById(eventId);
+                eventRepository.deleteById(eventId);
                 ApiResponse<String> response = new ApiResponse<>("Success", "Event deleted", null);
                 return new ResponseEntity<>(response, HttpStatus.OK);
             } else {
@@ -247,7 +361,7 @@ public class AdminServiceImpl implements AdminService{
         }
 
         try {
-            eventService.deleteAllEvents();
+            eventRepository.deleteAll();
             ApiResponse<String> response = new ApiResponse<>("Success", "All events deleted", null);
             return new ResponseEntity<>(response, HttpStatus.OK);
         } catch (Exception e) {
