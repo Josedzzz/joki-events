@@ -50,10 +50,6 @@ public class PaymentServiceImpl implements PaymentService {
     @Override
     public String doPayment(String clientId) {
         try {
-            String verificationResponse = ClientSecurityUtils.verifyClientAccessWithRole();
-            if (verificationResponse.equals("UNAUTHORIZED")) {
-                throw new AuthorizationException("Not authorized to enter this endpoint");
-            }
             // Get the order from the database
             Optional<ShoppingCart> shoppingCartOptional = obtenerOrden(clientId);
             if (shoppingCartOptional.isEmpty()) {
@@ -66,7 +62,7 @@ public class PaymentServiceImpl implements PaymentService {
                 throw new ShoppingCartException("The shopping cart is empty, nothing to buy");
             }
 
-            Double discountPercentage = shoppingCart.getAppliedDiscountPercent();
+            double discountPercentage = shoppingCart.getAppliedDiscountPercent( );
             List<PreferenceItemRequest> itemsPasarela = new ArrayList<>();
 
             for (LocalityOrder localityOrder : localityOrdersToBuy) {
@@ -88,26 +84,29 @@ public class PaymentServiceImpl implements PaymentService {
                         .categoryId(event.getEventType().name())
                         .quantity(localityOrder.getNumTicketsSelected())
                         .currencyId("COP")
-                        .unitPrice(BigDecimal.valueOf(locality.getPrice() * discountPercentage))
+                        .unitPrice(BigDecimal.valueOf((int) Math.round(locality.getPrice() * discountPercentage)))
                         .build();
 
                 itemsPasarela.add(itemRequest);
             }
 
-            MercadoPagoConfig.setAccessToken(applicationConfig.getAccessToken());
+            // With my account
+            //MercadoPagoConfig.setAccessToken(applicationConfig.getAccessToken());
+            // With the seller account of my account
+            MercadoPagoConfig.setAccessToken(applicationConfig.getSellerAccessToken());
 
-            // todo do we have to assign this urls?
+            // todo we have to assign this urls
             PreferenceBackUrlsRequest backUrls = PreferenceBackUrlsRequest.builder()
-                    .success("URL PAGO EXITOSO")
-                    .failure("URL PAGO FALLIDO")
-                    .pending("URL PAGO PENDIENTE")
+                    .success("https://youtu.be/MjlM0CxIyJo?si=mknrKymV_t2skYdi")
+                    .failure("https://youtu.be/MjlM0CxIyJo?si=mknrKymV_t2skYdi")
+                    .pending("https://youtu.be/MjlM0CxIyJo?si=mknrKymV_t2skYdi")
                     .build();
 
             PreferenceRequest preferenceRequest = PreferenceRequest.builder()
                     .backUrls(backUrls)
                     .items(itemsPasarela)
                     .metadata(Map.of("id_orden", shoppingCart.getId()))
-                    .notificationUrl("http://localhost:8080/api/payment/receive-payment-confirmation")
+                    .notificationUrl("https://04b2-2800-484-6879-7700-e618-91d8-8ffb-ded3.ngrok-free.app")
                     .build();
 
             PreferenceClient client = new PreferenceClient();
@@ -139,6 +138,9 @@ public class PaymentServiceImpl implements PaymentService {
     @Override
     @Async
     public void receiveMercadopagoNotification(Map<String, Object> request) {
+
+        System.out.println("BEATIFUL BIG TITTY BUTT NAKED WOMAN JUST DONT FALL OFF THE SKY, YOU KNOW?");
+
         try {
             Object type = request.get("type");
 

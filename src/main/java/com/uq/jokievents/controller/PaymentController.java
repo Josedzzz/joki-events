@@ -17,7 +17,7 @@ public class PaymentController {
 
     private final PaymentService paymentService;
 
-    @PostMapping("/pay-shopping-cart/{clientId}")
+    @PostMapping("/{clientId}/pay-shopping-cart")
     public ResponseEntity<ApiResponse<String>> payShoppingCart(@PathVariable String clientId) {
         try {
             String initPoint = paymentService.doPayment(clientId);
@@ -32,8 +32,8 @@ public class PaymentController {
         try {
             paymentService.receiveMercadopagoNotification(request);
             return ResponseEntity.ok("Notification received successfully");
-        } catch (PaymentException e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error processing notification");
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
         }
     }
 

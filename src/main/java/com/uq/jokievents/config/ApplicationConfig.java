@@ -100,4 +100,8 @@ public class ApplicationConfig {
     @Getter
     @Value("${mercadopago.accesstoken}")
     private String accessToken;
+
+    @Getter
+    @Value(("${selleraccount.mercadopago.accesstoken}"))
+    private String sellerAccessToken;
 }
