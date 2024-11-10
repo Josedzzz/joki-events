@@ -254,6 +254,4 @@ public class AdminController {
         // Return the encapsulated response
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
-
-
 }

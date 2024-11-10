@@ -166,7 +166,7 @@ public class ClientController {
         }
     }
 
-    @PostMapping("/{clientId/empty-shopping-cart}")
+    @PostMapping("/{clientId}/empty-shopping-cart}")
     public ResponseEntity<ApiResponse<String>> emptyShoppingCart(@PathVariable String clientId) {
         try {
             clientService.emptyShoppingCart(clientId);
