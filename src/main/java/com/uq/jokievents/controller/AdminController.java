@@ -160,7 +160,7 @@ public class AdminController {
     public ResponseEntity<ApiResponse<?>> addEvent(@RequestBody  @Valid HandleEventDTO dto) {
         try {
             ApiResponse<Event> response = adminService.addEvent(dto);
-            return ResponseEntity.status(HttpStatus.OK).body(response);
+            return new ResponseEntity<>(response, HttpStatus.OK);
         } catch (Exception e) {
             ApiResponse<String> errorResponse = new ApiResponse<>("Error", e.getMessage(), null);
             return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);

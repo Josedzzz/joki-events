@@ -3,6 +3,7 @@ package com.uq.jokievents.service.implementation;
 import com.google.cloud.storage.Blob;
 import com.google.cloud.storage.Bucket;
 import com.google.firebase.cloud.StorageClient;
+import com.uq.jokievents.exceptions.LogicException;
 import com.uq.jokievents.service.interfaces.ImageService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -18,22 +19,23 @@ import java.util.UUID;
 public class ImageServiceImpl implements ImageService {
 
     @Override
-    public String uploadImage(String base64Image) throws IOException {
+    public String uploadImage(String base64Image){
 
         assert base64Image != null;
         base64Image = base64Image.trim();
-        // Check if the input is valid
-        String imageData = getString(base64Image);
+
+        // Check if the input is valid and extract image data
+        ImageData imageData = extractImageData(base64Image);
 
         // Decode the Base64 string into a byte array
-        byte[] imageBytes = Base64.getDecoder().decode(imageData);
+        byte[] imageBytes = Base64.getDecoder().decode(imageData.data);
 
-        // Create a unique file localityName for the image
-        String fileName = String.format("%s-s%s", UUID.randomUUID(), ".png"); // Change extension as needed
+        // Create a unique file name for the image
+        String fileName = String.format("%s%s", UUID.randomUUID(), imageData.extension);
 
         // Get the bucket and upload the image
         Bucket bucket = StorageClient.getInstance().bucket();
-        Blob blob = bucket.create(fileName, new ByteArrayInputStream(imageBytes), "image/png");
+        Blob blob = bucket.create(fileName, new ByteArrayInputStream(imageBytes), imageData.mimeType);
 
         // Return the public URL of the uploaded image
         return String.format(
@@ -43,21 +45,48 @@ public class ImageServiceImpl implements ImageService {
         );
     }
 
-    private static String getString(String base64Image) {
+    // Helper method to parse the Base64 image and extract MIME type and image data
+    private ImageData extractImageData(String base64Image) {
         if (!base64Image.startsWith("data:image/")) {
             throw new IllegalArgumentException("Invalid Base64 image format.");
         }
 
-        // Split the Base64 string to get the actual data
+        // Extract the MIME type and actual Base64 encoded image data
         String[] parts = base64Image.split(",");
-
-        // Ensure we have the correct part containing the image data
         if (parts.length != 2) {
             throw new IllegalArgumentException("Base64 string is improperly formatted.");
         }
 
-        // This is the Base64 encoded data
-        return parts[1];
+        String mimeType = parts[0].substring(5, parts[0].indexOf(";"));
+        String data = parts[1];
+        String extension = mimeTypeToExtension(mimeType);
+
+        return new ImageData(mimeType, extension, data);
+    }
+
+    // Convert MIME type to file extension
+    private String mimeTypeToExtension(String mimeType) {
+        switch (mimeType) {
+            case "image/jpeg": return ".jpeg";
+            case "image/png": return ".png";
+            case "image/gif": return ".gif";
+            case "image/bmp": return ".bmp";
+            case "image/webp": return ".webp";
+            default: throw new IllegalArgumentException("Unsupported image MIME type: " + mimeType);
+        }
+    }
+
+    // Helper class to hold extracted image data
+    private static class ImageData {
+        String mimeType;
+        String extension;
+        String data;
+
+        ImageData(String mimeType, String extension, String data) {
+            this.mimeType = mimeType;
+            this.extension = extension;
+            this.data = data;
+        }
     }
 
     @Override

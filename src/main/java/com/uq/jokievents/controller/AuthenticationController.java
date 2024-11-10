@@ -1,5 +1,8 @@
 package com.uq.jokievents.controller;
 
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseAuthException;
+import com.google.firebase.auth.FirebaseToken;
 import com.uq.jokievents.dtos.*;
 import com.uq.jokievents.exceptions.*;
 import com.uq.jokievents.model.Admin;
@@ -157,6 +160,24 @@ public class AuthenticationController {
         } catch (Exception e) {
             ApiTokenResponse<String> response = new  ApiTokenResponse<>("Error", e.getMessage(), null,null);
             return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @PostMapping("/google-signin")
+    public ResponseEntity<ApiResponse<?>> googleSignIn(@RequestParam String idToken) {
+        try {
+            // Verify the token with Firebase
+            FirebaseToken decodedToken = FirebaseAuth.getInstance().verifyIdToken(idToken);
+
+            // Register the user if not exists
+            Client newClient = null;//authenticationService.registerUserIfNotExists(decodedToken);
+
+            // Return a response
+            ApiResponse<Client> response = new ApiResponse<>("success", "User authenticated and registered successfully.", newClient);
+            return new ResponseEntity<>(response, HttpStatus.OK);
+        } catch (FirebaseAuthException e) {
+            ApiResponse<String> response = new ApiResponse<>("error", e.getMessage(), null);
+            return new ResponseEntity<>(response, HttpStatus.UNAUTHORIZED);
         }
     }
 }
