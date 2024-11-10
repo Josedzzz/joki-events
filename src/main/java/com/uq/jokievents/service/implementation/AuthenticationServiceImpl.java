@@ -13,8 +13,6 @@ import com.uq.jokievents.utils.*;
 import com.uq.jokievents.service.interfaces.JwtService;
 import lombok.RequiredArgsConstructor;
 import org.bson.types.ObjectId;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -27,7 +25,6 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Optional;
 
 @Service
 @Transactional
@@ -210,6 +207,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
 
         // Client creation
         Client client = Client.builder()
+                .id(String.valueOf(new ObjectId()))
                 .idCard(request.idCard())
                 .name(request.name())
                 .address(request.address())
@@ -229,20 +227,18 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         // Create shopping cart for client
         ShoppingCart clientShoppingCart = ShoppingCart.builder()
                 .id(client.getIdShoppingCart())
+                .clientId(client.getId())
                 .paymentGatewayId("")
-                .idClient(client.getId())
                 .localityOrders(new ArrayList<>())
                 .totalPrice(0.0)
                 .totalPriceWithDiscount(0.0)
-                .orderPayment(null)
-                .paymentCoupon("")
                 .appliedDiscountPercent(1.0)
                 .couponClaimed(false)
                 .build();
 
         // Save client and shopping cart
-        clientRepository.save(client);
         shoppingCartRepository.save(clientShoppingCart);
+        clientRepository.save(client);
 
         // Send verification and discount emails after successful save
         emailService.sendVerificationMail(client.getEmail(), verificationCode);

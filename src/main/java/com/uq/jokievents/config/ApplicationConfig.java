@@ -2,6 +2,8 @@ package com.uq.jokievents.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import com.paypal.core.PayPalEnvironment;
+import com.paypal.core.PayPalHttpClient;
 import com.uq.jokievents.model.Admin;
 import com.uq.jokievents.model.Client;
 import com.uq.jokievents.repository.AdminRepository;
@@ -68,8 +70,6 @@ public class ApplicationConfig {
         };
     }
 
-
-
     @Bean
     public PasswordEncoder plainTextPasswordEncoder() {
         return new PasswordEncoder() {
@@ -98,10 +98,20 @@ public class ApplicationConfig {
     private String base64Image;
 
     @Getter
-    @Value("${mercadopago.accesstoken}")
-    private String accessToken;
+    @Value("${paypal.client.id}")
+    private String clientId;
 
     @Getter
-    @Value(("${selleraccount.mercadopago.accesstoken}"))
-    private String sellerAccessToken;
+    @Value("${paypal.client.secret}")
+    private String clientSecret;
+
+    @Getter
+    @Value("${paypal.mode}")
+    private String mode;
+
+    @Bean
+    public PayPalHttpClient payPalHttpClient() {
+        PayPalEnvironment.Sandbox environment = new PayPalEnvironment.Sandbox(this.getClientId(), this.getClientSecret());
+        return new PayPalHttpClient(environment);
+    }
 }

@@ -1,16 +1,10 @@
 package com.uq.jokievents.service.implementation;
 
-import com.mercadopago.MercadoPagoConfig;
-import com.mercadopago.client.payment.PaymentClient;
-import com.mercadopago.client.preference.PreferenceBackUrlsRequest;
-import com.mercadopago.client.preference.PreferenceClient;
-import com.mercadopago.client.preference.PreferenceItemRequest;
-import com.mercadopago.client.preference.PreferenceRequest;
-import com.mercadopago.exceptions.MPApiException;
-import com.mercadopago.exceptions.MPException;
-import com.mercadopago.resources.payment.Payment;
-import com.mercadopago.resources.preference.Preference;
-import com.uq.jokievents.config.ApplicationConfig;
+import com.braintreepayments.http.HttpResponse;
+import com.braintreepayments.http.exceptions.HttpException;
+
+import com.paypal.core.PayPalHttpClient;
+import com.paypal.orders.*;
 import com.uq.jokievents.exceptions.*;
 import com.uq.jokievents.model.*;
 import com.uq.jokievents.repository.ClientRepository;
@@ -19,20 +13,16 @@ import com.uq.jokievents.repository.PurchaseRepository;
 import com.uq.jokievents.repository.ShoppingCartRepository;
 import com.uq.jokievents.service.interfaces.ImageService;
 import com.uq.jokievents.service.interfaces.PaymentService;
-import com.uq.jokievents.utils.ClientSecurityUtils;
+import org.springframework.stereotype.Service;
 import com.uq.jokievents.utils.EmailService;
 import com.uq.jokievents.utils.Generators;
 import lombok.RequiredArgsConstructor;
-import org.springframework.scheduling.annotation.Async;
-import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 
 @Service
 @Transactional
@@ -40,202 +30,167 @@ import java.util.Optional;
 public class PaymentServiceImpl implements PaymentService {
 
     private final ShoppingCartRepository shoppingCartRepository;
-    private final ClientRepository clientRepository;
     private final PurchaseRepository purchaseRepository;
     private final ImageService imageService;
     private final EmailService emailService;
-    private final ApplicationConfig applicationConfig;
     private final EventRepository eventRepository;
+    private final PayPalHttpClient payPalHttpClient;
+    private final ClientRepository clientRepository;
 
     @Override
-    public String doPayment(String clientId) {
+    public HttpResponse<Order> createPaymentOrder(String clientId) throws Exception{
+
+        // Get the order from the database
+
+        Optional<Client> clientOptional = clientRepository.findById(clientId);
+        if (clientOptional.isEmpty()) {
+            throw new AccountException("Client does not exists, weird");
+        }
+        Client payingClient = clientOptional.get();
+
+        Optional<ShoppingCart> shoppingCartOptional = shoppingCartRepository.findById(payingClient.getIdShoppingCart());
+        if (shoppingCartOptional.isEmpty()) {
+            throw new AccountException("The client does not have a shopping cart, grave error");
+        }
+        // Have a shopping cart and a Purchase
+        ShoppingCart shoppingCart = shoppingCartOptional.get();
+        Purchase purchase = new Purchase();
+
+        OrdersCreateRequest request = new OrdersCreateRequest();
+        request.prefer("return=representation");
+        request.requestBody(buildOrderRequest(purchase.getId(), shoppingCart));
         try {
-            // Get the order from the database
-            Optional<ShoppingCart> shoppingCartOptional = obtenerOrden(clientId);
-            if (shoppingCartOptional.isEmpty()) {
-                throw new AccountException("The client does not have a shopping cart, grave error");
-            }
-
-            ShoppingCart shoppingCart = shoppingCartOptional.get();
-            ArrayList<LocalityOrder> localityOrdersToBuy = shoppingCart.getLocalityOrders();
-            if (localityOrdersToBuy.isEmpty()) {
-                throw new ShoppingCartException("The shopping cart is empty, nothing to buy");
-            }
-
-            double discountPercentage = shoppingCart.getAppliedDiscountPercent( );
-            List<PreferenceItemRequest> itemsPasarela = new ArrayList<>();
-
-            for (LocalityOrder localityOrder : localityOrdersToBuy) {
-                Optional<Event> eventOptional = eventRepository.findById(localityOrder.getEventId());
-                if (eventOptional.isEmpty()) continue;
-
-                Event event = eventOptional.get();
-                Locality locality = event.getLocalities(localityOrder.getLocalityName());
-
-                if (locality == null) {
-                    throw new EventException("Locality within the " + event.getName() + " event, not found");
-                }
-
-                // todo guess why the fuck only the price shows on the payment
-                PreferenceItemRequest itemRequest = PreferenceItemRequest.builder()
-                        .id(event.getId())
-                        .title(event.getName())
-                        .pictureUrl(event.getEventImageUrl())
-                        .categoryId(event.getEventType().name())
-                        .quantity(localityOrder.getNumTicketsSelected())
-                        .currencyId("COP")
-                        .unitPrice(BigDecimal.valueOf((int) Math.round(locality.getPrice() * discountPercentage)))
-                        .build();
-
-                itemsPasarela.add(itemRequest);
-            }
-
-            // With my account
-            //MercadoPagoConfig.setAccessToken(applicationConfig.getAccessToken());
-            // With the seller account of my account
-            MercadoPagoConfig.setAccessToken(applicationConfig.getSellerAccessToken());
-
-            // todo we have to assign this urls
-            PreferenceBackUrlsRequest backUrls = PreferenceBackUrlsRequest.builder()
-                    .success("https://youtu.be/MjlM0CxIyJo?si=mknrKymV_t2skYdi")
-                    .failure("https://youtu.be/MjlM0CxIyJo?si=mknrKymV_t2skYdi")
-                    .pending("https://youtu.be/MjlM0CxIyJo?si=mknrKymV_t2skYdi")
-                    .build();
-
-            PreferenceRequest preferenceRequest = PreferenceRequest.builder()
-                    .backUrls(backUrls)
-                    .items(itemsPasarela)
-                    .metadata(Map.of("id_orden", shoppingCart.getId()))
-                    .notificationUrl("https://04b2-2800-484-6879-7700-e618-91d8-8ffb-ded3.ngrok-free.app")
-                    .build();
-
-            PreferenceClient client = new PreferenceClient();
-            Preference preference = client.create(preferenceRequest);
-
-            shoppingCart.setPaymentGatewayId(preference.getId());
-            shoppingCartRepository.save(shoppingCart);
-
-            // Only return the initPoint field
-            return preference.getInitPoint();
-        } catch (MPApiException e) {
-            throw new PaymentException("Payment not done, API related issue: " + e.getApiResponse().getContent());
-        } catch (Exception e) {
-            // todo I may want to add a logger to all of this
-            throw new PaymentException("An unexpected error occurred while processing the payment.");
+            HttpResponse<Order> response = payPalHttpClient.execute(request);
+            System.out.println("Order ID: " + response.result().id());
+            return response;
+        } catch (HttpException e) {
+            System.err.println("Failed to create order: " + e.getMessage());
+            throw e;
         }
     }
 
-    private Optional<ShoppingCart> obtenerOrden(String clientId) {
-        Optional<Client> optionalClient = clientRepository.findById(clientId);
-        if (optionalClient.isEmpty()) {
-            return Optional.empty();
+    private OrderRequest buildOrderRequest(String referenceId, ShoppingCart shoppingCart) {
+        // Create a new OrderRequest
+        OrderRequest orderRequest = new OrderRequest();
+        orderRequest.intent("CAPTURE");
+
+        // Set the application context (for URLs)
+        ApplicationContext applicationContext = new ApplicationContext()
+                .cancelUrl("http://localhost:8080/api/payment/cancel")
+                .returnUrl("http://localhost:8080/api/payment/success");
+        orderRequest.applicationContext(applicationContext);
+
+        // Create the purchase unit (order item)
+        PurchaseUnitRequest purchaseUnitRequest = new PurchaseUnitRequest()
+                .referenceId(referenceId)
+                .amount(new AmountWithBreakdown()
+                        .currencyCode("USD")
+                        .value(shoppingCart.getTotalPriceWithDiscount().toString()));  // Use the rounded value
+
+        // Add the purchase unit to the order request
+        orderRequest.purchaseUnits(List.of(purchaseUnitRequest));
+
+        return orderRequest;
+    }
+
+    // I could make this message a thousand times better, but I am tired
+    private String buildOrderDescription(ShoppingCart shoppingCart) {
+        StringBuilder description = new StringBuilder();
+        // Append locality details in a more compact format
+        for (LocalityOrder localityOrder : shoppingCart.getLocalityOrders()) {
+            description.append(" | ").append(localityOrder.getNumTicketsSelected())
+                    .append("x ").append(localityOrder.getLocalityName());
         }
-        Client client = optionalClient.get();
-        String shoppingCartClientId = client.getIdShoppingCart();
-        return shoppingCartRepository.findById(shoppingCartClientId);
+
+        return description.toString();
     }
 
     @Override
-    @Async
-    public void receiveMercadopagoNotification(Map<String, Object> request) {
+    public Capture capturePayment(String orderId) throws Exception {
+        OrdersCaptureRequest request = new OrdersCaptureRequest(orderId);
+        request.requestBody(new OrderRequest());  // Typically an empty request body for capture
 
-        System.out.println("BEATIFUL BIG TITTY BUTT NAKED WOMAN JUST DONT FALL OFF THE SKY, YOU KNOW?");
+        HttpResponse<Order> response = payPalHttpClient.execute(request);
 
-        try {
-            Object type = request.get("type");
+        if ("COMPLETED".equals(response.result().status())) {
+            // Return the capture details
+            return response.result().purchaseUnits().get(0).payments().captures().get(0);
+        }
 
-            if ("payment".equals(type)) {
+        throw new Exception("Payment capture failed.");
+    }
 
-                String inputJson = request.get("data").toString();
-                String paymentId = inputJson.replaceAll("\\D+", "");
+    @Override
+    public void fillPurchaseAfterSuccess(ShoppingCart order) {
+            Purchase purchase = new Purchase();
+            purchase.setPurchaseDate(LocalDateTime.now());
+            purchase.setPaymentMethod("PayPal");
+            purchase.setTotalAmount(BigDecimal.valueOf(order.getTotalPriceWithDiscount()));
+            List<LocalityOrder> purchasedItems = new ArrayList<>(order.getLocalityOrders());
+            purchase.setPurchasedItems(purchasedItems);
+            purchaseRepository.save(purchase);
 
-                PaymentClient client = new PaymentClient();
-                Payment payment = client.get(Long.parseLong(paymentId));
+            order.setPaymentGatewayId("");
+            order.setLocalityOrders(new ArrayList<>());
+            order.setTotalPrice(0.0);
+            order.setTotalPriceWithDiscount(0.0);
+            order.setAppliedDiscountPercent(1.0);
+            order.setCouponClaimed(false);
+            shoppingCartRepository.save(order);  // Save the updated shopping cart with cleared items
 
-                String orderId = payment.getMetadata().get("id_orden").toString();
-                Optional<ShoppingCart> orderOpt = obtenerOrden(orderId);
-                if (orderOpt.isEmpty()) return;
-
-                ShoppingCart order = orderOpt.get();
-
-                // Check if the payment status is "approved"
-                if ("approved".equals(payment.getStatus())) {
-                    // Iterate through each LocalityOrder in the order
-                    for (LocalityOrder localityOrder : order.getLocalityOrders()) {
-                        // Retrieve the event associated with the localityOrder using its event ID
-                        Optional<Event> eventOpt = eventRepository.findById(localityOrder.getEventId());
-
-                        // If no event is found for the given ID, skip the current iteration
-                        if (eventOpt.isEmpty()) continue;
-
-                        // Get the event object from the Optional
-                        Event event = eventOpt.get();
-
-                        // Retrieve the specific locality from the event based on the locality name
-                        Locality locality = event.getLocalities(localityOrder.getLocalityName());
-
-                        // If no locality is found for the given locality name, skip the current iteration
-                        if (locality == null) continue;
-
-                        // Decrease the maximum capacity of the locality by the number of selected tickets
-                        locality.setMaxCapacity(locality.getMaxCapacity() - localityOrder.getNumTicketsSelected());
-
-                        // Decrease the total available places of the event by the number of selected tickets
-                        event.setTotalAvailablePlaces(event.getTotalAvailablePlaces() - localityOrder.getNumTicketsSelected());
-
-                        // Save the updated event back to the repository
-                        eventRepository.save(event);
-                    }
-
-                    OrderPayment orderPayment = createPayment(payment);
-                    order.setOrderPayment(orderPayment);
-                    shoppingCartRepository.save(order);
-
-                    // Create and save the purchase
-                    Purchase purchase = Purchase.builder()
-                            .clientId(order.getIdClient())
-                            .purchaseDate(LocalDateTime.now())
-                            .purchasedItems(new ArrayList<>(order.getLocalityOrders()))
-                            .totalAmount(orderPayment.getPaymentValue())
-                            .paymentMethod(payment.getPaymentTypeId())
-                            .build();
-
-                    purchaseRepository.save(purchase);
-
-                    // Clear the shopping cart for the client
-                    order.setLocalityOrders(new ArrayList<>());
-                    order.setTotalPrice(0.0);
-                    order.setTotalPriceWithDiscount(0.0);
-                    order.setPaymentCoupon(null);
-                    order.setAppliedDiscountPercent(null);
-                    order.setCouponClaimed(false);
-                    shoppingCartRepository.save(order);
-
-                    // Send the purchase QR code to the client
-                    Client purchaseClient = clientRepository.findById(order.getIdClient()).orElseThrow(() -> new RuntimeException("Client not found"));
-                    sendPurchaseQRCodeEmail(purchaseClient, purchase);
-                }
+            Optional<Client> clientOptional = clientRepository.findById(order.getClientId());
+            if (clientOptional.isEmpty()) {
+                throw new AccountException("No account to send the payment receipt");
             }
-        } catch (MPException e) {
-            throw new PaymentException("An unexpected error occurred while processing the payment of mercadopago.");
-        } catch (MPApiException e) {
-            throw new PaymentException("Payment notification error, API related issue: " + e.getApiResponse().getContent());
-        } catch (Exception e) {
-            throw new PaymentException("An unexpected error occurred while processing the payment.");
+            Client client = clientOptional.get();
+            sendPurchaseQRCodeEmail(client, purchase);
+    }
+
+     @Override
+    public void updateEventAndLocalities(ShoppingCart order) {
+        // Iterate through each LocalityOrder in the order
+        for (LocalityOrder localityOrder : order.getLocalityOrders()) {
+            // Retrieve the event associated with the localityOrder using its event ID
+            Optional<Event> eventOpt = eventRepository.findById(localityOrder.getEventId());
+
+            // If no event is found for the given ID, skip the current iteration
+            if (eventOpt.isEmpty()) continue;
+
+            // Get the event object from the Optional
+            Event event = eventOpt.get();
+
+            // Retrieve the specific locality from the event based on the locality name
+            Locality locality = event.getLocalities(localityOrder.getLocalityName());
+
+            // If no locality is found for the given locality name, skip the current iteration
+            if (locality == null) continue;
+
+            // Decrease the maximum capacity of the locality by the number of selected tickets
+            locality.setMaxCapacity(locality.getMaxCapacity() - localityOrder.getNumTicketsSelected());
+            locality.setCurrentOccupancy(locality.getCurrentOccupancy() + localityOrder.getNumTicketsSelected());
+
+            // Decrease the total available places of the event by the number of selected tickets
+            event.setTotalAvailablePlaces(event.getTotalAvailablePlaces() - localityOrder.getNumTicketsSelected());
+
+            // Save the updated event back to the repository
+            eventRepository.save(event);
         }
     }
 
-    private OrderPayment createPayment(Payment payment) {
-        OrderPayment orderPayment = new OrderPayment();
-        orderPayment.setId(payment.getId().toString());
-        orderPayment.setPaymentDate(payment.getDateCreated().toLocalDateTime());
-        orderPayment.setPaymentStatus(payment.getStatus());
-        orderPayment.setPaymentStatus(payment.getStatusDetail());
-        orderPayment.setPaymentType(payment.getPaymentTypeId());
-        orderPayment.setPaymentCurrency(payment.getCurrencyId());
-        orderPayment.setAuthorizationCode(payment.getAuthorizationCode());
-        orderPayment.setPaymentValue(payment.getTransactionAmount());
-        return orderPayment;
+    @Override
+    public ShoppingCart getShoppingCart(String clientId) {
+
+        Optional<Client> clientOptional = clientRepository.findById(clientId);
+        if (clientOptional.isEmpty()) {
+            throw new AccountException("Not an existing client to pay");
+        }
+        Client client = clientOptional.get();
+        String shoppingCartId = client.getIdShoppingCart();
+        Optional<ShoppingCart> shoppingCartOptional = shoppingCartRepository.findById(shoppingCartId);
+        if (shoppingCartOptional.isEmpty()) {
+            throw new AccountException("Client does not have a shopping cart, grave error");
+        }
+        return shoppingCartOptional.get();
     }
 
     private void sendPurchaseQRCodeEmail(Client client, Purchase purchase) {

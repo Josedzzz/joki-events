@@ -247,6 +247,7 @@ public class ClientServiceImpl implements ClientService {
         // Update and save the shopping cart total price
         double newTotalPrice = shoppingCart.getTotalPrice() + expectedPayment;
         shoppingCart.setTotalPrice(newTotalPrice);
+        shoppingCart.setTotalPriceWithDiscount(newTotalPrice);
         shoppingCartRepository.save(shoppingCart);
     }
 
