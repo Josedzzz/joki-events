@@ -5,6 +5,7 @@ import com.uq.jokievents.exceptions.*;
 import com.uq.jokievents.model.Admin;
 import com.uq.jokievents.model.Client;
 import com.uq.jokievents.service.interfaces.AuthenticationService;
+import com.uq.jokievents.service.interfaces.JwtService;
 import com.uq.jokievents.utils.ApiResponse;
 import com.uq.jokievents.utils.ApiTokenResponse;
 import jakarta.validation.constraints.Email;
@@ -24,6 +25,7 @@ public class AuthenticationController {
     // redrum redrum redrum
 
     private final AuthenticationService authenticationService;
+    private final JwtService jwtService;
 
     @PostMapping("/login-admin")
     public ResponseEntity<ApiTokenResponse<String>> loginAdmin(@RequestBody @Valid AuthAdminDTO loginRequest) {
@@ -147,5 +149,16 @@ public class AuthenticationController {
         }
     }
 
+    @PostMapping("/refresh-token")
+    public ResponseEntity<ApiTokenResponse<String>> refreshJwtToken(@RequestHeader("Authorization") String token) {
+        try {
+            String newToken = jwtService.refreshToken(token);
+            ApiTokenResponse<String> response = new  ApiTokenResponse<>("Success", "Returning new token", null, newToken);
+            return new ResponseEntity<>(response, HttpStatus.OK);
+        } catch (Exception e) {
+            ApiTokenResponse<String> response = new  ApiTokenResponse<>("Error", "Something happening while trying to refresh the token", e.getMessage(),null);
+            return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
 }
 

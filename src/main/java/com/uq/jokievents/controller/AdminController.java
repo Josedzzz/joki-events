@@ -14,13 +14,18 @@ import com.uq.jokievents.utils.ApiResponse;
 import com.uq.jokievents.utils.ApiTokenResponse;
 import lombok.RequiredArgsConstructor;
 
+import org.springframework.core.io.InputStreamResource;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
+import java.io.ByteArrayInputStream;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -227,8 +232,29 @@ public class AdminController {
         }
     }
 
-    @GetMapping("/event-report")
-    public ResponseEntity<?> getEventsReport(@RequestParam LocalDateTime startDate, @RequestParam LocalDateTime endDate) {
-        return null;
+    @GetMapping("/get-reports-events-pdf")
+    public ResponseEntity<InputStreamResource> downloadMonthlyEventReportPdf(
+            @RequestParam int month, @RequestParam int year) {
+        ByteArrayInputStream pdfReport = adminService.generateMonthlyEventReportPdf(month, year);
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.add("Content-Disposition", "inline; filename=event_report_" + month + "_" + year + ".pdf");
+
+        return ResponseEntity.ok()
+                .headers(headers)
+                .contentType(MediaType.APPLICATION_PDF)
+                .body(new InputStreamResource(pdfReport));
     }
+
+    // Good luck, Jose!
+    @GetMapping("/get-report-events")
+    public ResponseEntity<ApiResponse<List<EventReportDTO>>> getMonthlyEventReport(
+            @RequestParam int month,
+            @RequestParam int year) {
+        List<EventReportDTO> report = adminService.generateMonthlyEventReport(month, year);
+
+        ApiResponse<List<EventReportDTO>> response = new ApiResponse<>("Success", "Retrieving the possible events info", report);
+        return ResponseEntity.ok(response);
+    }
+
 }

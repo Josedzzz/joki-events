@@ -123,6 +123,7 @@ public class PaymentServiceImpl implements PaymentService {
     @Override
     public void fillPurchaseAfterSuccess(ShoppingCart order) {
             Purchase purchase = new Purchase();
+            purchase.setClientId(order.getClientId());
             purchase.setPurchaseDate(LocalDateTime.now());
             purchase.setPaymentMethod("PayPal");
             purchase.setTotalAmount(BigDecimal.valueOf(order.getTotalPriceWithDiscount()));
@@ -172,6 +173,9 @@ public class PaymentServiceImpl implements PaymentService {
             // Decrease the total available places of the event by the number of selected tickets
             event.setTotalAvailablePlaces(event.getTotalAvailablePlaces() - localityOrder.getNumTicketsSelected());
 
+            if (event.getTotalAvailablePlaces() == 0) {
+                event.setAvailableForPurchase(false);
+            }
             // Save the updated event back to the repository
             eventRepository.save(event);
         }

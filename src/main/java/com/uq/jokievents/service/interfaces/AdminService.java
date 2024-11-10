@@ -8,7 +8,9 @@ import com.uq.jokievents.utils.ApiResponse;
 import com.uq.jokievents.utils.ApiTokenResponse;
 import org.springframework.http.ResponseEntity;
 
+import java.io.ByteArrayInputStream;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Map;
 
 public interface AdminService {
@@ -26,9 +28,9 @@ public interface AdminService {
     ApiResponse<String> deleteAllEvents();
     ApiResponse<Map<String, Object>> getAllCouponsPaginated(int page, int size);
     ApiResponse<UpdateAdminDTO> getAccountInformation(String adminId);
-    void generateEventsReport(LocalDateTime startDate, LocalDateTime endDate);
-
     ApiTokenResponse<Map<String, Object>> getAllAdmins() throws Exception;
+    List<EventReportDTO> generateMonthlyEventReport(int month, int year);
+    ByteArrayInputStream generateMonthlyEventReportPdf(int month, int year);
 }
 
 

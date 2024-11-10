@@ -1,40 +1,33 @@
 package com.uq.jokievents.service.implementation;
 
-import javax.validation.Valid;
-
+import com.itextpdf.kernel.pdf.PdfDocument;
+import com.itextpdf.kernel.pdf.PdfWriter;
 import com.uq.jokievents.dtos.*;
 import com.uq.jokievents.exceptions.AccountException;
-import com.uq.jokievents.exceptions.AuthorizationException;
 import com.uq.jokievents.exceptions.LogicException;
-import com.uq.jokievents.model.Event;
-import com.uq.jokievents.model.Locality;
+import com.uq.jokievents.model.*;
 import com.uq.jokievents.repository.CouponRepository;
 import com.uq.jokievents.repository.EventRepository;
+import com.uq.jokievents.repository.PurchaseRepository;
 import com.uq.jokievents.service.interfaces.*;
 import com.uq.jokievents.utils.*;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.http.HttpStatus;
-import com.uq.jokievents.model.Admin;
-import com.uq.jokievents.model.Coupon;
 import com.uq.jokievents.repository.AdminRepository;
-
+import com.itextpdf.layout.Document;
+import com.itextpdf.layout.element.Paragraph;
+import com.itextpdf.layout.element.Table;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.time.LocalDate;
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
-
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.bind.annotation.RequestBody;
-
-import java.time.LocalTime;
 import java.util.*;
-import java.util.stream.Collectors;
 
 import lombok.RequiredArgsConstructor;
 
@@ -46,6 +39,7 @@ public class AdminServiceImpl implements AdminService{
     private final AdminRepository adminRepository;
     private final EventRepository eventRepository;
     private final CouponRepository couponRepository;
+    private final PurchaseRepository purchaseRepository;
     private final ImageService imageService;
     private final JwtService jwtService;
 
@@ -216,6 +210,7 @@ public class AdminServiceImpl implements AdminService{
                     .availableForPurchase(true)  // Event available for purchase
                     .localities(newEventLocalities)
                     .totalAvailablePlaces(dto.totalAvailablePlaces())
+                    .finalTotalPlaces(dto.totalAvailablePlaces())
                     .eventImageUrl(eventUrl)
                     .localitiesImageUrl(localitiesUrl)
                     .eventType(dto.eventType())
@@ -356,11 +351,6 @@ public class AdminServiceImpl implements AdminService{
     }
 
     @Override
-    public void generateEventsReport(LocalDateTime startDate, LocalDateTime endDate) {
-
-    }
-
-    @Override
     public ApiTokenResponse<Map<String, Object>> getAllAdmins() {
 
         try {
@@ -377,5 +367,123 @@ public class AdminServiceImpl implements AdminService{
         } catch (Exception e) {
             throw new LogicException("Failed to retrieve admins: " + e.getMessage());
         }
+    }
+
+    @Override
+    public List<EventReportDTO> generateMonthlyEventReport(int month, int year) {
+        // Fetch purchases within the specified month and year based on purchaseDate
+        List<Purchase> purchases = purchaseRepository.findByPurchaseDateBetween(
+                LocalDateTime.of(year, month, 1, 0, 0),
+                LocalDateTime.of(year, month, 1, 0, 0).plusMonths(1)
+        );
+
+        Map<String, EventReportDTO> eventReports = new HashMap<>();
+
+        for (Purchase purchase : purchases) {
+            for (LocalityOrder localityOrder : purchase.getPurchasedItems()) {
+                String eventId = localityOrder.getEventId();
+                Event event = eventRepository.findById(eventId)
+                        .orElseThrow(() -> new IllegalArgumentException("Event not found with ID: " + eventId));
+
+                // Retrieve or initialize the EventReportDTO
+                EventReportDTO currentReport = eventReports.get(eventId);
+
+                List<LocalityStats> updatedLocalityStats;
+                BigDecimal updatedRevenue;
+
+                if (currentReport == null) {
+                    // Create new LocalityStats list if event report doesn't exist yet
+                    updatedLocalityStats = new ArrayList<>();
+                    updatedRevenue = purchase.getTotalAmount();
+                } else {
+                    // Copy existing localityStats and revenue
+                    updatedLocalityStats = new ArrayList<>(currentReport.localityStats());
+                    updatedRevenue = currentReport.totalRevenue().add(purchase.getTotalAmount());
+                }
+
+                // Update locality statistics
+                Optional<LocalityStats> existingStats = updatedLocalityStats.stream()
+                        .filter(stats -> stats.getLocalityName().equals(localityOrder.getLocalityName()))
+                        .findFirst();
+
+                if (existingStats.isPresent()) {
+                    LocalityStats stats = existingStats.get();
+                    int updatedTicketsSold = stats.getTicketsSold() + localityOrder.getNumTicketsSelected();
+                    double updatedLocalityRevenue = stats.getLocalityRevenue().add(BigDecimal.valueOf(localityOrder.getTotalPaymentAmount())).toBigInteger().doubleValue();
+                    int totalTickets = event.getLocalities().stream()
+                            .filter(loc -> loc.getName().equals(localityOrder.getLocalityName()))
+                            .map(Locality::getMaxCapacity)
+                            .findFirst()
+                            .orElse(0);
+                    double soldPercentage = (double) updatedTicketsSold / totalTickets * 100;
+
+                    updatedLocalityStats.remove(stats); // Remove old entry to replace with updated stats
+                    updatedLocalityStats.add(new LocalityStats(
+                            stats.getLocalityName(), updatedTicketsSold, totalTickets, soldPercentage, BigDecimal.valueOf(updatedLocalityRevenue)
+                    ));
+                } else {
+                    int totalTickets = event.getLocalities().stream()
+                            .filter(loc -> loc.getName().equals(localityOrder.getLocalityName()))
+                            .map(Locality::getMaxCapacity)
+                            .findFirst()
+                            .orElse(0);
+                    double soldPercentage = (double) localityOrder.getNumTicketsSelected() / totalTickets * 100;
+
+                    updatedLocalityStats.add(new LocalityStats(
+                            localityOrder.getLocalityName(), localityOrder.getNumTicketsSelected(),
+                            totalTickets, soldPercentage, BigDecimal.valueOf(localityOrder.getTotalPaymentAmount())
+                    ));
+                }
+
+                // Update the map with the new EventReportDTO record
+                eventReports.put(eventId, new EventReportDTO(
+                        eventId, event.getName(), event.getCity(), updatedRevenue, updatedLocalityStats
+                ));
+            }
+        }
+
+        return new ArrayList<>(eventReports.values());
+    }
+
+    public ByteArrayInputStream generateMonthlyEventReportPdf(int month, int year) {
+        List<EventReportDTO> reportData = generateMonthlyEventReport(month, year);
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+
+        try (PdfWriter writer = new PdfWriter(out); PdfDocument pdfDoc = new PdfDocument(writer)) {
+            Document document = new Document(pdfDoc);
+
+            // Title and report date
+            document.add(new Paragraph("Monthly Event Report")
+                    .setBold().setFontSize(16));
+            document.add(new Paragraph("Report Date: " + month + "/" + year));
+
+            for (EventReportDTO eventReport : reportData) {
+                // Event title
+                document.add(new Paragraph("Event: " + eventReport.eventName())
+                        .setBold().setFontSize(14));
+                document.add(new Paragraph("City: " + eventReport.eventCity()));
+                document.add(new Paragraph("Total Revenue: $" + eventReport.totalRevenue()));
+
+                // Table for locality statistics
+                Table table = new Table(new float[]{4, 2, 2, 2});
+                table.addHeaderCell("Locality");
+                table.addHeaderCell("Tickets Sold");
+                table.addHeaderCell("Total Tickets");
+                table.addHeaderCell("Sold Percentage (%)");
+
+                for (LocalityStats locality : eventReport.localityStats()) {
+                    table.addCell(locality.getLocalityName());
+                    table.addCell(String.valueOf(locality.getTicketsSold()));
+                    table.addCell(String.valueOf(locality.getTotalTickets()));
+                    table.addCell(String.format("%.2f", locality.getSoldPercentage()));
+                }
+                document.add(table);
+                document.add(new Paragraph("\n")); // Add space between events
+            }
+            document.close();
+        } catch (Exception e) {
+            throw new RuntimeException("Error generating PDF report", e);
+        }
+        return new ByteArrayInputStream(out.toByteArray());
     }
 }

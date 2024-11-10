@@ -11,15 +11,12 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 
-@Data
-@AllArgsConstructor
-@NoArgsConstructor
-@Builder
+@Data@AllArgsConstructor@NoArgsConstructor@Builder
 @Document(collection = "purchases")
 public class Purchase {
 
     @Id private String id;
-    private String clientId;  // Reference to the Client's ID.
+    private String clientId;
     private LocalDateTime purchaseDate;
     private List<LocalityOrder> purchasedItems;
     private BigDecimal totalAmount;

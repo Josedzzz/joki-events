@@ -1,6 +1,5 @@
 package com.uq.jokievents.utils;
 
-import com.uq.jokievents.model.Client;
 import com.uq.jokievents.model.Coupon;
 import com.uq.jokievents.model.enums.CouponType;
 import com.uq.jokievents.repository.CouponRepository;
@@ -32,7 +31,6 @@ public class EmailService {
         mailSender.send(message);
     }
 
-    // todo iterate over all the coupons, send an individual coupon
     public void sendDiscountCouponMail(String to) {
 
         List<Coupon> individualCoupons = couponRepository.findByCouponType(CouponType.INDIVIDUAL);

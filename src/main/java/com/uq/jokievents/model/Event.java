@@ -16,7 +16,6 @@ import java.util.List;
 @RequiredArgsConstructor
 @AllArgsConstructor
 @Document(collection = "events")
-// TODO Add an int of totalUsedDiscount. Should be easy.
 public class Event {
 
     @Id
@@ -26,9 +25,10 @@ public class Event {
     private String city;
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'")
     private LocalDateTime eventDate;
-    private boolean availableForPurchase; // todo make this false if the totalAvailablePlaces get to 0 in the payment method
+    private boolean availableForPurchase;
     private List<Locality> localities;
-    private int totalAvailablePlaces; // todo check if this is reducing when a payment is "approved"
+    private int totalAvailablePlaces;
+    private int finalTotalPlaces; // Will always be the same initial value
     private String eventImageUrl;
     private String localitiesImageUrl;
     private EventType eventType;

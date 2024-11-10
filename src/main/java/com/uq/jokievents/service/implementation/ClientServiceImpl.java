@@ -412,12 +412,6 @@ public class ClientServiceImpl implements ClientService {
 
     @Override
     public ApiResponse<Map<String, Object>> loadPurchaseHistory(String clientId, int page, int size) {
-
-        String verificationResponse = ClientSecurityUtils.verifyClientAccessWithId(clientId);
-        if ("UNAUTHORIZED".equals(verificationResponse)) {
-            throw new AccountException("Account not authorized");
-        }
-
         try {
             List<Purchase> allPurchases = purchaseRepository.findByClientId(clientId); // Retrieve all purchases for the client
 
