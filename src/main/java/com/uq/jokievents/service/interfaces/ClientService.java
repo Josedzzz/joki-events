@@ -15,6 +15,7 @@ import java.util.Optional;
 
 
 public interface ClientService {
+    void verifyClient(String clientId, String verificationCode);
     Map<Client, String> updateClient(String clientId, UpdateClientDTO dto);
     void deleteAccount(String id);
     Map<String, Object> getAllEventsPaginated(int page, int size);
@@ -25,6 +26,5 @@ public interface ClientService {
     void emptyShoppingCart(String clientId);
     Map<String, Object> loadShoppingCart(String clientId, int page, int size);
     void applyCoupon(String clientId, String coupon);
-    void verifyClient(String clientId, String verificationCode);
     ApiResponse<Map<String, Object>> loadPurchaseHistory(String clientId, int page, int size);
 }

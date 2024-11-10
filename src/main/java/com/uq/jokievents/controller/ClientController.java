@@ -192,7 +192,7 @@ public class ClientController {
             ApiResponse<String> response = new ApiResponse<>("Error", e.getMessage(), null);
             return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
         } catch (Exception e) {
-            ApiResponse<String> response = new ApiResponse<>("Error", "An unexpected error occurred", e.getMessage());
+            ApiResponse<String> response = new ApiResponse<>("Error", e.getMessage(), null);
             return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
@@ -207,5 +207,4 @@ public class ClientController {
         HttpStatus status = "Success".equals(response.getStatus()) ? HttpStatus.OK : HttpStatus.INTERNAL_SERVER_ERROR;
         return new ResponseEntity<>(response, status);
     }
-
 }

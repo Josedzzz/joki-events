@@ -50,7 +50,7 @@ public class PaymentController {
                 return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
             }
         } catch (Exception e) {
-            ApiResponse<String> response = new ApiResponse<>("Error", "Something extraordinary occured", e.getMessage());
+            ApiResponse<String> response = new ApiResponse<>("Error", e.getMessage(), null);
             return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
@@ -75,11 +75,11 @@ public class PaymentController {
                 ApiResponse<String> response = new ApiResponse<>("Success", "Payment done", null);
                 return new ResponseEntity<>(response, HttpStatus.OK);
             } else {
-                ApiResponse<String> response = new ApiResponse<>("Success", "Payment done", capture.status());
+                ApiResponse<String> response = new ApiResponse<>("Success", "Payment done, probably cancelled", capture.status());
                 return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
             }
         } catch (Exception e) {
-            ApiResponse<String> response = new ApiResponse<>("Error", "Something extraordinary occured", e.getMessage());
+            ApiResponse<String> response = new ApiResponse<>("Error", e.getMessage(), null);
             return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }

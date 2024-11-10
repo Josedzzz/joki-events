@@ -107,7 +107,7 @@ public class AuthenticationController {
             return new ResponseEntity<>(response, HttpStatus.CONFLICT);
         }
         catch (Exception e) {
-            ApiTokenResponse<String> response = new ApiTokenResponse<>("Error", "Client registration failed", e.getMessage(), null);
+            ApiTokenResponse<String> response = new ApiTokenResponse<>("Error", e.getMessage(),null, null);
             return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
@@ -125,7 +125,7 @@ public class AuthenticationController {
             return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
 
         } catch (Exception e) {
-            ApiResponse<String> response = new ApiResponse<>("Error", "Password code sending failed", e.getMessage());
+            ApiResponse<String> response = new ApiResponse<>("Error", e.getMessage(), null);
             return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
@@ -142,9 +142,8 @@ public class AuthenticationController {
         } catch (AccountException e) {
             ApiResponse<String> response = new ApiResponse<>("Error", e.getMessage(), null);
             return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
-
         } catch (Exception e) {
-            ApiResponse<String> response = new ApiResponse<>("Error", "Password recovery failed", null);
+            ApiResponse<String> response = new ApiResponse<>("Error", e.getMessage(), null);
             return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
@@ -156,7 +155,7 @@ public class AuthenticationController {
             ApiTokenResponse<String> response = new  ApiTokenResponse<>("Success", "Returning new token", null, newToken);
             return new ResponseEntity<>(response, HttpStatus.OK);
         } catch (Exception e) {
-            ApiTokenResponse<String> response = new  ApiTokenResponse<>("Error", "Something happening while trying to refresh the token", e.getMessage(),null);
+            ApiTokenResponse<String> response = new  ApiTokenResponse<>("Error", e.getMessage(), null,null);
             return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
