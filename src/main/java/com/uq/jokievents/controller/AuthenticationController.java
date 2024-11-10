@@ -133,7 +133,6 @@ public class AuthenticationController {
         }
     }
 
-
     @PostMapping("/recover-password")
     public ResponseEntity<ApiResponse<String>> recoverPassword(@RequestBody @Valid RecoverPassDTO dto) {
         try {

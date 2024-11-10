@@ -322,7 +322,7 @@ public class AdminServiceImpl implements AdminService{
         // Map the List<CreateLocalityDTO> to List<Locality>
         return dto.localities().stream()
                 .map(dtoLocality -> Locality.builder()
-                        .name(dtoLocality.localityName())
+                        .name(dtoLocality.name())
                         .price(dtoLocality.price())
                         .maxCapacity(dtoLocality.maxCapacity())
                         .build())

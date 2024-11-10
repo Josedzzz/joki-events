@@ -250,7 +250,5 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         registerInfo.put(client, token);
         return registerInfo;
     }
-
-
 }
 
