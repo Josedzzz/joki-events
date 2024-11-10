@@ -65,7 +65,7 @@ public class AdminServiceImpl implements AdminService{
             UserDetails adminDetails = adminRepository.findById(adminId).orElseThrow();
             String newToken = jwtService.getAdminToken(adminDetails);
 
-            return new ApiTokenResponse<Object>("Success", "Admin updated", admin, newToken);
+            return new ApiTokenResponse<>("Success", "Admin updated", admin, newToken);
         } catch (AccountException e) {
             throw new AccountException("Failed to update admin, serverside: " + e.getMessage());
         }

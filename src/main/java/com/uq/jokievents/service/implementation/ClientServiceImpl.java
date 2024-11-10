@@ -152,7 +152,6 @@ public class ClientServiceImpl implements ClientService {
         List<Event> allEvents = eventRepository.findAll();
 
         // Filter events based on the criteria
-        // todo filter out inactive events, will do it when I figure out how the fuck Asynch methods work
         List<Event> filteredEvents = allEvents.stream()
                 .filter(event ->
                         (eventName.isEmpty() || (event.getName() != null && event.getName().toLowerCase().contains(eventName.toLowerCase())))
@@ -307,6 +306,27 @@ public class ClientServiceImpl implements ClientService {
         // Save the updated shopping cart and event
         shoppingCartRepository.save(shoppingCart);
         eventRepository.save(event);
+    }
+
+    @Override
+    public void emptyShoppingCart(String clientId) {
+        Optional<Client> clientOptional = clientRepository.findById(clientId);
+        if (clientOptional.isEmpty()){
+            throw new AccountException("No account found to delete the shopping cart.");
+        }
+        Optional<ShoppingCart> optionalShoppingCart = shoppingCartRepository.findById(clientOptional.get().getIdShoppingCart());
+        if (optionalShoppingCart.isEmpty()){
+            throw new ShoppingCartException("Shopping cart not found, grave error");
+        }
+
+        ShoppingCart shoppingCart = optionalShoppingCart.get();
+        shoppingCart.setPaymentGatewayId("");
+        shoppingCart.setLocalityOrders(new ArrayList<>());
+        shoppingCart.setTotalPrice(0.0);
+        shoppingCart.setTotalPriceWithDiscount(0.0);
+        shoppingCart.setAppliedDiscountPercent(1.0);
+        shoppingCart.setCouponClaimed(false);
+        shoppingCartRepository.save(shoppingCart);  // Save the updated shopping cart with cleared items
     }
 
     @Override

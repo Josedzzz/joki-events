@@ -22,6 +22,7 @@ public interface ClientService {
     UpdateClientDTO getAccountInformation(String clientId);
     void orderLocality(String clientId, LocalityOrderAsClientDTO dto);
     void cancelLocalityOrder(String clientId, LocalityOrderAsClientDTO dto);
+    void emptyShoppingCart(String clientId);
     Map<String, Object> loadShoppingCart(String clientId, int page, int size);
     void applyCoupon(String clientId, String coupon);
     void verifyClient(String clientId, String verificationCode);

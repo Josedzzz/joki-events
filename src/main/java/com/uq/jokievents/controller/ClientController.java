@@ -166,13 +166,19 @@ public class ClientController {
         }
     }
 
-    /**
-     * todo Check if that String couponName must be changed to a dto.
-     * most likely not
-     * @param clientId String
-     * @param couponName String
-     * @return ResponseEntity
-     */
+    @PostMapping("/{clientId/empty-shopping-cart}")
+    public ResponseEntity<ApiResponse<String>> emptyShoppingCart(@PathVariable String clientId) {
+        try {
+            clientService.emptyShoppingCart(clientId);
+            // maybe call the load shopping cart method next in the frontend?
+            ApiResponse<String> response = new ApiResponse<>("Success", "Empty shopping cart", null);
+            return new ResponseEntity<>(response, HttpStatus.OK);
+        } catch (Exception e) {
+            ApiResponse<String> response = new ApiResponse<>("Error", e.getMessage(), null);
+            return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
     @PostMapping("/{clientId}/apply-coupon")
     public ResponseEntity<ApiResponse<String>> applyCoupon(@PathVariable String clientId, @RequestParam String couponName) {
         try {

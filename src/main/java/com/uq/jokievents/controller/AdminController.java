@@ -66,12 +66,12 @@ public class AdminController {
             @PathVariable String adminId)       {
         try {
             ApiResponse<UpdateAdminDTO> response = adminService.getAccountInformation(adminId);
-            return ResponseEntity.status(HttpStatus.OK).body(response);
+            return new ResponseEntity<>(response, HttpStatus.OK);
         } catch (LogicException e) {
             ApiResponse<String> errorResponse = new ApiResponse<>("Error", e.getMessage(), null);
             return new ResponseEntity<>(errorResponse, HttpStatus.NOT_FOUND);
         } catch (Exception e) {
-            ApiResponse<String> errorResponse = new ApiResponse<>("Error", "Failed to retrieve admin info", null);
+            ApiResponse<String> errorResponse = new ApiResponse<>("Error", e.getMessage(), null);
             return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
@@ -99,7 +99,7 @@ public class AdminController {
             ApiResponse<String> errorResponse = new ApiResponse<>("Error", e.getMessage(), null);
             return new ResponseEntity<>(errorResponse, HttpStatus.FORBIDDEN);
         } catch (Exception e) {
-            ApiResponse<String> errorResponse = new ApiResponse<>("Error", "Failed to create coupon", e.getMessage());
+            ApiResponse<String> errorResponse = new ApiResponse<>("Error", e.getMessage(), null);
             return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
@@ -115,7 +115,7 @@ public class AdminController {
             ApiResponse<String> errorResponse = new ApiResponse<>("Error", e.getMessage(), null);
             return new ResponseEntity<>(errorResponse, HttpStatus.NOT_FOUND);
         } catch (Exception e) {
-            ApiResponse<String> errorResponse = new ApiResponse<>("Error", "Failed to update coupon", e.getMessage());
+            ApiResponse<String> errorResponse = new ApiResponse<>("Error", e.getMessage(), null);
             return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
@@ -125,11 +125,8 @@ public class AdminController {
         try {
             ApiResponse<Map<String, Object>> response = adminService.getAllCouponsPaginated(page, size);
             return ResponseEntity.status(HttpStatus.OK).body(response);
-        } catch (LogicException e) {
-            ApiResponse<String> errorResponse = new ApiResponse<>("Error", e.getMessage(), null);
-            return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
         } catch (Exception e) {
-            ApiResponse<String> errorResponse = new ApiResponse<>("Error", "Failed to retrieve coupons", null);
+            ApiResponse<String> errorResponse = new ApiResponse<>("Error", e.getMessage(), null);
             return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
@@ -143,7 +140,7 @@ public class AdminController {
             ApiResponse<String> errorResponse = new ApiResponse<>("Error", e.getMessage(), null);
             return new ResponseEntity<>(errorResponse, HttpStatus.NOT_FOUND);
         } catch (Exception e) {
-            ApiResponse<String> errorResponse = new ApiResponse<>("Error", "Failed to delete coupon", e.getMessage());
+            ApiResponse<String> errorResponse = new ApiResponse<>("Error", e.getMessage(), null);
             return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
@@ -153,11 +150,8 @@ public class AdminController {
         try {
             ApiResponse<String> response = adminService.deleteAllCoupons();
             return ResponseEntity.ok(response);
-        } catch (LogicException e) {
-            ApiResponse<String> errorResponse = new ApiResponse<>("Error", e.getMessage(), null);
-            return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
         } catch (Exception e) {
-            ApiResponse<String> errorResponse = new ApiResponse<>("Error", "Failed to delete all coupons", null);
+            ApiResponse<String> errorResponse = new ApiResponse<>("Error", e.getMessage(), null);
             return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
@@ -167,11 +161,8 @@ public class AdminController {
         try {
             ApiResponse<Event> response = adminService.addEvent(dto);
             return ResponseEntity.status(HttpStatus.OK).body(response);
-        } catch (LogicException e) {
-            ApiResponse<String> errorResponse = new ApiResponse<>("Error", e.getMessage(), null);
-            return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
         } catch (Exception e) {
-            ApiResponse<String> errorResponse = new ApiResponse<>("Error", "Failed to create event", null);
+            ApiResponse<String> errorResponse = new ApiResponse<>("Error", e.getMessage(), null);
             return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
@@ -180,12 +171,9 @@ public class AdminController {
     public ResponseEntity<ApiResponse<?>> getAllEventsPaginated(@RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "10") int size ) {
         try {
             ApiResponse<Map<String, Object>> response = adminService.getAllEventsPaginated(page, size);
-            return ResponseEntity.status(HttpStatus.OK).body(response);
-        } catch (LogicException e) {
-            ApiResponse<String> errorResponse = new ApiResponse<>("Error", e.getMessage(), null);
-            return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
+            return new ResponseEntity<>(response, HttpStatus.OK);
         } catch (Exception e) {
-            ApiResponse<String> errorResponse = new ApiResponse<>("Error", "Failed to retrieve events", null);
+            ApiResponse<String> errorResponse = new ApiResponse<>("Error", e.getMessage(), null);
             return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
@@ -197,11 +185,8 @@ public class AdminController {
         try {
             ApiResponse<Event> response = adminService.updateEvent(eventId, dto);
             return ResponseEntity.status(HttpStatus.OK).body(response);
-        } catch (LogicException e) {
-            ApiResponse<String> errorResponse = new ApiResponse<>("Error", e.getMessage(), null);
-            return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
         } catch (Exception e) {
-            ApiResponse<String> errorResponse = new ApiResponse<>("Error", "Failed to update event", null);
+            ApiResponse<String> errorResponse = new ApiResponse<>("Error", e.getMessage(), null);
             return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
@@ -217,44 +202,58 @@ public class AdminController {
         }
     }
 
-    // POST until further notice.
     @PostMapping("/delete-all-events")
     public ResponseEntity<ApiResponse<String>> deleteAllEvents() {
         try {
             ApiResponse<String> response = adminService.deleteAllEvents();
-            return ResponseEntity.status(HttpStatus.OK).body(response);
-        } catch (LogicException e) {
-            ApiResponse<String> errorResponse = new ApiResponse<>("Error", e.getMessage(), null);
-            return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
+            return new ResponseEntity<>(response, HttpStatus.OK);
         } catch (Exception e) {
-            ApiResponse<String> errorResponse = new ApiResponse<>("Error", "Failed to delete all events", null);
+            ApiResponse<String> errorResponse = new ApiResponse<>("Error", e.getMessage(), null);
             return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
     @GetMapping("/get-reports-events-pdf")
-    public ResponseEntity<InputStreamResource> downloadMonthlyEventReportPdf(
+    public ResponseEntity<ApiResponse<InputStreamResource>> downloadMonthlyEventReportPdf(
             @RequestParam int month, @RequestParam int year) {
+
         ByteArrayInputStream pdfReport = adminService.generateMonthlyEventReportPdf(month, year);
 
+        // Prepare headers with inline PDF display and custom filename
         HttpHeaders headers = new HttpHeaders();
         headers.add("Content-Disposition", "inline; filename=event_report_" + month + "_" + year + ".pdf");
+
+        // Wrap the InputStreamResource in the ApiResponse
+        ApiResponse<InputStreamResource> response = new ApiResponse<>(
+                "success",
+                "Monthly event report generated successfully.",
+                new InputStreamResource(pdfReport)
+        );
 
         return ResponseEntity.ok()
                 .headers(headers)
                 .contentType(MediaType.APPLICATION_PDF)
-                .body(new InputStreamResource(pdfReport));
+                .body(response);
     }
 
-    // Good luck, Jose!
     @GetMapping("/get-report-events")
     public ResponseEntity<ApiResponse<List<EventReportDTO>>> getMonthlyEventReport(
             @RequestParam int month,
             @RequestParam int year) {
+
+        // Generate the report using the service
         List<EventReportDTO> report = adminService.generateMonthlyEventReport(month, year);
 
-        ApiResponse<List<EventReportDTO>> response = new ApiResponse<>("Success", "Retrieving the possible events info", report);
-        return ResponseEntity.ok(response);
+        // Encapsulate the report data in an ApiResponse
+        ApiResponse<List<EventReportDTO>> response = new ApiResponse<>(
+                "success",
+                "Monthly event report retrieved successfully.",
+                report
+        );
+
+        // Return the encapsulated response
+        return new ResponseEntity<>(response, HttpStatus.OK);
     }
+
 
 }
