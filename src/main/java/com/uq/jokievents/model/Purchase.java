@@ -1,5 +1,6 @@
 package com.uq.jokievents.model;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -17,6 +18,7 @@ public class Purchase {
 
     @Id private String id;
     private String clientId;
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'")
     private LocalDateTime purchaseDate;
     private List<LocalityOrder> purchasedItems;
     private BigDecimal totalAmount;

@@ -65,13 +65,12 @@ public class PaymentController {
             if ("COMPLETED".equals(capture.status())) {
                 // Step 3: Retrieve the ShoppingCart based on the payment token
                 Optional<ShoppingCart> order = shoppingCartRepository.findByPaymentGatewayId(token);
-
                 if (order.isEmpty()) {
                     ApiResponse<String> response = new ApiResponse<>("Error", "Could not find the order", capture.status());
                     return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
                 }
-                paymentService.fillPurchaseAfterSuccess(order.get());
                 paymentService.updateEventAndLocalities(order.get());
+                paymentService.fillPurchaseAfterSuccess(order.get());
                 ApiResponse<String> response = new ApiResponse<>("Success", "Payment done", null);
                 return new ResponseEntity<>(response, HttpStatus.OK);
             } else {

@@ -214,32 +214,30 @@ public class AdminController {
     }
 
     @GetMapping("/get-reports-events-pdf")
-    public ResponseEntity<ApiResponse<?>> downloadMonthlyEventReportPdf(
+    public ResponseEntity<byte[]> downloadMonthlyEventReportPdf(
             @RequestParam int month, @RequestParam int year) {
 
         try {
+            // Generate the PDF report as a ByteArrayInputStream
             ByteArrayInputStream pdfReport = adminService.generateMonthlyEventReportPdf(month, year);
+
+            // Convert the ByteArrayInputStream to a byte array
+            byte[] pdfBytes = pdfReport.readAllBytes();
 
             // Prepare headers with inline PDF display and custom filename
             HttpHeaders headers = new HttpHeaders();
             headers.add("Content-Disposition", "inline; filename=event_report_" + month + "_" + year + ".pdf");
 
-            // Wrap the InputStreamResource in the ApiResponse
-            ApiResponse<InputStreamResource> response = new ApiResponse<>(
-                    "success",
-                    "Monthly event report generated successfully.",
-                    new InputStreamResource(pdfReport)
-            );
-
             return ResponseEntity.ok()
                     .headers(headers)
                     .contentType(MediaType.APPLICATION_PDF)
-                    .body(response);
+                    .body(pdfBytes); // Return the PDF file directly as the body
         } catch (Exception e) {
-            ApiResponse<String> response = new ApiResponse<>("Error", e.getMessage(), null);
-            return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
+            // Handle errors (you can return an error response here if needed)
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
     }
+
 
     @GetMapping("/get-report-events")
     public ResponseEntity<ApiResponse<?>> getMonthlyEventReport(

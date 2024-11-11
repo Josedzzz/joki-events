@@ -39,7 +39,9 @@ dependencies {
 	implementation 'com.paypal.sdk:checkout-sdk:1.0.0'
 	// https://mvnrepository.com/artifact/com.itextpdf/itextpdf
 	implementation 'com.itextpdf:itext7-core:7.1.16'
-	implementation 'org.json:json:20210307' // Or the latest version
+	implementation 'org.json:json:20210307'
+	implementation 'com.google.zxing:core:3.5.0'
+
 
 
 	implementation 'com.fasterxml.jackson.core:jackson-databind:2.15.0'

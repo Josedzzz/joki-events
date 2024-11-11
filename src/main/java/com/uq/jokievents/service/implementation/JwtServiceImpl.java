@@ -1,5 +1,6 @@
 package com.uq.jokievents.service.implementation;
 
+import com.uq.jokievents.exceptions.LogicException;
 import com.uq.jokievents.model.Admin;
 import com.uq.jokievents.model.Client;
 import com.uq.jokievents.repository.AdminRepository;
@@ -99,47 +100,47 @@ public class JwtServiceImpl implements JwtService {
         return claims.getSubject(); // or use Claims::getSubject directly
     }
 
-    public <T> T extractClaim(String token, Function<Claims, T> claimsResolver) {
+    public <T> T extractClaim(String token, Function<Claims, T> claimsResolver) throws JwtException, IllegalArgumentException  {
         final Claims claims = extractAllClaims(token);
         return claimsResolver.apply(claims);
     }
 
-    private Claims extractAllClaims(String token) {
-        try {
+    private Claims extractAllClaims(String token) throws JwtException, IllegalArgumentException {
             return Jwts.parser()
                     .verifyWith(getSigningKey())
                     .build().parseSignedClaims(token).getPayload();
-        } catch (JwtException | IllegalArgumentException e) {
-            throw new RuntimeException("Invalid JWT token: ", e);
-        }
     }
 
     @Override
-    public String refreshToken(String token) throws JSONException {
+    public String refreshToken(String token){
         // Email or username as client uses email and admin uses username as the subject.
-        String tokenWithoutPrefix = token.replace("Bearer ", "").trim();
-        String emailOrUsername = this.extractEmailOrUsername(tokenWithoutPrefix);
+        try {
+            String tokenWithoutPrefix = token.replace("Bearer ", "").trim();
+            String emailOrUsername = this.extractEmailOrUsername(tokenWithoutPrefix);
 
-        UserDetails userDetails = loadUserByEmailOrUsername(emailOrUsername);
-        String sub = extractClaim(tokenWithoutPrefix, Claims::getSubject);
-        String role = extractClaim(tokenWithoutPrefix, claims -> claims.get("role", String.class));
+            UserDetails userDetails = loadUserByEmailOrUsername(emailOrUsername);
+            String sub = extractClaim(tokenWithoutPrefix, Claims::getSubject);
+            String role = extractClaim(tokenWithoutPrefix, claims -> claims.get("role", String.class));
 
-        // Create claims for the new token
-        Map<String, Object> extraClaims = new HashMap<>();
-        extraClaims.put("sub", sub);
-        extraClaims.put("role", role);
-        String newToken;
-        if (userDetails.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("CLIENT"))) {
-            // The user has CLIENT role
-            newToken = this.getTokenWithClaims(extraClaims, userDetails);
-        } else if (userDetails.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ADMIN"))) {
-            // The user has ADMIN role
-            newToken = this.getTokenWithClaims(extraClaims, userDetails);
-        } else {
-            // No valid role found
-            throw new RuntimeException("Unsupported user type");
+            // Create claims for the new token
+            Map<String, Object> extraClaims = new HashMap<>();
+            extraClaims.put("sub", sub);
+            extraClaims.put("role", role);
+            String newToken;
+            if (userDetails.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("CLIENT"))) {
+                // The user has CLIENT role
+                newToken = this.getTokenWithClaims(extraClaims, userDetails);
+            } else if (userDetails.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ADMIN"))) {
+                // The user has ADMIN role
+                newToken = this.getTokenWithClaims(extraClaims, userDetails);
+            } else {
+                // No valid role found
+                throw new RuntimeException("Unsupported user type");
+            }
+            return newToken;
+        } catch (Exception e) {
+            throw new LogicException("Failed to refresh token: " + e.getMessage());
         }
-        return newToken;
     }
 
     private String extractEmailOrUsername(String tokenWithoutPrefix) throws JSONException {

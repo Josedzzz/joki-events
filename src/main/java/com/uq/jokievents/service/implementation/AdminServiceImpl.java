@@ -458,16 +458,21 @@ public class AdminServiceImpl implements AdminService{
             Document document = new Document(pdfDoc);
 
             // Title and report date
-            document.add(new Paragraph("Monthly Event Report")
+            document.add(new Paragraph("Monthly Event Report Joki Eventos")
                     .setBold().setFontSize(16));
             document.add(new Paragraph("Report Date: " + month + "/" + year));
+            document.add(new Paragraph("Total revenue: $" + reportData.get(0).totalRevenue()));
 
             for (EventReportDTO eventReport : reportData) {
+
+                List<LocalityStats> localityStatsList = eventReport.localityStats();
+                LocalityStats localityStats = localityStatsList.get(0);
+                if (localityStats == null) throw new LogicException("The event report has no locality stats, grave error");
                 // Event title
                 document.add(new Paragraph("Event: " + eventReport.eventName())
                         .setBold().setFontSize(14));
                 document.add(new Paragraph("City: " + eventReport.eventCity()));
-                document.add(new Paragraph("Total Revenue: $" + eventReport.totalRevenue()));
+                document.add(new Paragraph("Event Revenue: $" + localityStats.getLocalityRevenue()));
 
                 // Table for locality statistics
                 Table table = new Table(new float[]{4, 2, 2, 2});

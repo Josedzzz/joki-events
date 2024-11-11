@@ -7,6 +7,7 @@ import com.paypal.core.PayPalHttpClient;
 import com.paypal.orders.*;
 import com.uq.jokievents.exceptions.*;
 import com.uq.jokievents.model.*;
+import com.uq.jokievents.model.Event;
 import com.uq.jokievents.repository.ClientRepository;
 import com.uq.jokievents.repository.EventRepository;
 import com.uq.jokievents.repository.PurchaseRepository;
@@ -19,10 +20,16 @@ import com.uq.jokievents.utils.Generators;
 import lombok.RequiredArgsConstructor;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.imageio.ImageIO;
+import java.awt.*;
+import java.awt.image.BufferedImage;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.List;
 
 @Service
 @Transactional
@@ -83,6 +90,7 @@ public class PaymentServiceImpl implements PaymentService {
         // Create the purchase unit (order item)
         PurchaseUnitRequest purchaseUnitRequest = new PurchaseUnitRequest()
                 .referenceId(referenceId)
+                .description(buildOrderDescription(shoppingCart))
                 .amount(new AmountWithBreakdown()
                         .currencyCode("USD")
                         .value(shoppingCart.getTotalPriceWithDiscount().toString()));  // Use the rounded value
@@ -149,7 +157,7 @@ public class PaymentServiceImpl implements PaymentService {
 
      @Override
     public void updateEventAndLocalities(ShoppingCart order) {
-        // Iterate through each LocalityOrder in the order
+         // Iterate through each LocalityOrder in the order
         for (LocalityOrder localityOrder : order.getLocalityOrders()) {
             // Retrieve the event associated with the localityOrder using its event ID
             Optional<Event> eventOpt = eventRepository.findById(localityOrder.getEventId());
@@ -159,15 +167,13 @@ public class PaymentServiceImpl implements PaymentService {
 
             // Get the event object from the Optional
             Event event = eventOpt.get();
-
             // Retrieve the specific locality from the event based on the locality name
             Locality locality = event.getLocalities(localityOrder.getLocalityName());
 
             // If no locality is found for the given locality name, skip the current iteration
             if (locality == null) continue;
 
-            // Decrease the maximum capacity of the locality by the number of selected tickets
-            locality.setMaxCapacity(locality.getMaxCapacity() - localityOrder.getNumTicketsSelected());
+            // Increase the current occupancy of the locality by the number of selected tickets
             locality.setCurrentOccupancy(locality.getCurrentOccupancy() + localityOrder.getNumTicketsSelected());
 
             // Decrease the total available places of the event by the number of selected tickets
@@ -199,18 +205,77 @@ public class PaymentServiceImpl implements PaymentService {
 
     private void sendPurchaseQRCodeEmail(Client client, Purchase purchase) {
         try {
-            // Generate the QR code from purchase details (e.g., purchase ID, amount, etc.)
-            String qrCodeData = "Purchase ID: " + purchase.getId() + "\nTotal Amount: " + purchase.getTotalAmount();
-            String base64QRCode = Generators.generateQRCode(qrCodeData);
+            // What I basically think this does is create an image with the information of the purchase alone, then I convert that image to Base64 and upload it to Firebase, then I get that firebase link and create a QR Code that contains the information of that link so that when scanned it shows the purchase info image
+            BufferedImage customImage = createCustomPurchaseImage(client, purchase);
+            String base64QRCode = encodeImageToBase64(customImage);
+            // todo make that shit a constant
+            String qrCodeFirebaseUrl = imageService.uploadImage("data:image/png;base64,"+base64QRCode);
 
-            // Upload the QR code image to Firebase Storages
-            String qrCodeUrl = imageService.uploadImage(base64QRCode);
+            String qrCodeImageBase64 = Generators.generateQRCode(qrCodeFirebaseUrl);
 
-            // Send the email with the QR code URL (use your email service to send this)
-            String emailBody = "Dear " + client.getName() + ",\n\nHere is your purchase QR code:\n" + qrCodeUrl;
-            emailService.sendPurchaseEmail(client.getEmail(), "Your Purchase QR Code", emailBody);
+            // Send the email with the embedded image (QR code)
+            String emailBody = "<p>Dear " + client.getName() + ",</p>" +
+                    "<p>Here is your purchase QR code with details:</p>" +
+                    "<img src='cid:qrCodeImage' />"; // This references the embedded image using its Content-ID
+            emailService.sendPurchaseEmail(client.getEmail(), "Your Purchase QR Code", emailBody, qrCodeImageBase64);
         } catch (Exception e) {
             throw new LogicException(e.getMessage());
         }
     }
+
+    private String encodeImageToBase64(BufferedImage image) throws IOException {
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        ImageIO.write(image, "png", baos);
+        byte[] imageBytes = baos.toByteArray();
+        return Base64.getEncoder().encodeToString(imageBytes);
+    }
+
+    private BufferedImage createCustomPurchaseImage(Client client, Purchase purchase) {
+        int width = 600; // Image width
+        int height = 600; // Increased height for more content
+        BufferedImage image = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
+        Graphics2D g2d = image.createGraphics();
+
+        // Fill background with white color
+        g2d.setColor(Color.WHITE);
+        g2d.fillRect(0, 0, width, height);
+
+        // Set text color and font for purchase details
+        g2d.setColor(Color.BLACK);
+        g2d.setFont(new Font("Arial", Font.PLAIN, 14));
+
+        // Draw the purchase details
+        int y = 30;  // Starting y-position for text
+
+        // Purchase summary
+        g2d.drawString("Purchase ID: " + purchase.getId(), 20, y);
+        y += 20;
+        g2d.drawString("Client: " + client.getName(), 20, y);
+        y += 20;
+        g2d.drawString("Total Amount: $" + purchase.getTotalAmount(), 20, y);
+        y += 20;
+        g2d.drawString("Payment Method: " + purchase.getPaymentMethod(), 20, y);
+        y += 20;
+        g2d.drawString("Purchase Date: " + purchase.getPurchaseDate(), 20, y);
+        y += 40;
+
+        // Locality order details
+        g2d.drawString("Purchased Items:", 20, y);
+        y += 20;
+        for (LocalityOrder order : purchase.getPurchasedItems()) {
+            g2d.drawString("Event ID: " + order.getEventId(), 20, y);
+            y += 20;
+            g2d.drawString("Locality: " + order.getLocalityName(), 20, y);
+            y += 20;
+            g2d.drawString("Tickets: " + order.getNumTicketsSelected(), 20, y);
+            y += 20;
+            g2d.drawString("Total: $" + order.getTotalPaymentAmount(), 20, y);
+            y += 30;  // Adding extra space between orders
+        }
+
+        // Dispose the graphics context and return the image
+        g2d.dispose();
+        return image;
+    }
+
 }

@@ -1,14 +1,19 @@
 package com.uq.jokievents.utils;
 
+import com.uq.jokievents.exceptions.LogicException;
 import com.uq.jokievents.model.Coupon;
 import com.uq.jokievents.model.enums.CouponType;
 import com.uq.jokievents.repository.CouponRepository;
+import jakarta.mail.internet.MimeMessage;
+import jakarta.mail.util.ByteArrayDataSource;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
 
+import java.util.Base64;
 import java.util.List;
 import java.util.Random;
 
@@ -63,11 +68,31 @@ public class EmailService {
      * @param subject String
      * @param body String
      */
-    public void sendPurchaseEmail(String to, String subject, String body) {
-        SimpleMailMessage message = new SimpleMailMessage();
-        message.setTo(to);
-        message.setSubject(subject);
-        message.setText(body);
-        mailSender.send(message);
+    public void sendPurchaseEmail(String to, String subject, String body, String base64QRCode) {
+        try {
+            // Decode the base64 QR code image
+            byte[] imageBytes = Base64.getDecoder().decode(base64QRCode); // Extract the base64 data from the URI
+
+            // Create MimeMessage
+            MimeMessage message = mailSender.createMimeMessage();
+
+            // Prepare the helper for the MimeMessage
+            MimeMessageHelper helper = new MimeMessageHelper(message, true); // 'true' allows attachments
+
+            helper.setTo(to);
+            helper.setSubject(subject);
+            helper.setText(body, true); // 'true' indicates that the body is HTML
+
+            // Convert the byte array image into a DataSource for the inline attachment
+            ByteArrayDataSource dataSource = new ByteArrayDataSource(imageBytes, "image/png");
+
+            // Add the image as an inline attachment with a Content-ID
+            helper.addInline("qrCodeImage", dataSource);
+
+            // Send the email
+            mailSender.send(message);
+        } catch (Exception e) {
+            throw new LogicException("Error sending email with embedded image " + e.getMessage(), e);
+        }
     }
 }
