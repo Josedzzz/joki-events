@@ -266,14 +266,23 @@ public class PaymentServiceImpl implements PaymentService {
         g2d.drawString("Purchased Items:", 20, y);
         y += 20;
         for (LocalityOrder order : purchase.getPurchasedItems()) {
-            g2d.drawString("Event ID: " + order.getEventId(), 20, y);
+            // todo check if the business logic will ever delete an event from the database, for now, assume not
+            Optional<Event> eventOptional = eventRepository.findById(order.getEventId());
+            if (eventOptional.isEmpty()) continue;
+            Event event = eventOptional.get();
+
+            g2d.drawString("     Event name: " + event.getName(), 20, y);
             y += 20;
-            g2d.drawString("Locality: " + order.getLocalityName(), 20, y);
+            g2d.drawString("     Event address: " + event.getAddress(), 20, y);
             y += 20;
-            g2d.drawString("Tickets: " + order.getNumTicketsSelected(), 20, y);
+            g2d.drawString("     Date of the event: " + event.getEventDate(), 20, y);
             y += 20;
-            g2d.drawString("Total: $" + order.getTotalPaymentAmount(), 20, y);
-            y += 30;  // Adding extra space between orders
+            g2d.drawString("     Locality: " + order.getLocalityName(), 20, y);
+            y += 20;
+            g2d.drawString("     Tickets: " + order.getNumTicketsSelected(), 20, y);
+            y += 20;
+            g2d.drawString("     Total: $" + order.getTotalPaymentAmount(), 20, y);
+            y += 30;  // Adding extra space between orders klasjdhjkgaksd
         }
 
         // Dispose the graphics context and return the image
