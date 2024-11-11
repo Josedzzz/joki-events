@@ -214,7 +214,7 @@ public class AdminController {
     }
 
     @GetMapping("/get-reports-events-pdf")
-    public ResponseEntity<byte[]> downloadMonthlyEventReportPdf(
+    public ResponseEntity<?> downloadMonthlyEventReportPdf(
             @RequestParam int month, @RequestParam int year) {
 
         try {
@@ -234,7 +234,8 @@ public class AdminController {
                     .body(pdfBytes); // Return the PDF file directly as the body
         } catch (Exception e) {
             // Handle errors (you can return an error response here if needed)
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+            ApiResponse<String> response = new ApiResponse<>("Error", e.getMessage(), null);
+            return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
         }
     }
 

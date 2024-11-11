@@ -450,7 +450,7 @@ public class AdminServiceImpl implements AdminService{
     public ByteArrayInputStream generateMonthlyEventReportPdf(int month, int year) {
         List<EventReportDTO> reportData = generateMonthlyEventReport(month, year);
 
-        if (reportData.isEmpty()) throw new LogicException("No events to generate a report");
+        if (reportData.isEmpty()) throw new LogicException("No events to generate a report in the provided date");
 
         ByteArrayOutputStream out = new ByteArrayOutputStream();
 
