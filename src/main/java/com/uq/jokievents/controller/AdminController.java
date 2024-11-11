@@ -214,44 +214,54 @@ public class AdminController {
     }
 
     @GetMapping("/get-reports-events-pdf")
-    public ResponseEntity<ApiResponse<InputStreamResource>> downloadMonthlyEventReportPdf(
+    public ResponseEntity<ApiResponse<?>> downloadMonthlyEventReportPdf(
             @RequestParam int month, @RequestParam int year) {
 
-        ByteArrayInputStream pdfReport = adminService.generateMonthlyEventReportPdf(month, year);
+        try {
+            ByteArrayInputStream pdfReport = adminService.generateMonthlyEventReportPdf(month, year);
 
-        // Prepare headers with inline PDF display and custom filename
-        HttpHeaders headers = new HttpHeaders();
-        headers.add("Content-Disposition", "inline; filename=event_report_" + month + "_" + year + ".pdf");
+            // Prepare headers with inline PDF display and custom filename
+            HttpHeaders headers = new HttpHeaders();
+            headers.add("Content-Disposition", "inline; filename=event_report_" + month + "_" + year + ".pdf");
 
-        // Wrap the InputStreamResource in the ApiResponse
-        ApiResponse<InputStreamResource> response = new ApiResponse<>(
-                "success",
-                "Monthly event report generated successfully.",
-                new InputStreamResource(pdfReport)
-        );
+            // Wrap the InputStreamResource in the ApiResponse
+            ApiResponse<InputStreamResource> response = new ApiResponse<>(
+                    "success",
+                    "Monthly event report generated successfully.",
+                    new InputStreamResource(pdfReport)
+            );
 
-        return ResponseEntity.ok()
-                .headers(headers)
-                .contentType(MediaType.APPLICATION_PDF)
-                .body(response);
+            return ResponseEntity.ok()
+                    .headers(headers)
+                    .contentType(MediaType.APPLICATION_PDF)
+                    .body(response);
+        } catch (Exception e) {
+            ApiResponse<String> response = new ApiResponse<>("Error", e.getMessage(), null);
+            return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
+        }
     }
 
     @GetMapping("/get-report-events")
-    public ResponseEntity<ApiResponse<List<EventReportDTO>>> getMonthlyEventReport(
+    public ResponseEntity<ApiResponse<?>> getMonthlyEventReport(
             @RequestParam int month,
             @RequestParam int year) {
 
-        // Generate the report using the service
-        List<EventReportDTO> report = adminService.generateMonthlyEventReport(month, year);
+        try {
+            // Generate the report using the service
+            List<EventReportDTO> report = adminService.generateMonthlyEventReport(month, year);
 
-        // Encapsulate the report data in an ApiResponse
-        ApiResponse<List<EventReportDTO>> response = new ApiResponse<>(
-                "success",
-                "Monthly event report retrieved successfully.",
-                report
-        );
+            // Encapsulate the report data in an ApiResponse
+            ApiResponse<List<EventReportDTO>> response = new ApiResponse<>(
+                    "success",
+                    "Monthly event report retrieved successfully.",
+                    report
+            );
 
-        // Return the encapsulated response
-        return new ResponseEntity<>(response, HttpStatus.OK);
+            // Return the encapsulated response
+            return new ResponseEntity<>(response, HttpStatus.OK);
+        } catch (Exception e) {
+            ApiResponse<String> response = new ApiResponse<>("Error", e.getMessage(), null);
+            return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
 }

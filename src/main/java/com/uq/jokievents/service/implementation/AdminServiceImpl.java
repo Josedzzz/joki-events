@@ -382,9 +382,12 @@ public class AdminServiceImpl implements AdminService{
         for (Purchase purchase : purchases) {
             for (LocalityOrder localityOrder : purchase.getPurchasedItems()) {
                 String eventId = localityOrder.getEventId();
-                Event event = eventRepository.findById(eventId)
-                        .orElseThrow(() -> new IllegalArgumentException("Event not found with ID: " + eventId));
 
+                Optional<Event> optionalEvent = eventRepository.findById(eventId);
+                if (optionalEvent.isEmpty()) {
+                    continue;
+                }
+                Event event = optionalEvent.get();
                 // Retrieve or initialize the EventReportDTO
                 EventReportDTO currentReport = eventReports.get(eventId);
 
@@ -441,12 +444,14 @@ public class AdminServiceImpl implements AdminService{
                 ));
             }
         }
-
         return new ArrayList<>(eventReports.values());
     }
 
     public ByteArrayInputStream generateMonthlyEventReportPdf(int month, int year) {
         List<EventReportDTO> reportData = generateMonthlyEventReport(month, year);
+
+        if (reportData.isEmpty()) throw new LogicException("No events to generate a report");
+
         ByteArrayOutputStream out = new ByteArrayOutputStream();
 
         try (PdfWriter writer = new PdfWriter(out); PdfDocument pdfDoc = new PdfDocument(writer)) {
