@@ -2,6 +2,7 @@ package com.uq.jokievents.service.implementation;
 
 import com.itextpdf.kernel.pdf.PdfDocument;
 import com.itextpdf.kernel.pdf.PdfWriter;
+import com.uq.jokievents.config.ApplicationConfig;
 import com.uq.jokievents.dtos.*;
 import com.uq.jokievents.exceptions.AccountException;
 import com.uq.jokievents.exceptions.LogicException;
@@ -42,10 +43,7 @@ public class AdminServiceImpl implements AdminService{
     private final PurchaseRepository purchaseRepository;
     private final ImageService imageService;
     private final JwtService jwtService;
-
-    @Value("${image.not.found}")
-    private String imageNotFound;
-
+    private final ApplicationConfig applicationConfig;
 
     @Override
     public ApiTokenResponse<Object> updateAdmin(String adminId, UpdateAdminDTO dto) {
@@ -190,8 +188,8 @@ public class AdminServiceImpl implements AdminService{
     public ApiResponse<Event> addEvent(HandleEventDTO dto) {
         try {
             checkEventInSitu(dto);
-            String eventUrl = imageNotFound;
-            String localitiesUrl = imageNotFound;
+            String eventUrl = applicationConfig.getImageNotFound();
+            String localitiesUrl = applicationConfig.getImageNotFound();
             boolean bothImagesEmpty = dto.eventImageUrl().isEmpty() && dto.localitiesImageUrl().isEmpty();
             if (!bothImagesEmpty) {
                 // XD
@@ -253,7 +251,7 @@ public class AdminServiceImpl implements AdminService{
         String eventImageUrl = dto.eventImageUrl();
         String localitiesImageUrl = dto.localitiesImageUrl();
 
-        if (!(eventImageUrl.equals(imageNotFound) && localitiesImageUrl.equals(imageNotFound))) {
+        if (!(eventImageUrl.equals(applicationConfig.getImageNotFound()) && localitiesImageUrl.equals(applicationConfig.getImageNotFound()))) {
             // if both are not the image not found (unique case possible)
             // Validate and upload the event image if needed
             // Validate and upload the localities image if needed
@@ -496,5 +494,9 @@ public class AdminServiceImpl implements AdminService{
             throw new RuntimeException("Error generating PDF report", e);
         }
         return new ByteArrayInputStream(out.toByteArray());
+    }
+
+    public ApplicationConfig getApplicationConfig() {
+        return applicationConfig;
     }
 }

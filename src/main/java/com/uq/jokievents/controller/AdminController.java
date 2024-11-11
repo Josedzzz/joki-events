@@ -14,6 +14,7 @@ import com.uq.jokievents.utils.ApiResponse;
 import com.uq.jokievents.utils.ApiTokenResponse;
 import lombok.RequiredArgsConstructor;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -34,9 +35,6 @@ import java.util.Map;
 @Validated
 public class AdminController {
 
-    // TODO 0auth login with Google Account
-    // TODO Refresh Tokens
-    // TODO Admin actions logger, can be one of the two additional functionalities
     private final AdminService adminService;
 
     @GetMapping("/get-all-admins")

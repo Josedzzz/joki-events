@@ -57,13 +57,13 @@ public class ApplicationConfig {
             // Try to find the user in the admin repository first
             Optional<Admin> adminOpt = adminRepository.findByUsername(username);
             if (adminOpt.isPresent()) {
-                return adminOpt.get();  // Return the Admin directly since it implements UserDetails
+                return adminOpt.get();
             }
 
             // If not found, check the client repository
             Optional<Client> clientOpt = clientRepository.findByEmail(username);
             if (clientOpt.isPresent()) {
-                return clientOpt.get();  // Return the Client directly since it also implements UserDetails
+                return clientOpt.get();
             }
 
             throw new UsernameNotFoundException("User not found");
@@ -93,21 +93,17 @@ public class ApplicationConfig {
         return mapper;
     }
 
-    @Getter
-    @Value("${base64.image}")
-    private String base64Image;
+    @Getter @Value("${JWT_SECRET}") private String SECRET_JWT_KEY;
 
-    @Getter
-    @Value("${paypal.client.id}")
-    private String clientId;
+    @Getter @Value("${IMAGE_NOT_FOUND}") private String imageNotFound;
 
-    @Getter
-    @Value("${paypal.client.secret}")
-    private String clientSecret;
+    @Getter @Value("${PAYPAL_CLIENT_ID}") private String clientId;
 
-    @Getter
-    @Value("${paypal.mode}")
-    private String mode;
+    @Getter @Value("${PAYPAL_CLIENT_SECRET}") private String clientSecret;
+
+    @Getter @Value("${PAYPAL_MODE}") private String mode;
+
+    @Getter @Value("${FIREBASE_CONFIG}") private String firebaseKey;
 
     @Bean
     public PayPalHttpClient payPalHttpClient() {

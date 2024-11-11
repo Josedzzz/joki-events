@@ -1,5 +1,6 @@
 package com.uq.jokievents.service.implementation;
 
+import com.uq.jokievents.config.ApplicationConfig;
 import com.uq.jokievents.exceptions.LogicException;
 import com.uq.jokievents.model.Admin;
 import com.uq.jokievents.model.Client;
@@ -11,6 +12,7 @@ import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -36,12 +38,10 @@ public class JwtServiceImpl implements JwtService {
 
     private final AdminRepository adminRepository;
     private final ClientRepository clientRepository;
-
-    @Value("${jwt.secret}")
-    private String SECRET_KEY;
+    @Getter private final ApplicationConfig applicationConfig;
 
     private SecretKey getSigningKey() {
-        return Keys.hmacShaKeyFor(SECRET_KEY.getBytes());
+        return Keys.hmacShaKeyFor(applicationConfig.getSECRET_JWT_KEY().getBytes());
     }
 
     public Date extractExpiration(String token) {
@@ -199,4 +199,5 @@ public class JwtServiceImpl implements JwtService {
         // If user not found, throw exception
         throw new UsernameNotFoundException("User not found with username: " + username);
     }
+
 }

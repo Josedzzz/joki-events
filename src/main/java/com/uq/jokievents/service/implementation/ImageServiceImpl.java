@@ -21,7 +21,7 @@ public class ImageServiceImpl implements ImageService {
     @Override
     public String uploadImage(String base64Image){
 
-        assert base64Image != null;
+        if (base64Image == null) throw new LogicException("base64Image is null");
         base64Image = base64Image.trim();
 
         // Check if the input is valid and extract image data
@@ -66,14 +66,14 @@ public class ImageServiceImpl implements ImageService {
 
     // Convert MIME type to file extension
     private String mimeTypeToExtension(String mimeType) {
-        switch (mimeType) {
-            case "image/jpeg": return ".jpeg";
-            case "image/png": return ".png";
-            case "image/gif": return ".gif";
-            case "image/bmp": return ".bmp";
-            case "image/webp": return ".webp";
-            default: throw new IllegalArgumentException("Unsupported image MIME type: " + mimeType);
-        }
+        return switch (mimeType) {
+            case "image/jpeg" -> ".jpeg";
+            case "image/png" -> ".png";
+            case "image/gif" -> ".gif";
+            case "image/bmp" -> ".bmp";
+            case "image/webp" -> ".webp";
+            default -> throw new IllegalArgumentException("Unsupported image MIME type: " + mimeType);
+        };
     }
 
     // Helper class to hold extracted image data
