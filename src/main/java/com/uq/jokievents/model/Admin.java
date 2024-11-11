@@ -1,5 +1,6 @@
     package com.uq.jokievents.model;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.uq.jokievents.model.enums.Role;
 import lombok.*;
@@ -27,6 +28,7 @@ public class Admin implements UserDetails {
     private String username;
     private String password;
     private String verificationCode;
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'")
     private LocalDateTime verificationCodeExpiration;
     private boolean active;
     private Role role = Role.ADMIN;

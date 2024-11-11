@@ -11,7 +11,6 @@ import com.uq.jokievents.repository.*;
 import com.uq.jokievents.service.interfaces.ClientService;
 import com.uq.jokievents.service.interfaces.JwtService;
 import com.uq.jokievents.utils.ApiResponse;
-import com.uq.jokievents.utils.ClientSecurityUtils;
 import com.uq.jokievents.utils.EmailService;
 import com.uq.jokievents.utils.Generators;
 import lombok.RequiredArgsConstructor;

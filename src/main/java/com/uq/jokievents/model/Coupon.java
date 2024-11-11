@@ -17,7 +17,8 @@ public class Coupon {
     private String id;
     private String name;
     private double discountPercent;
-    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss.SSS") private LocalDateTime expirationDate;
+    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss.SSS")
+    private LocalDateTime expirationDate;
     private double minPurchaseAmount;
     private CouponType couponType; //    UNIQUE or INDIVIDUAL
 }
