@@ -4,6 +4,8 @@ import com.braintreepayments.http.HttpResponse;
 import com.paypal.orders.Capture;
 import com.paypal.orders.LinkDescription;
 import com.paypal.orders.Order;
+import com.uq.jokievents.exceptions.AccountException;
+import com.uq.jokievents.exceptions.LogicException;
 import com.uq.jokievents.model.ShoppingCart;
 import com.uq.jokievents.repository.ShoppingCartRepository;
 import com.uq.jokievents.service.interfaces.PaymentService;
@@ -49,9 +51,15 @@ public class PaymentController {
                 ApiResponse<String> response = new ApiResponse<>("Error", "Could not load a payment link", null);
                 return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
             }
-        } catch (Exception e) {
+        } catch (LogicException e) {
+            ApiResponse<String> response = new ApiResponse<>("Error", e.getMessage(), null);
+            return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
+        }
+        catch (AccountException e) {
             ApiResponse<String> response = new ApiResponse<>("Error", e.getMessage(), null);
             return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
         }
     }
 

@@ -45,7 +45,7 @@ public class PaymentServiceImpl implements PaymentService {
     private final ClientRepository clientRepository;
 
     @Override
-    public HttpResponse<Order> createPaymentOrder(String clientId) throws Exception{
+    public HttpResponse<Order> createPaymentOrder(String clientId){
 
         // Get the order from the database
 
@@ -59,20 +59,23 @@ public class PaymentServiceImpl implements PaymentService {
         if (shoppingCartOptional.isEmpty()) {
             throw new AccountException("The client does not have a shopping cart, grave error");
         }
+
         // Have a shopping cart and a Purchase
         ShoppingCart shoppingCart = shoppingCartOptional.get();
+
+        if (shoppingCart.getLocalityOrders().isEmpty()) {
+            throw new LogicException("Nothing to pay in the shopping cart");
+        }
+
         Purchase purchase = new Purchase();
 
         OrdersCreateRequest request = new OrdersCreateRequest();
         request.prefer("return=representation");
         request.requestBody(buildOrderRequest(purchase.getId(), shoppingCart));
         try {
-            HttpResponse<Order> response = payPalHttpClient.execute(request);
-            System.out.println("Order ID: " + response.result().id());
-            return response;
-        } catch (HttpException e) {
-            System.err.println("Failed to create order: " + e.getMessage());
-            throw e;
+            return payPalHttpClient.execute(request);
+        } catch (IOException e) {
+            throw new AccountException("Could not generate the payment link");
         }
     }
 
