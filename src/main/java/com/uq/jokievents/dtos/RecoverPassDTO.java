@@ -4,6 +4,7 @@ import jakarta.validation.constraints.*;
 
 public record RecoverPassDTO(
         @NotBlank(message = "Email/Username cannot be blank")
+        @Email(message = "Provide an actual mail")
         String email,
 
         @NotBlank(message = "Verification code cannot be blank")
