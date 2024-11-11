@@ -162,22 +162,43 @@ public class AuthenticationController {
         }
     }
 
-    @PostMapping("/google-signin")
-    public ResponseEntity<ApiResponse<?>> googleSignIn(@RequestParam String idToken) {
+    @PostMapping("/google-sign-in")
+    public ResponseEntity<ApiTokenResponse<?>> googleSignIn(@RequestParam String idToken) {
         try {
             // Verify the token with Firebase
             FirebaseToken decodedToken = FirebaseAuth.getInstance().verifyIdToken(idToken);
 
             // Register the user if not exists
-            Client newClient = null;//authenticationService.registerUserIfNotExists(decodedToken);
+            Map<String, String> newClient = authenticationService.registerUserIfNotExists(decodedToken);
+            Map.Entry<String, String> entry = newClient.entrySet().iterator().next();
+            String clientId = entry.getKey();
+            String token = entry.getValue();
 
             // Return a response
-            ApiResponse<Client> response = new ApiResponse<>("success", "User authenticated and registered successfully.", newClient);
+            ApiTokenResponse<String> response = new ApiTokenResponse<>("success", "User authenticated and registered successfully.", clientId, token);
             return new ResponseEntity<>(response, HttpStatus.OK);
         } catch (FirebaseAuthException e) {
-            ApiResponse<String> response = new ApiResponse<>("error", e.getMessage(), null);
+            ApiTokenResponse<String> response = new ApiTokenResponse<>("error", e.getMessage(), null, null);
             return new ResponseEntity<>(response, HttpStatus.UNAUTHORIZED);
         }
     }
+
+    @PostMapping("/google-login")
+    public ResponseEntity<ApiTokenResponse<String>> loginWithGoogle(@RequestBody GoogleUserDTO request) {
+
+        try {
+            String idToken = request.idToken();
+            Map<String, String> loginInfo = authenticationService.googleLogin(idToken);
+            Map.Entry<String, String> entry = loginInfo.entrySet().iterator().next();
+            String clientId = entry.getKey();
+            String newToken = entry.getValue();
+            ApiTokenResponse<String> response = new ApiTokenResponse<>("Success", "Google login successful", clientId, newToken);
+            return new ResponseEntity<>(response, HttpStatus.OK);
+        } catch (Exception e) {
+            ApiTokenResponse<String> response = new ApiTokenResponse<>("error", e.getMessage(), null, null);
+            return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
 }
 

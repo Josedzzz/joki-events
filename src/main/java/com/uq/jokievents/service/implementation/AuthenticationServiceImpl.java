@@ -1,10 +1,14 @@
 package com.uq.jokievents.service.implementation;
 
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseAuthException;
+import com.google.firebase.auth.FirebaseToken;
 import com.uq.jokievents.dtos.*;
 import com.uq.jokievents.exceptions.*;
 import com.uq.jokievents.model.Admin;
 import com.uq.jokievents.model.Client;
 import com.uq.jokievents.model.ShoppingCart;
+import com.uq.jokievents.model.enums.Role;
 import com.uq.jokievents.repository.AdminRepository;
 import com.uq.jokievents.repository.ClientRepository;
 import com.uq.jokievents.repository.ShoppingCartRepository;
@@ -25,6 +29,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 
 @Service
 @Transactional
@@ -154,6 +159,101 @@ public class AuthenticationServiceImpl implements AuthenticationService {
             clientRepository.save(client);
         } else {
             throw new AccountException("No account found with that email");
+        }
+    }
+
+    @Override
+    public Map<String, String> registerUserIfNotExists(FirebaseToken decodedToken) {
+        String email = decodedToken.getEmail();
+        String name = decodedToken.getName();
+        Client existingClient = clientRepository.findByEmail(email).orElse(null);
+
+        if (existingClient != null) {
+            // If client exists and is active, return the token immediately
+            if (existingClient.isActive()) {
+                String token = jwtService.getClientToken(existingClient);
+                Map<String, String> registerInfo = new HashMap<>();
+                registerInfo.put(existingClient.getId(), token);
+                return registerInfo;
+            } else {
+                // Activate an existing but inactive client without requiring verification code
+                existingClient.setActive(true);
+                clientRepository.save(existingClient);
+                String token = jwtService.getClientToken(existingClient);
+                Map<String, String> registerInfo = new HashMap<>();
+                registerInfo.put(existingClient.getId(), token);
+                return registerInfo;
+            }
+        }
+        return getLoginInfoFromClient(name, email);
+    }
+
+    private Map<String, String> getLoginInfoFromClient(String name, String email) {
+        // New client creation
+        Client client = Client.builder()
+                .id(String.valueOf(new ObjectId()))
+                .idCard("") // No ID card in Google sign-in, or generate a placeholder if required
+                .name(name)
+                .address("") // Address could be added later by the client, if needed
+                .phoneNumber("") // No phone initially unless provided
+                .email(email)
+                .password(null) // No password set for Google sign-in clients, maybe insist? Now that I think of it, I don't have password in lots of sites
+                .idShoppingCart(String.valueOf(new ObjectId()))
+                .active(true) // Mark as active by default for Google accounts
+                .listOfUsedCoupons(new ArrayList<>())
+                .build();
+
+        // Create shopping cart for the new Google client
+        ShoppingCart clientShoppingCart = ShoppingCart.builder()
+                .id(client.getIdShoppingCart())
+                .clientId(client.getId())
+                .paymentGatewayId("")
+                .localityOrders(new ArrayList<>())
+                .totalPrice(0.0)
+                .totalPriceWithDiscount(0.0)
+                .appliedDiscountPercent(1.0)
+                .couponClaimed(false)
+                .build();
+
+        // Save client and shopping cart
+        shoppingCartRepository.save(clientShoppingCart);
+        clientRepository.save(client);
+
+        // Send a welcome or discount email if desired
+        emailService.sendDiscountCouponMail(client.getEmail());
+
+        // Generate and return JWT token for new client
+        String token = jwtService.getClientToken(client);
+        Map<String, String> registerInfo = new HashMap<>();
+        registerInfo.put(client.getId(), token);
+        return registerInfo;
+    }
+
+    @Override
+    public Map<String, String> googleLogin(String idToken) {
+        // Verify the token with Firebase
+        try {
+            FirebaseToken decodedToken = FirebaseAuth.getInstance().verifyIdToken(idToken);
+
+            // Extract user details from the token
+            String email = decodedToken.getEmail();
+            String name = decodedToken.getName();
+
+            // Check if user exists
+            Client client = clientRepository.findByEmail(email).orElse(null);
+
+            if (client == null) {
+                // New client creation, very rude but okay
+                return getLoginInfoFromClient(name, email);
+            }
+            // If the user exists or has just been registered, generate a token for them
+            String token = jwtService.getClientToken(client);
+            // Return the client and their JWT token
+            Map<String, String> loginInfo = new HashMap<>();
+            loginInfo.put(client.getId(), token);
+            return loginInfo;
+        } catch (FirebaseAuthException e) {
+            throw new LogicException(e.getMessage());
         }
     }
 
