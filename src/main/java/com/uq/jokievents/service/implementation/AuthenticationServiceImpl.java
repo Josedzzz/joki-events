@@ -59,7 +59,6 @@ public class AuthenticationServiceImpl implements AuthenticationService {
             throw new AccountException("Invalid username or password");
         }
 
-        // Exception throws here
         authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(username, password)
         );

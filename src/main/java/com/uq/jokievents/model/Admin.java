@@ -1,4 +1,4 @@
-package com.uq.jokievents.model;
+    package com.uq.jokievents.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.uq.jokievents.model.enums.Role;

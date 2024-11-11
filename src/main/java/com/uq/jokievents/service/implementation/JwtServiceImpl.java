@@ -41,20 +41,17 @@ public class JwtServiceImpl implements JwtService {
         return Keys.hmacShaKeyFor(SECRET_KEY.getBytes());
     }
 
-    // Extract expiration date from token
     public Date extractExpiration(String token) {
         return extractClaim(token, Claims::getExpiration);
     }
 
-    // Check if token is expired
     public boolean isTokenExpired(String token) {
-        return extractExpiration(token).before(new Date());
+        return !extractExpiration(token).before(new Date());
     }
 
-    // Check if the token is valid
     public boolean isTokenValid(String token, UserDetails userDetails) {
         final String username = getUsernameFromToken(token);
-        return (username.equals(userDetails.getUsername()) && !isTokenExpired(token));
+        return (username.equals(userDetails.getUsername()) && isTokenExpired(token));
     }
 
     public String getClientToken(UserDetails client) {
@@ -85,28 +82,14 @@ public class JwtServiceImpl implements JwtService {
     }
 
     private String getTokenWithClaims(Map<String, Object> extraClaims, UserDetails user) {
-        long ACCESS_TOKEN_EXPIRATION = 1440 * 60 * 1000; // 1 day
+        long expirationTime = 3600L * 1000; // 1 hour expiration time (or adjust as needed)
+        Date now = new Date();
+        Date expiration = new Date(now.getTime() + expirationTime);
         return Jwts.builder()
                 .setClaims(extraClaims)
                 .setSubject(user.getUsername())
-                .setIssuedAt(new Date(System.currentTimeMillis()))
-                .setExpiration(new Date(System.currentTimeMillis() + ACCESS_TOKEN_EXPIRATION))
-                .signWith(getSigningKey())
-                .compact();
-    }
-
-    // Generate refresh token with longer expiration time
-    public String generateRefreshToken(UserDetails user) {
-        long REFRESH_TOKEN_EXPIRATION = 1000 * 60 * 60 * 24 * 30; // 30 days
-        Map<String, Object> extraClaims = new HashMap<>();
-        extraClaims.put("role", user.getAuthorities().stream()
-                .map(GrantedAuthority::getAuthority)
-                .findFirst().orElse("USER"));
-        return Jwts.builder()
-                .setClaims(extraClaims)
-                .setSubject(user.getUsername())
-                .setIssuedAt(new Date(System.currentTimeMillis()))
-                .setExpiration(new Date(System.currentTimeMillis() + REFRESH_TOKEN_EXPIRATION))
+                .setIssuedAt(now)
+                .setExpiration(expiration)
                 .signWith(getSigningKey())
                 .compact();
     }
@@ -127,35 +110,39 @@ public class JwtServiceImpl implements JwtService {
                     .verifyWith(getSigningKey())
                     .build().parseSignedClaims(token).getPayload();
         } catch (JwtException | IllegalArgumentException e) {
-            throw new RuntimeException("Invalid JWT token");
+            throw new RuntimeException("Invalid JWT token: ", e);
         }
     }
 
     @Override
     public String refreshToken(String token) throws JSONException {
-        if (isTokenExpired(token)) {
-            throw new RuntimeException("Token has expired. Please log in again.");
-        }
+        // Email or username as client uses email and admin uses username as the subject.
+        String tokenWithoutPrefix = token.replace("Bearer ", "").trim();
+        String emailOrUsername = this.extractEmailOrUsername(tokenWithoutPrefix);
 
-        String tokenWithoutPrefix = token.replace("Bearer ", "");
-        String email = this.extractEmail(tokenWithoutPrefix);
+        UserDetails userDetails = loadUserByEmailOrUsername(emailOrUsername);
+        String sub = extractClaim(tokenWithoutPrefix, Claims::getSubject);
+        String role = extractClaim(tokenWithoutPrefix, claims -> claims.get("role", String.class));
 
-        // Extract user details (client or admin)
-        UserDetails userDetails = loadUserByUsername(email);
-
-        // Generate a new token for the user (client or admin)
+        // Create claims for the new token
+        Map<String, Object> extraClaims = new HashMap<>();
+        extraClaims.put("sub", sub);
+        extraClaims.put("role", role);
         String newToken;
-        if (userDetails instanceof Client) {
-            newToken = this.getClientToken(userDetails);  // For client
-        } else if (userDetails instanceof Admin) {
-            newToken = this.getAdminToken(userDetails);  // For admin
+        if (userDetails.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("CLIENT"))) {
+            // The user has CLIENT role
+            newToken = this.getTokenWithClaims(extraClaims, userDetails);
+        } else if (userDetails.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ADMIN"))) {
+            // The user has ADMIN role
+            newToken = this.getTokenWithClaims(extraClaims, userDetails);
         } else {
+            // No valid role found
             throw new RuntimeException("Unsupported user type");
         }
         return newToken;
     }
 
-    private String extractEmail(String tokenWithoutPrefix) throws JSONException {
+    private String extractEmailOrUsername(String tokenWithoutPrefix) throws JSONException {
         // Split token into its parts
         String[] parts = tokenWithoutPrefix.split("\\.");
 
@@ -174,7 +161,7 @@ public class JwtServiceImpl implements JwtService {
     }
 
 
-    private UserDetails loadUserByUsername(String username) {
+    private UserDetails loadUserByEmailOrUsername(String username) {
         // First, attempt to load a client (could be a normal user)
         Client client = clientRepository.findByEmail(username).orElse(null);
 
@@ -187,11 +174,11 @@ public class JwtServiceImpl implements JwtService {
         }
 
         // If not a client, attempt to load an admin
-        Admin admin = adminRepository.findByEmail(username).orElse(null);
+        Admin admin = adminRepository.findByUsername(username).orElse(null);
 
         if (admin != null) {
             return new org.springframework.security.core.userdetails.User(
-                    admin.getEmail(),
+                    admin.getUsername(),
                     admin.getPassword(),
                     admin.getAuthorities()
             );
@@ -199,5 +186,4 @@ public class JwtServiceImpl implements JwtService {
         // If user not found, throw exception
         throw new UsernameNotFoundException("User not found with username: " + username);
     }
-
 }

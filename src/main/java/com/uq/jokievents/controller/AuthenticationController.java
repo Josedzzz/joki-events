@@ -151,13 +151,14 @@ public class AuthenticationController {
     }
 
     @PostMapping("/refresh-token")
-    public ResponseEntity<ApiTokenResponse<String>> refreshJwtToken(@RequestHeader("Authorization") String token) {
+    public ResponseEntity<ApiTokenResponse<?>> refreshJwtToken(@RequestHeader("Authorization") String token) {
         try {
             String newToken = jwtService.refreshToken(token);
             ApiTokenResponse<String> response = new  ApiTokenResponse<>("Success", "Returning new token", null, newToken);
             return new ResponseEntity<>(response, HttpStatus.OK);
         } catch (Exception e) {
-            ApiTokenResponse<String> response = new  ApiTokenResponse<>("Error", e.getMessage(), null,null);
+            // getting thrown here
+            ApiTokenResponse<?> response = new  ApiTokenResponse<>("Error", e.getMessage(),null,null);
             return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
