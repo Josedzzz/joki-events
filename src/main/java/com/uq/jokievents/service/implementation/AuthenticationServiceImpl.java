@@ -19,6 +19,7 @@ import lombok.RequiredArgsConstructor;
 import org.bson.types.ObjectId;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -44,53 +45,94 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     private final ShoppingCartRepository shoppingCartRepository;
     private final EmailService emailService;
 
+//    @Override
+//    public Map<Admin, String> loginAdmin(AuthAdminDTO request) {
+//        String username = request.username();
+//        String password = request.password();
+//        Admin admin = adminRepository.findByUsername(username)
+//                .orElseThrow(() -> new AccountException("Account not found in the database"));
+//
+//        if (!admin.isActive()) {
+//            throw new AccountException("The admin is not active");
+//        }
+//
+//        if (!passwordEncoder.matches(password, admin.getPassword())) {
+//            throw new AccountException("Invalid username or password");
+//        }
+//
+//        authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(username, password));
+//        Map<Admin, String> loginInfo = new HashMap<>();
+//        String adminToken = jwtService.getAdminToken(admin);
+//        loginInfo.put(admin, adminToken);
+//        return loginInfo;
+//    }
+
     @Override
     public Map<Admin, String> loginAdmin(AuthAdminDTO request) {
         String username = request.username();
         String password = request.password();
-        Admin admin = adminRepository.findByUsername(username)
-                .orElseThrow(() -> new AccountException("Account not found in the database"));
 
-        if (!admin.isActive()) {
-            throw new AccountException("The admin is not active");
+        UsernamePasswordAuthenticationToken authenticationToken =
+                new UsernamePasswordAuthenticationToken(username, password);
+        Authentication authentication = authenticationManager.authenticate(authenticationToken);
+
+        if (authentication.isAuthenticated()) {
+            Admin admin = (Admin) authentication.getPrincipal();
+            String adminToken = jwtService.getAdminToken(admin);
+            Map<Admin, String> loginInfo = new HashMap<>();
+            loginInfo.put(admin, adminToken);
+            return loginInfo;
+        } else {
+            throw new AccountException("Authentication failed");
         }
-
-        if (!passwordEncoder.matches(password, admin.getPassword())) {
-            throw new AccountException("Invalid username or password");
-        }
-
-        authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(username, password)
-        );
-        Map<Admin, String> loginInfo = new HashMap<>();
-        String adminToken = jwtService.getAdminToken(admin);
-        loginInfo.put(admin, adminToken);
-        return loginInfo;
     }
+
+//    @Override
+//    public Map<Client, String> loginClient(LoginClientDTO request) {
+//
+//        String email = request.email();
+//        String rawPassword = request.password();
+//
+//        Client client = clientRepository.findByEmail(email)
+//                .orElseThrow(() -> new AccountException("Client not found"));
+//
+//        if (!client.isActive()) {
+//            throw new AccountException("Client is not active");
+//        }
+//
+//        if (!passwordEncoder.matches(rawPassword, client.getPassword())) {
+//            throw new AccountException("Invalid password");
+//        }
+//
+//        Map<Client, String> loginInfo = new HashMap<>();
+//        authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(email, rawPassword));
+//        UserDetails clientDetails = clientRepository.findByEmail(email).orElse(null);
+//        String token = jwtService.getClientToken(clientDetails);
+//        loginInfo.put(client, token);
+//        return loginInfo;
+//    }
 
     @Override
     public Map<Client, String> loginClient(LoginClientDTO request) {
 
         String email = request.email();
         String rawPassword = request.password();
+        UsernamePasswordAuthenticationToken authenticationToken =
+                new UsernamePasswordAuthenticationToken(email, rawPassword);
 
-        Client client = clientRepository.findByEmail(email)
-                .orElseThrow(() -> new AccountException("Client not found"));
+        // Authenticate the token using AuthenticationManager
+        Authentication authentication = authenticationManager.authenticate(authenticationToken);
 
-        if (!client.isActive()) {
-            throw new AccountException("Client is not active");
+        if (authentication.isAuthenticated()) {
+            Client client = (Client) authentication.getPrincipal();
+            if (!client.isActive()) throw new AccountException("Your account is not active"); // I could do this for admin too but whatever
+            String clientToken = jwtService.getClientToken(client);
+            Map<Client, String> loginInfo = new HashMap<>();
+            loginInfo.put(client, clientToken);
+            return loginInfo;
+        } else {
+            throw new AccountException("Authentication failed");
         }
-
-        if (!passwordEncoder.matches(rawPassword, client.getPassword())) {
-            throw new AccountException("Invalid password");
-        }
-
-        Map<Client, String> loginInfo = new HashMap<>();
-        authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(email, rawPassword));
-        UserDetails clientDetails = clientRepository.findByEmail(email).orElse(null);
-        String token = jwtService.getClientToken(clientDetails);
-        loginInfo.put(client, token);
-        return loginInfo;
     }
 
     @Override
