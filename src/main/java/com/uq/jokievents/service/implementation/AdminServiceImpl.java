@@ -440,7 +440,7 @@ public class AdminServiceImpl implements AdminService{
 
                 // Update the map with the new EventReportDTO record
                 eventReports.put(eventId, new EventReportDTO(
-                        eventId, event.getName(), event.getCity(), updatedRevenue, updatedLocalityStats
+                        eventId, event.getName(), event.getCity() , event.getAddress(), updatedRevenue, updatedLocalityStats
                 ));
             }
         }
@@ -472,6 +472,7 @@ public class AdminServiceImpl implements AdminService{
                 document.add(new Paragraph("Event: " + eventReport.eventName())
                         .setBold().setFontSize(14));
                 document.add(new Paragraph("City: " + eventReport.eventCity()));
+                document.add(new Paragraph("Address: " + eventReport.address()));
                 document.add(new Paragraph("Event Revenue: $" + localityStats.getLocalityRevenue()));
 
                 // Table for locality statistics

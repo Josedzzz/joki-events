@@ -7,6 +7,7 @@ import com.uq.jokievents.repository.AdminRepository;
 import com.uq.jokievents.repository.ClientRepository;
 import com.uq.jokievents.service.interfaces.JwtService;
 import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
@@ -21,6 +22,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.crypto.SecretKey;
+import java.sql.SQLOutput;
 import java.util.Base64;
 import java.util.Date;
 import java.util.HashMap;
@@ -47,10 +49,20 @@ public class JwtServiceImpl implements JwtService {
     }
 
     public boolean isTokenExpired(String token) {
-        return !extractExpiration(token).before(new Date());
+        try {
+            // Extract expiration date
+            Date expirationDate = extractClaim(token, Claims::getExpiration);
+            // Check if expiration date is before the current date
+            return expirationDate.before(new Date());
+        } catch (ExpiredJwtException e) {
+            return true; // Token is expired if this exception is thrown
+        } catch (JwtException e) {
+            throw new JwtException("Token validation failed");
+        }
     }
 
     public boolean isTokenValid(String token, UserDetails userDetails) {
+        System.out.println("P. DIDDY");
         final String username = getUsernameFromToken(token);
         return (username.equals(userDetails.getUsername()) && isTokenExpired(token));
     }
@@ -106,42 +118,42 @@ public class JwtServiceImpl implements JwtService {
     }
 
     private Claims extractAllClaims(String token) throws JwtException, IllegalArgumentException {
+            // Exception gets thrown here
             return Jwts.parser()
                     .verifyWith(getSigningKey())
                     .build().parseSignedClaims(token).getPayload();
     }
 
     @Override
-    public String refreshToken(String token){
-        // Email or username as client uses email and admin uses username as the subject.
-        try {
-            String tokenWithoutPrefix = token.replace("Bearer ", "").trim();
-            String emailOrUsername = this.extractEmailOrUsername(tokenWithoutPrefix);
+    public String refreshToken(String token) {
+        System.out.println("I GOT HERE");
+        String tokenWithoutPrefix = token.replace("Bearer ", "").trim();
 
-            UserDetails userDetails = loadUserByEmailOrUsername(emailOrUsername);
-            String sub = extractClaim(tokenWithoutPrefix, Claims::getSubject);
-            String role = extractClaim(tokenWithoutPrefix, claims -> claims.get("role", String.class));
+        if (isTokenExpired(tokenWithoutPrefix)) {
+            throw new JwtException("Token has expired. Please login again.");
+        }
 
-            // Create claims for the new token
-            Map<String, Object> extraClaims = new HashMap<>();
-            extraClaims.put("sub", sub);
-            extraClaims.put("role", role);
-            String newToken;
-            if (userDetails.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("CLIENT"))) {
-                // The user has CLIENT role
-                newToken = this.getTokenWithClaims(extraClaims, userDetails);
-            } else if (userDetails.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ADMIN"))) {
-                // The user has ADMIN role
-                newToken = this.getTokenWithClaims(extraClaims, userDetails);
-            } else {
-                // No valid role found
-                throw new RuntimeException("Unsupported user type");
-            }
-            return newToken;
-        } catch (Exception e) {
-            throw new LogicException("Failed to refresh token: " + e.getMessage());
+        // Proceed with refreshing token since it’s not expired
+        String emailOrUsername = this.extractEmailOrUsername(tokenWithoutPrefix);
+        UserDetails userDetails = loadUserByEmailOrUsername(emailOrUsername);
+        String sub = extractClaim(tokenWithoutPrefix, Claims::getSubject);
+        String role = extractClaim(tokenWithoutPrefix, claims -> claims.get("role", String.class));
+
+        // Create claims for the new token
+        Map<String, Object> extraClaims = new HashMap<>();
+        extraClaims.put("sub", sub);
+        extraClaims.put("role", role);
+
+        // Generate new token based on user role
+        if (userDetails.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("CLIENT"))) {
+            return this.getTokenWithClaims(extraClaims, userDetails);
+        } else if (userDetails.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ADMIN"))) {
+            return this.getTokenWithClaims(extraClaims, userDetails);
+        } else {
+            throw new LogicException("Unsupported user type");
         }
     }
+
 
     private String extractEmailOrUsername(String tokenWithoutPrefix) throws JSONException {
         // Split token into its parts

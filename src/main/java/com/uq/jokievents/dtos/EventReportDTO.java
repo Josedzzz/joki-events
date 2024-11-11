@@ -9,7 +9,7 @@ public record EventReportDTO(
         String eventId,
         String eventName,
         String eventCity,
-        BigDecimal totalRevenue,
+        String address, BigDecimal totalRevenue,
         List<LocalityStats> localityStats
 ) {
 }

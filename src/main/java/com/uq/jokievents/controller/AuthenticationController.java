@@ -154,11 +154,15 @@ public class AuthenticationController {
     public ResponseEntity<ApiTokenResponse<?>> refreshJwtToken(@RequestHeader("Authorization") String token) {
         try {
             String newToken = jwtService.refreshToken(token);
-            ApiTokenResponse<String> response = new  ApiTokenResponse<>("Success", "Returning new token", null, newToken);
+            ApiTokenResponse<String> response = new ApiTokenResponse<>("Success", "Returning new token", null, newToken);
             return new ResponseEntity<>(response, HttpStatus.OK);
+        } catch (LogicException e) {
+            // Return a friendly error response to Postman if the token is expired or invalid
+            ApiTokenResponse<?> response = new ApiTokenResponse<>("Error", e.getMessage(), null, null);
+            return new ResponseEntity<>(response, HttpStatus.UNAUTHORIZED);
         } catch (Exception e) {
-            // getting thrown here
-            ApiTokenResponse<?> response = new  ApiTokenResponse<>("Error", e.getMessage(),null,null);
+            // General error response for unexpected exceptions
+            ApiTokenResponse<?> response = new ApiTokenResponse<>("Error", "An unexpected error occurred.", null, null);
             return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
