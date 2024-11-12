@@ -151,8 +151,7 @@ public class ClientServiceImpl implements ClientService {
                         event.getName(),
                         event.getAddress(),
                         event.getCity(),
-                        event.getEventDate().atZone(ZoneId.of("America/Bogota"))
-                                .format(DateTimeFormatter.ISO_OFFSET_DATE_TIME),
+                        event.getEventDate().plusHours(5),
                         event.isAvailableForPurchase(),
                         event.getLocalities(),
                         event.getTotalAvailablePlaces(),

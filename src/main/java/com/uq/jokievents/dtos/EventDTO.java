@@ -10,7 +10,7 @@ public record EventDTO(
         String name,
         String address,
         String city,
-        String eventDate,
+        java.time.LocalDateTime eventDate,
         boolean availableForPurchase,
         List<Locality> localities,
         int totalAvailablePlaces,
