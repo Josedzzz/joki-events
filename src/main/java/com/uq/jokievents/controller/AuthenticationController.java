@@ -3,12 +3,17 @@ package com.uq.jokievents.controller;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseAuthException;
 import com.google.firebase.auth.FirebaseToken;
+import com.paypal.orders.*;
 import com.uq.jokievents.dtos.*;
 import com.uq.jokievents.exceptions.*;
 import com.uq.jokievents.model.Admin;
 import com.uq.jokievents.model.Client;
+import com.uq.jokievents.model.LocalityOrder;
+import com.uq.jokievents.model.ShoppingCart;
+import com.uq.jokievents.repository.ShoppingCartRepository;
 import com.uq.jokievents.service.interfaces.AuthenticationService;
 import com.uq.jokievents.service.interfaces.JwtService;
+import com.uq.jokievents.service.interfaces.PaymentService;
 import com.uq.jokievents.utils.ApiResponse;
 import com.uq.jokievents.utils.ApiTokenResponse;
 import jakarta.validation.constraints.Email;
@@ -18,7 +23,9 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import javax.validation.Valid;
+import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/auth")
@@ -29,6 +36,8 @@ public class AuthenticationController {
 
     private final AuthenticationService authenticationService;
     private final JwtService jwtService;
+    private final PaymentService paymentService;
+    private final ShoppingCartRepository shoppingCartRepository;
 
     @PostMapping("/login-admin")
     public ResponseEntity<ApiTokenResponse<String>> loginAdmin(@RequestBody @Valid AuthAdminDTO loginRequest) {
@@ -205,5 +214,39 @@ public class AuthenticationController {
         }
     }
 
+    @GetMapping("/payment-success")
+    public ResponseEntity<ApiResponse<String>> handlePaymentSuccess(@RequestParam("token") String token) {
+        try {
+            // Step 1: Capture the payment
+            Capture capture = paymentService.capturePayment(token);
+
+            // Step 2: Check if payment status is 'COMPLETED'
+            if ("COMPLETED".equals(capture.status())) {
+                // Step 3: Retrieve the ShoppingCart based on the payment token
+                Optional<ShoppingCart> order = shoppingCartRepository.findByPaymentGatewayId(token);
+                if (order.isEmpty()) {
+                    ApiResponse<String> response = new ApiResponse<>("Error", "Could not find the order", capture.status());
+                    return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
+                }
+                paymentService.updateEventAndLocalities(order.get());
+                paymentService.fillPurchaseAfterSuccess(order.get());
+                ApiResponse<String> response = new ApiResponse<>("Success", "Payment done", null);
+                return new ResponseEntity<>(response, HttpStatus.OK);
+            } else {
+                ApiResponse<String> response = new ApiResponse<>("Success", "Payment done, probably cancelled", capture.status());
+                return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+            }
+        } catch (Exception e) {
+            ApiResponse<String> response = new ApiResponse<>("Error", e.getMessage(), null);
+            return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    // Qué pesar este método kjaskjaksjkajs
+    @GetMapping("/payment-cancel")
+    public ResponseEntity<ApiResponse<String>> handlePaymentCancel() {
+        ApiResponse<String> response = new ApiResponse<>("Success", "Payment cancelled", null);
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
 }
 
