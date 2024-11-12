@@ -273,8 +273,7 @@ public class AdminServiceImpl implements AdminService{
                 }
             }
         }
-
-        checkEventInSitu(dto); // two not used conditions but well fuck
+        checkEventInSituUpdating(dto); // two not used conditions but well fuck
         List<Locality> updatedLocalities = getLocalities(dto);
 
         // Update the fields from the DTO
@@ -301,6 +300,17 @@ public class AdminServiceImpl implements AdminService{
         if (eventRepository.existsByEventDate(eventDate) && eventRepository.existsByAddress(address) && eventRepository.existsByCity(city)) {
             throw new LogicException("Event at that time in the same address in the same city exists");
         }
+        if (!eventImage.isEmpty() && localitiesImage.isEmpty()) {
+            throw new LogicException("Please add a localities image for the event");
+        }
+        if (!localitiesImage.isEmpty() && eventImage.isEmpty()) {
+            throw new LogicException("Please add an event image for the localities");
+        }
+    }
+
+    private void checkEventInSituUpdating(HandleEventDTO dto) {
+        String eventImage = dto.eventImageUrl();
+        String localitiesImage = dto.localitiesImageUrl();
         if (!eventImage.isEmpty() && localitiesImage.isEmpty()) {
             throw new LogicException("Please add a localities image for the event");
         }
@@ -428,8 +438,12 @@ public class AdminServiceImpl implements AdminService{
                             .map(Locality::getMaxCapacity)
                             .findFirst()
                             .orElse(0);
-                    double soldPercentage = (double) localityOrder.getNumTicketsSelected() / totalTickets * 100;
-
+                    double soldPercentage;
+                    if (event.isAvailableForPurchase()) {
+                        soldPercentage = (double) localityOrder.getNumTicketsSelected() / totalTickets * 100;
+                    } else {
+                        soldPercentage=100;
+                    }
                     updatedLocalityStats.add(new LocalityStats(
                             localityOrder.getLocalityName(), localityOrder.getNumTicketsSelected(),
                             totalTickets, soldPercentage, BigDecimal.valueOf(localityOrder.getTotalPaymentAmount())
