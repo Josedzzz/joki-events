@@ -449,7 +449,6 @@ public class AdminServiceImpl implements AdminService{
                             totalTickets, soldPercentage, BigDecimal.valueOf(localityOrder.getTotalPaymentAmount())
                     ));
                 }
-
                 // Update the map with the new EventReportDTO record
                 eventReports.put(eventId, new EventReportDTO(
                         eventId, event.getName(), event.getCity() , event.getAddress(), updatedRevenue, updatedLocalityStats
@@ -510,7 +509,4 @@ public class AdminServiceImpl implements AdminService{
         return new ByteArrayInputStream(out.toByteArray());
     }
 
-    public ApplicationConfig getApplicationConfig() {
-        return applicationConfig;
-    }
 }

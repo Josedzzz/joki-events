@@ -1,9 +1,6 @@
 package com.uq.jokievents.service.implementation;
 
-import com.uq.jokievents.dtos.LoadLocalityOrdersForClient;
-import com.uq.jokievents.dtos.LocalityOrderAsClientDTO;
-import com.uq.jokievents.dtos.SearchEventDTO;
-import com.uq.jokievents.dtos.UpdateClientDTO;
+import com.uq.jokievents.dtos.*;
 import com.uq.jokievents.exceptions.*;
 import com.uq.jokievents.model.*;
 import com.uq.jokievents.model.enums.EventType;
@@ -23,6 +20,9 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.RequestBody;
 
 import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 
 @Service
@@ -122,15 +122,50 @@ public class ClientServiceImpl implements ClientService {
         clientRepository.save(client);
     }
 
+//    @Override
+//    public Map<String, Object> getAllEventsPaginated(int page, int size) {
+//
+//        Pageable pageable = PageRequest.of(page, size);
+//        Page<Event> eventPage = eventRepository.findAll(pageable);
+//
+//        // Populate pagination data
+//        Map<String, Object> responseData = new HashMap<>();
+//        responseData.put("content", eventPage.getContent());
+//        responseData.put("totalPages", eventPage.getTotalPages());
+//        responseData.put("totalElements", eventPage.getTotalElements());
+//        responseData.put("currentPage", eventPage.getNumber());
+//
+//        return responseData;
+//    }
+
     @Override
     public Map<String, Object> getAllEventsPaginated(int page, int size) {
-
         Pageable pageable = PageRequest.of(page, size);
         Page<Event> eventPage = eventRepository.findAll(pageable);
 
-        // Populate pagination data
+        // Adjust event dates to the correct time zone before adding them to the response
+// Adjust event dates to the correct time zone before adding them to the response
+        List<EventDTO> eventsWithAdjustedDates = eventPage.getContent().stream()
+                .map(event -> new EventDTO(
+                        event.getId(),
+                        event.getName(),
+                        event.getAddress(),
+                        event.getCity(),
+                        event.getEventDate().atZone(ZoneId.of("America/Bogota"))
+                                .format(DateTimeFormatter.ISO_OFFSET_DATE_TIME),
+                        event.isAvailableForPurchase(),
+                        event.getLocalities(),
+                        event.getTotalAvailablePlaces(),
+                        event.getFinalTotalPlaces(),
+                        event.getEventImageUrl(),
+                        event.getLocalitiesImageUrl(),
+                        event.getEventType()
+                ))
+                .toList();
+
+
         Map<String, Object> responseData = new HashMap<>();
-        responseData.put("content", eventPage.getContent());
+        responseData.put("content", eventsWithAdjustedDates);
         responseData.put("totalPages", eventPage.getTotalPages());
         responseData.put("totalElements", eventPage.getTotalElements());
         responseData.put("currentPage", eventPage.getNumber());
