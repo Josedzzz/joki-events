@@ -34,7 +34,6 @@ public class SecurityConfig{
                 .sessionManagement(sessionManager -> sessionManager.sessionCreationPolicy(SessionCreationPolicy.STATELESS)) // Use stateless sessions for JWT
                 .authenticationProvider(authProvider) // Use custom authentication provider
                 .addFilterBefore(jwtRequestFilter, UsernamePasswordAuthenticationFilter.class) // Add JwtRequestFilter before UsernamePasswordAuthenticationFilter
-                .cors(config -> config.configurationSource(corsConfigurationSource))
                 .build();
     }
 
