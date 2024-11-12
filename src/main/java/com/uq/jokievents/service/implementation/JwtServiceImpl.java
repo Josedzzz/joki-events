@@ -53,7 +53,8 @@ public class JwtServiceImpl implements JwtService {
             // Extract expiration date
             Date expirationDate = extractClaim(token, Claims::getExpiration);
             // Check if expiration date is before the current date
-            return expirationDate.before(new Date());
+            // If the expiration is after the current date, means it is active
+            return expirationDate.after(new Date());
         } catch (ExpiredJwtException e) {
             return true; // Token is expired if this exception is thrown
         } catch (JwtException e) {
@@ -62,7 +63,6 @@ public class JwtServiceImpl implements JwtService {
     }
 
     public boolean isTokenValid(String token, UserDetails userDetails) {
-        System.out.println("P. DIDDY");
         final String username = getUsernameFromToken(token);
         return (username.equals(userDetails.getUsername()) && isTokenExpired(token));
     }
