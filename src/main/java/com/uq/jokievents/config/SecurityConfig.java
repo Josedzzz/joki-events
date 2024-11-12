@@ -4,6 +4,7 @@ import com.uq.jokievents.utils.jwt.JwtRequestFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -25,17 +26,19 @@ public class SecurityConfig{
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         return http
-                .csrf(AbstractHttpConfigurer::disable) // Disable CSRF as we are handling token-based authentication
+                .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests((authRequest) ->
                         authRequest
-                                .requestMatchers("/auth/**").permitAll() // Allow unauthenticated access to /auth endpoints
-                                .anyRequest().authenticated() // All other endpoints require authentication
+                                .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll() // Allow preflight requests
+                                .requestMatchers("/auth/**").permitAll()
+                                .anyRequest().authenticated()
                 )
-                .sessionManagement(sessionManager -> sessionManager.sessionCreationPolicy(SessionCreationPolicy.STATELESS)) // Use stateless sessions for JWT
-                .authenticationProvider(authProvider) // Use custom authentication provider
-                .addFilterBefore(jwtRequestFilter, UsernamePasswordAuthenticationFilter.class) // Add JwtRequestFilter before UsernamePasswordAuthenticationFilter
+                .sessionManagement(sessionManager -> sessionManager.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .authenticationProvider(authProvider)
+                .addFilterBefore(jwtRequestFilter, UsernamePasswordAuthenticationFilter.class)
                 .build();
     }
+
 
 //    @Bean
 //    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
