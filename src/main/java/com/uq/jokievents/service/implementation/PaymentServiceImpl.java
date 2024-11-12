@@ -86,8 +86,8 @@ public class PaymentServiceImpl implements PaymentService {
 
         // Set the application context (for URLs)
         ApplicationContext applicationContext = new ApplicationContext()
-                .cancelUrl("http://localhost:8080/api/payment/cancel")
-                .returnUrl("http://localhost:8080/api/payment/success");
+                .cancelUrl("https://joki-events-production.up.railway.app/api/payment/cancel")
+                .returnUrl("https://joki-events-production.up.railway.app/api/payment/success");
         orderRequest.applicationContext(applicationContext);
 
         // Create the purchase unit (order item)
