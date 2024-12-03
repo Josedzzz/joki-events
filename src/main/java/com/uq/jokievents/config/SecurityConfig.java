@@ -21,31 +21,30 @@ public class SecurityConfig{
 
     private final AuthenticationProvider authProvider;
 
-    // todo remember to uncomment this
-
-//    @Bean
-//    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-//        return http
-//                .csrf(AbstractHttpConfigurer::disable) // Disable CSRF as we are handling token-based authentication
-//                .authorizeHttpRequests((authRequest) ->
-//                        authRequest
-//                                .requestMatchers("/auth/**").permitAll() // Allow unauthenticated access to /auth endpoints
-//                                .anyRequest().authenticated() // All other endpoints require authentication
-//                )
-//                .sessionManagement(sessionManager -> sessionManager.sessionCreationPolicy(SessionCreationPolicy.STATELESS)) // Use stateless sessions for JWT
-//                .authenticationProvider(authProvider) // Use custom authentication provider
-//                .addFilterBefore(jwtRequestFilter, UsernamePasswordAuthenticationFilter.class) // Add JwtRequestFilter before UsernamePasswordAuthenticationFilter
-//                .build();
-//    }
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         return http
                 .csrf(AbstractHttpConfigurer::disable) // Disable CSRF as we are handling token-based authentication
                 .authorizeHttpRequests((authRequest) ->
-                        authRequest.anyRequest().permitAll() // Permit all requests from any route while we test this project.
+                        authRequest
+                                .requestMatchers("/auth/**").permitAll() // Allow unauthenticated access to /auth endpoints
+                                .anyRequest().authenticated() // All other endpoints require authentication
                 )
                 .sessionManagement(sessionManager -> sessionManager.sessionCreationPolicy(SessionCreationPolicy.STATELESS)) // Use stateless sessions for JWT
+                .authenticationProvider(authProvider) // Use custom authentication provider
+                .addFilterBefore(jwtRequestFilter, UsernamePasswordAuthenticationFilter.class) // Add JwtRequestFilter before UsernamePasswordAuthenticationFilter
                 .build();
     }
+
+//    @Bean
+//    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+//        return http
+//                .csrf(AbstractHttpConfigurer::disable) // Disable CSRF as we are handling token-based authentication
+//                .authorizeHttpRequests((authRequest) ->
+//                        authRequest.anyRequest().permitAll() // Permit all requests from any route while we test this project.
+//                )
+//                .sessionManagement(sessionManager -> sessionManager.sessionCreationPolicy(SessionCreationPolicy.STATELESS)) // Use stateless sessions for JWT
+//                .build();
+//    }
 }
